@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
@@ -37,10 +38,17 @@ class _FamilyVoiceRecorderState extends State<FamilyVoiceRecorder> {
   _RecState _state = _RecState.idle;
   String? _path;
   bool _recordingNow = false;
+  bool _playing = false;
+  StreamSubscription<PlayerState>? _playerSub;
 
   @override
   void initState() {
     super.initState();
+    // Tombol Dengarkan berubah jadi kotak berhenti selama rekaman diputar, lalu kembali saat klip selesai.
+    _playerSub = _player.onPlayerStateChanged.listen((s) {
+      final playing = s == PlayerState.playing;
+      if (mounted && playing != _playing) setState(() => _playing = playing);
+    });
     final existing = widget.initialPath;
     if (existing != null && File(existing).existsSync()) {
       _path = existing;
@@ -56,6 +64,7 @@ class _FamilyVoiceRecorderState extends State<FamilyVoiceRecorder> {
       _recorder.stop().then(onRecorded, onError: (Object e, StackTrace st) => ErrorLog.record('rekam:stop', e, st));
     }
     _recorder.dispose();
+    _playerSub?.cancel();
     _player.dispose();
     super.dispose();
   }
@@ -94,11 +103,18 @@ class _FamilyVoiceRecorderState extends State<FamilyVoiceRecorder> {
   Future<void> _play() async {
     final path = _path;
     if (path == null) return;
+    final wasPlaying = _playing;
     try {
       await _player.stop();
+      if (wasPlaying) {
+        if (mounted) setState(() => _playing = false);
+        return;
+      }
+      setState(() => _playing = true);
       await _player.play(DeviceFileSource(path));
     } catch (e, st) {
       ErrorLog.record('rekam:putar', e, st);
+      if (mounted) setState(() => _playing = false);
     }
   }
 
@@ -147,8 +163,11 @@ class _FamilyVoiceRecorderState extends State<FamilyVoiceRecorder> {
                     child: TextButton.icon(
                       onPressed: _play,
                       style: TextButton.styleFrom(backgroundColor: Colors.white, foregroundColor: CompanionColors.mintText),
-                      icon: const Icon(Icons.play_arrow_rounded),
-                      label: const Text('Dengarkan'),
+                      icon: AnimatedSwitcher(
+                        duration: Motion.of(context, Motion.press),
+                        child: Icon(_playing ? Icons.stop_rounded : Icons.play_arrow_rounded, key: ValueKey(_playing)),
+                      ),
+                      label: Text(_playing ? 'Berhenti' : 'Dengarkan'),
                     ),
                   ),
           ),

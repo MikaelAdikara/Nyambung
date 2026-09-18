@@ -4,8 +4,9 @@ import '../../core/app_state.dart';
 import '../../data/models.dart';
 import '../board/symbol_cell.dart';
 import '../coach/companion_widgets.dart';
+import 'photo_card_screen.dart';
 
-/// C2 Kelola kosakata: sembunyikan atau tampilkan kembali sebuah kata. Posisi tidak bisa dipindahkan;
+/// C2 Kelola kosakata: sembunyikan atau tampilkan kembali sebuah kata, dan tambah kartu personal dari foto (C3). Posisi tidak bisa dipindahkan;
 /// kata yang disembunyikan tetap memegang tempatnya di papan (invarian 8). Kata di halaman kata inti
 /// ikut tersembunyi di sel cermin setiap halaman kategori, karena sel itu adalah kata yang sama.
 class ManageVocabScreen extends StatefulWidget {
@@ -32,6 +33,11 @@ class _ManageVocabScreenState extends State<ManageVocabScreen> {
     await _app.symbolDao.setHidden(s.wordId, !s.isHidden);
     await _app.reloadSymbols();
     if (mounted) setState(() => _busy = false);
+  }
+
+  Future<void> _addCard() async {
+    await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => PhotoCardScreen(initialPage: _page)));
+    if (mounted) setState(() {});
   }
 
   @override
@@ -73,6 +79,15 @@ class _ManageVocabScreenState extends State<ManageVocabScreen> {
               return Wrap(spacing: gap, runSpacing: gap, children: [for (final s in words) _cell(s, w)]);
             },
           ),
+          const SizedBox(height: 16),
+          Text(
+            _page == 0
+                ? 'Halaman kata inti tetap 12 kata. Kartu baru masuk ke halaman kategori.'
+                : 'Kartu baru mengisi kotak kosong berikutnya di halaman ini (posisi ${_app.nextCardSlot(_page) + 1}).',
+            style: companionMutedStyle,
+          ),
+          const SizedBox(height: 12),
+          PrimaryButton(label: 'Tambah kartu baru', icon: Icons.add_a_photo_outlined, onPressed: _addCard),
         ],
       ),
     );

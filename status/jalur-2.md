@@ -1,12 +1,16 @@
 # Status jalur 2 — Pendamping
-Diperbarui: 11:20
+Diperbarui: 13:55
 
 **Mulai 11:20 semua jalur bekerja langsung di `main`** (tidak ada lagi kerja paralel; branch jalur sudah tergabung).
 
 ## Sedang dikerjakan
-2.8 sisa: C2 sembunyikan kata dan C3 kartu foto tidak dikerjakan (urutan buang #1). Pengerasan bersama jalur 1.
+Layar mockup A–C lengkap (18 Sep siang). Belum dibuka di emulator: C3, C5 baru, C6 baru, kartu B1, A5/A6 baru.
 
 ## Tonggak selesai (tag)
+- (13:55, tanpa tag) C3 Kartu dari foto: kamera/galeri bawaan (`image_picker`, tanpa izin kamera), foto 512 px
+  disalin ke `cards/`, label huruf kapital, pilih halaman, kartu mengisi slot kosong berikutnya; foto dipulihkan bila
+  Android menutup aplikasi saat kamera terbuka. Ketukan kartu = `PRS`. B5 slot kosong bergaris putus-putus. C2 tombol
+  "Tambah kartu baru"; C4 ikut menampilkan kartu personal. Analyzer + tes lulus, **belum dicek di emulator**
 - (11:20, tanpa tag) C2 Kelola kosakata, C4 Suara keluarga per kata inti, pilihan Suara papan cowok/cewek,
   Sekarang → Nanti, "Hari ini" di C1, sinkron otomatis tiap 20 dtk + saat aplikasi aktif. C2 dan C1 diuji di emulator
 - j2-layar (10:00): seluruh layar terhubung AppState/DAO

@@ -12,10 +12,14 @@ import '../../data/models.dart';
 import '../board/symbol_cell.dart';
 import '../coach/companion_widgets.dart';
 
-/// C4 Suara keluarga: daftar 12 kata inti (halaman 0) dengan status rekaman. Satu perekam dan satu pemutar
-/// untuk seluruh layar. Rekaman disimpan di folder aplikasi `family/` dan tidak pernah dikirim (invarian 17, 18).
+/// C4 Suara keluarga: daftar 12 kata inti (halaman 0) dan kartu personal (C3) dengan status rekaman. Satu perekam
+/// dan satu pemutar untuk seluruh layar. Rekaman disimpan di folder aplikasi `family/` dan tidak pernah dikirim
+/// (invarian 17, 18).
 class FamilyVoiceScreen extends StatefulWidget {
-  const FamilyVoiceScreen({super.key});
+  const FamilyVoiceScreen({super.key, this.showPersonal = false});
+
+  /// Dibuka dari C3 setelah kartu tersimpan: kartu personal ditaruh paling atas.
+  final bool showPersonal;
 
   @override
   State<FamilyVoiceScreen> createState() => _FamilyVoiceScreenState();
@@ -108,12 +112,27 @@ class _FamilyVoiceScreenState extends State<FamilyVoiceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final words = _app.symbolsForPage(0);
+    final core = _app.symbolsForPage(0);
+    final personal = _app.allSymbols.where((s) => s.isCustom && !s.isHidden).toList();
+    final all = [...core, ...personal];
+    final recorded = all.where((s) => s.familyAudio != null).length;
+    final sections = [
+      if (widget.showPersonal && personal.isNotEmpty) ('Kartu personal', personal),
+      ('Kata inti', core),
+      if (!widget.showPersonal && personal.isNotEmpty) ('Kartu personal', personal),
+    ];
     return CompanionPage(
       title: 'Suara keluarga',
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
+          Text(
+            recorded == 0
+                ? 'Belum ada kata dengan suara keluarga. Papan memakai suara HP, dan itu tidak masalah.'
+                : '$recorded dari ${all.length} kata sudah punya suara keluarga. Sisanya memakai suara HP, dan itu tidak masalah.',
+            style: const TextStyle(fontSize: 18, height: 1.35, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
           const Text(
             'Suara ini dipakai saat Ibu atau Ayah memberi contoh di papan, supaya anak mendengar orang yang dikenalnya. '
             'Saat anak sendiri yang menekan, papan bicara dengan suara anak, karena itu suaranya.',
@@ -128,8 +147,15 @@ class _FamilyVoiceScreenState extends State<FamilyVoiceScreen> {
             const SizedBox(height: 12),
             const Text('Izin mikrofon tidak diberikan. Tidak apa-apa; papan tetap memakai suara bawaan.', style: companionMutedStyle),
           ],
-          const SizedBox(height: 16),
-          for (final s in words) ...[_row(s), const SizedBox(height: 8)],
+          for (final (title, words) in sections) ...[
+            const SizedBox(height: 16),
+            Text(
+              title.toUpperCase(),
+              style: const TextStyle(fontSize: 13, letterSpacing: 1.2, fontWeight: FontWeight.w800, color: CompanionColors.muted),
+            ),
+            const SizedBox(height: 8),
+            for (final s in words) ...[_row(s), const SizedBox(height: 8)],
+          ],
         ],
       ),
     );

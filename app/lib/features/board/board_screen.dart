@@ -75,7 +75,7 @@ class _BoardScreenState extends State<BoardScreen> {
       _started = true;
       _app.boardOpen = true;
       _app.startBoardSession();
-      if (widget.childMode) LockTask.start();
+      if (widget.childMode && _app.childLock) LockTask.start();
       WidgetsBinding.instance.addPostFrameCallback((_) => _precacheBoard());
     }
   }
@@ -117,7 +117,7 @@ class _BoardScreenState extends State<BoardScreen> {
   void _onSelect(WordSymbol s) {
     _utterance.value = [..._utterance.value, _Word(s)];
     _app.speech.speakWord(s, byParent: _byParent);
-    _log(s.wordId, _page == 0 ? Method.sel : Method.kat);
+    _log(s.wordId, s.isCustom ? Method.prs : (_page == 0 ? Method.sel : Method.kat));
     _suggestedPage.value = _suggestionAfter(s);
   }
 
@@ -157,7 +157,7 @@ class _BoardScreenState extends State<BoardScreen> {
   }
 
   Future<void> _exitChildMode() async {
-    await LockTask.stop();
+    if (_app.childLock) await LockTask.stop();
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -430,8 +430,10 @@ class _BoardGrid extends StatelessWidget {
 
   Widget _slot(int i, double w, double h) {
     final s = i < cells.length ? cells[i] : null;
-    // Slot kosong atau simbol tersembunyi tetap memegang tempatnya (invarian 8).
-    if (s == null || s.isHidden) return SizedBox(width: w, height: h);
+    // Simbol tersembunyi tetap memegang tempatnya tanpa tampil (invarian 8). Slot yang belum terisi di halaman
+    // kategori diberi garis putus-putus: tempat kartu baru berikutnya (B5). Keduanya tidak bisa diketuk.
+    if (s != null && s.isHidden) return SizedBox(width: w, height: h);
+    if (s == null) return isCorePage ? SizedBox(width: w, height: h) : EmptySlot(width: w, height: h);
     return SymbolCell(key: ValueKey(s.wordId), symbol: s, width: w, height: h, holdMs: holdMs, onSelect: onSelect);
   }
 }

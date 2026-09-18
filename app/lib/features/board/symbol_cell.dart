@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -134,12 +135,23 @@ class SymbolFace extends StatelessWidget {
                 SizedBox(
                   height: imageSize - (compact ? 6 : 12),
                   width: double.infinity,
-                  child: Image(
-                    image: symbolImage(symbol.symbolPath),
-                    fit: BoxFit.contain,
-                    gaplessPlayback: true,
-                    errorBuilder: (_, _, _) => fallback,
-                  ),
+                  child: symbol.isCustom
+                      // Foto kartu personal: memenuhi kotak gambar dengan sudut membulat, bukan dikecilkan.
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(compact ? 4 : 8),
+                          child: Image(
+                            image: symbolImage(symbol.symbolPath),
+                            fit: BoxFit.cover,
+                            gaplessPlayback: true,
+                            errorBuilder: (_, _, _) => fallback,
+                          ),
+                        )
+                      : Image(
+                          image: symbolImage(symbol.symbolPath),
+                          fit: BoxFit.contain,
+                          gaplessPlayback: true,
+                          errorBuilder: (_, _, _) => fallback,
+                        ),
                 ),
                 Expanded(
                   child: Center(
@@ -173,7 +185,49 @@ const symbolDecodeWidth = 256;
 
 /// Satu kunci cache per simbol untuk papan, bilah ujaran, dan pratinjau: tiap gambar didekode sekali
 /// (± 256 KB) lalu dipakai ulang di semua ukuran, termasuk oleh [precacheSymbols].
-ImageProvider symbolImage(String path) => ResizeImage(AssetImage(path), width: symbolDecodeWidth);
+///
+/// Kartu personal (C3) menyimpan jalur berkas mutlak di folder aplikasi, bukan jalur aset.
+ImageProvider symbolImage(String path) =>
+    ResizeImage(path.startsWith('/') ? FileImage(File(path)) : AssetImage(path) as ImageProvider, width: symbolDecodeWidth);
+
+/// Slot kategori yang belum terisi (B5): garis putus-putus tipis, tanpa teks dan tanpa respons ketukan. Kartu
+/// personal baru mengisi slot seperti ini, sehingga sel lain tidak pernah bergeser.
+class EmptySlot extends StatelessWidget {
+  const EmptySlot({super.key, required this.width, required this.height});
+
+  final double width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: width,
+    height: height,
+    child: const CustomPaint(painter: _DashedBorderPainter(Color(0xFFCFC8B8))),
+  );
+}
+
+class _DashedBorderPainter extends CustomPainter {
+  const _DashedBorderPainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    final path = Path()..addRRect(RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(12)).deflate(1));
+    for (final metric in path.computeMetrics()) {
+      for (var d = 0.0; d < metric.length; d += 12) {
+        canvas.drawPath(metric.extractPath(d, d + 6), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorderPainter old) => old.color != color;
+}
 
 /// Dekode gambar simbol sebelum halamannya dibuka, satu per satu supaya tidak berebut dengan frame yang sedang
 /// digambar. Berhenti bila [keepGoing] mengembalikan false (mis. papan sudah ditutup). Gambar yang belum ada

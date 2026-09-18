@@ -7,6 +7,9 @@ Diperbarui: 13:55
 Paruh kedua: PERUBAHAN.md (terus-menerus), lalu naskah demo, deck, video. Siap menyaksikan `int-1-hp-ke-d2`.
 
 ## Tonggak selesai (tag)
+- (13:55, tanpa tag) D4 dibangun penuh: butir "Sebelum sesi, dari data rumah" + Salin ringkasan, formulir catatan
+  (tanggal, catatan, fokus, sesi berikutnya) → server, tabel sesi sebelumnya + Ubah, Kirim ringkasan ke keluarga
+  (teks bisa disunting). Mode demo: formulir nonaktif, sesi ilustratif Arka tampil. PERUBAHAN.md entri 13–15
 - (13:55, tanpa tag) D1 kartu Usulan menunggu + Waktu tinjauan rata-rata + kolom Misi orang tua; D2 Total ketukan
   pekan ini + "Catatan wajib dibaca"; D3 "dipakai N kali" per sel, saran maks 3 kata, Simpan draf (localStorage).
   `review.ts` mengukur waktu tinjauan (tab terlihat + interaksi ≤ 2 menit) → `POST /v1/review-time`. Label kartu
@@ -52,4 +55,4 @@ Naskah demo J12–J20, deck J14–
   berisi `sessions` (opsional).
 
 ## Perubahan terhadap proposal (untuk PERUBAHAN.md, dibaca jalur 4)
-- (kosong)
+- Sudah dicatat: entri 13–15 (C3, catatan sesi D4, waktu tinjauan)

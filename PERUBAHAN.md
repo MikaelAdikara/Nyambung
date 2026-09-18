@@ -166,3 +166,38 @@ Format entri:
 - **Alasan:** Tanpa umpan balik, aplikasi terasa kaku dan orang tua tidak yakin ketukannya diterima.
 - **Dampak terhadap masalah inti:** M2: pendamping harian terasa lebih ringan dipakai. Papan anak tidak ikut bergerak
   (kecuali geser urutan bilah, entri 11); nada bebas rasa bersalah (invarian 15) dijaga dengan gerak yang identik.
+
+## 13. Kartu dari foto (C3) akhirnya dibangun (13:55, jalur 1 & 2)
+- **Kondisi di proposal:** C3 membuat kartu personal dari foto benda milik anak. Entri 1 dan 4 mencatatnya belum ada.
+- **Yang diubah:** Kelola kosakata punya tombol **Tambah kartu baru**. Orang tua memotret benda (atau memilih dari galeri
+  lewat aplikasi bawaan Android, tanpa izin kamera di Nyambung), menulis label huruf kapital, dan memilih halaman
+  kategori. Kartu mengisi kotak kosong berikutnya, sehingga sel lain tidak bergeser. Kotak kosong di halaman kategori
+  kini tampil bergaris putus-putus (B5). Ketukan kartu tercatat sebagai `PRS` dengan `word_id` `prs-<label>-<6 hex>`,
+  dan dasbor menampilkan labelnya (mis. GELAS). Suara keluarga (C4) juga bisa direkam untuk kartu ini.
+- **Alasan:** Kata khas rumah (gelas kesayangan, boneka, nama benda) adalah yang paling ingin disampaikan anak.
+- **Dampak terhadap masalah inti:** M1 menguat karena papan bisa memuat benda milik anak sendiri. Fotonya **tidak pernah
+  dikirim** ke server (invarian 18 diperluas ke foto); terapis hanya melihat label. Batasan: label hanya lewat
+  `word_id`, jadi mengganti label berarti membuat kartu baru; kartu tidak bisa dipindah posisinya.
+
+## 14. Catatan sesi D4 tersimpan di server dan ringkasannya bisa dikirim ke keluarga (13:55, jalur 3, 4 & 2)
+- **Kondisi di proposal:** D4 berupa paragraf siap salin dari data rumah, tanpa penyimpanan catatan bebas (status jalur
+  4, butir 4.6).
+- **Yang diubah:** D4 kini memuat butir otomatis "Sebelum sesi, dari data rumah", formulir catatan terapis (tanggal,
+  catatan, fokus pekan depan, jadwal sesi berikutnya) yang tersimpan di server, tabel sesi sebelumnya yang bisa diubah,
+  dan tombol **Kirim ringkasan ke keluarga** dengan teks yang bisa disunting. Hanya teks ringkasan itu yang ditarik HP
+  keluarga saat sinkron dan tampil di C5; catatan terapis tidak pernah sampai ke keluarga. Seed demo memuat dua
+  catatan sesi ilustratif. Endpoint baru: `sessions`, `sessions/{id}/share`, `shared-summaries`.
+- **Alasan:** Mockup D4 dan C5 menunjukkan catatan sesi dan jadwal sesi berikutnya. Tanpa jalur balik, hasil sesi tatap
+  muka hanya sampai ke keluarga lewat ingatan.
+- **Dampak terhadap masalah inti:** M3 menjadi dua arah untuk hasil sesi, bukan hanya usulan kata. Catatan terapis
+  adalah teks bebas di server, jadi terapis bertanggung jawab untuk tidak menulis diagnosis di sana (invarian 20 hanya
+  dijaga aplikasi, bukan isi tulisan terapis). Belum ada: hapus catatan, dan riwayat ringkasan di HP hanya bertambah.
+
+## 15. Waktu tinjauan terapis diukur (13:55, jalur 3 & 4)
+- **Kondisi di proposal:** Sasaran tinjauan < 5 menit per anak, tanpa pengukuran.
+- **Yang diubah:** Dasbor menghitung lama halaman satu anak (D2–D4) terbuka, hanya saat tab terlihat dan ada interaksi
+  dalam 2 menit terakhir, lalu mengirimnya ke `POST /v1/review-time`. D1 menampilkan rerata 30 hari. Mode demo tidak
+  mengukur.
+- **Alasan:** Klaim "satu terapis, banyak keluarga" butuh angka yang teramati, bukan perkiraan.
+- **Dampak terhadap masalah inti:** M4 bisa dibuktikan dengan data pemakaian. Yang diukur adalah waktu terapis, bukan
+  anak atau keluarga.

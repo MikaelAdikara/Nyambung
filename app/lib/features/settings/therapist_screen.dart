@@ -1,0 +1,117 @@
+import 'package:flutter/material.dart';
+
+import '../coach/companion_widgets.dart';
+import '../coach/fake_app_state.dart';
+
+class TherapistScreen extends StatefulWidget {
+  const TherapistScreen({super.key, required this.state});
+
+  final FakeAppState state;
+
+  @override
+  State<TherapistScreen> createState() => _TherapistScreenState();
+}
+
+class _TherapistScreenState extends State<TherapistScreen> {
+  final _code = TextEditingController();
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _code.dispose();
+    super.dispose();
+  }
+
+  Future<void> _connect() async {
+    if (_code.text.trim().length != 8) return;
+    setState(() => _busy = true);
+    await widget.state.connectTherapist(_code.text.trim().toUpperCase());
+    if (mounted) setState(() => _busy = false);
+  }
+
+  Future<void> _revoke() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Cabut akses ${widget.state.therapistName}?'),
+        content: const Text('Catatan baru tidak akan dikirim lagi.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Cabut')),
+        ],
+      ),
+    );
+    if (confirmed == true) await widget.state.revokeTherapist();
+  }
+
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: widget.state,
+    builder: (context, _) => CompanionPage(
+      title: 'Terapis',
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        children: widget.state.linkedToTherapist ? _linked(context) : _unlinked(),
+      ),
+    ),
+  );
+
+  List<Widget> _unlinked() => [
+    const Text(
+      'Masukkan kode undangan dari terapis. Setelah terhubung, yang dikirim hanya catatan ketukan simbol dan konfirmasi misi. Tidak ada rekaman suara, video, foto, atau lokasi. Akses bisa dicabut kapan saja.',
+      style: companionBodyStyle,
+    ),
+    const SizedBox(height: 20),
+    TextField(
+      controller: _code,
+      maxLength: 8,
+      textCapitalization: TextCapitalization.characters,
+      decoration: const InputDecoration(labelText: 'Kode undangan', border: OutlineInputBorder()),
+      onChanged: (_) => setState(() {}),
+    ),
+    const SizedBox(height: 12),
+    PrimaryButton(label: _busy ? 'Menghubungkan…' : 'Hubungkan', onPressed: _busy || _code.text.trim().length != 8 ? null : _connect),
+  ];
+
+  List<Widget> _linked(BuildContext context) => [
+    CompanionCard(child: Text('Terhubung dengan ${widget.state.therapistName} sejak hari ini.', style: companionBodyStyle)),
+    const SizedBox(height: 16),
+    CompanionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Usulan kata pekan ini: BERHENTI', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 8),
+          const Text('Contohkan saat makan selesai.', style: companionBodyStyle),
+          const SizedBox(height: 8),
+          const Text('Keluarga boleh menolak tanpa alasan.', style: companionMutedStyle),
+          const SizedBox(height: 16),
+          if (widget.state.targetStatus == 'usulan')
+            Row(
+              children: [
+                Expanded(
+                  child: EqualOutlineButton(label: 'Tolak', onPressed: () => widget.state.logTargetAnswer('target-demo', false)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: EqualOutlineButton(label: 'Terima', onPressed: () => widget.state.logTargetAnswer('target-demo', true)),
+                ),
+              ],
+            )
+          else
+            Text(
+              widget.state.targetStatus == 'diterima'
+                  ? 'Diterima. Misi berganti ke BERHENTI.'
+                  : 'Ditolak. Terapis akan melihat jawaban ini.',
+              style: companionBodyStyle,
+            ),
+        ],
+      ),
+    ),
+    const SizedBox(height: 16),
+    Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton(onPressed: _revoke, child: const Text('Cabut akses')),
+    ),
+  ];
+}

@@ -13,11 +13,11 @@ import 'symbol_cell.dart';
 /// Ikon tab per halaman (02 §4).
 const pageIcons = <int, IconData>{
   0: Icons.star,
-  1: Icons.star_half,
-  2: Icons.star_outline,
+  1: Icons.forum,
+  2: Icons.open_with,
   3: Icons.waving_hand,
   4: Icons.directions_run,
-  5: Icons.sports_soccer,
+  5: Icons.home,
   6: Icons.mood,
   7: Icons.palette,
   8: Icons.restaurant,
@@ -169,18 +169,26 @@ class _BoardScreenState extends State<BoardScreen> {
             trailing: widget.childMode ? HoldButton(onComplete: _exitChildMode) : null,
           ),
           Expanded(
-            child: _BoardGrid(
-              key: ValueKey(_page),
-              cells: _app.cellsForPage(_page),
-              gridCols: _app.child?.gridCols ?? 3,
-              isCorePage: _page == 0,
-              holdMs: _app.holdMs,
-              onSelect: _onSelect,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ValueListenableBuilder<int?>(
+                  valueListenable: _suggestedPage,
+                  builder: (context, suggested, _) =>
+                      _PageRail(pages: _app.pages, selected: _page, suggested: suggested, onSelect: _openPage),
+                ),
+                Expanded(
+                  child: _BoardGrid(
+                    key: ValueKey(_page),
+                    cells: _app.cellsForPage(_page),
+                    gridCols: _app.child?.gridCols ?? 3,
+                    isCorePage: _page == 0,
+                    holdMs: _app.holdMs,
+                    onSelect: _onSelect,
+                  ),
+                ),
+              ],
             ),
-          ),
-          ValueListenableBuilder<int?>(
-            valueListenable: _suggestedPage,
-            builder: (context, suggested, _) => _PageTabs(pages: _app.pages, selected: _page, suggested: suggested, onSelect: _openPage),
           ),
           if (widget.allowTurnToggle) _TurnToggle(parentTurn: _parentTurn),
         ],
@@ -222,14 +230,23 @@ class _SpeechBar extends StatelessWidget {
               children: [
                 ?leading,
                 Expanded(
-                  child: ValueListenableBuilder<List<WordSymbol>>(
-                    valueListenable: utterance,
-                    builder: (context, words, _) => ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      reverse: true,
-                      itemCount: words.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 4),
-                      itemBuilder: (_, i) => SymbolFace(symbol: words[words.length - 1 - i], width: 72, height: 84, compact: true),
+                  // Jalur kalimat: bidang cekung tempat kata-kata berbaris, supaya terbaca sebagai satu kalimat.
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: AppColors.bg,
+                      border: Border.all(color: AppColors.line, width: 2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ValueListenableBuilder<List<WordSymbol>>(
+                      valueListenable: utterance,
+                      builder: (context, words, _) => ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        reverse: true,
+                        itemCount: words.length,
+                        separatorBuilder: (_, _) => const SizedBox(width: 4),
+                        itemBuilder: (_, i) => SymbolFace(symbol: words[words.length - 1 - i], width: 68, height: 80, compact: true),
+                      ),
                     ),
                   ),
                 ),
@@ -257,8 +274,9 @@ class _SpeechBar extends StatelessWidget {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(minWidth: 140),
                 child: FilledButton.icon(
+                  style: FilledButton.styleFrom(minimumSize: const Size(140, 64)),
                   onPressed: onSpeak,
-                  icon: const Icon(Icons.volume_up),
+                  icon: const Icon(Icons.volume_up, size: 28),
                   label: const FittedBox(fit: BoxFit.scaleDown, child: Text('UCAPKAN')),
                 ),
               ),
@@ -330,26 +348,29 @@ class _BoardGrid extends StatelessWidget {
   }
 }
 
-/// Tab halaman bergulir horizontal, ikon + label, tinggi 64 dp.
-/// Tab [suggested] diberi garis toska tebal dan digulir ke tampilan tanpa animasi (invarian 11).
-class _PageTabs extends StatefulWidget {
-  const _PageTabs({required this.pages, required this.selected, required this.onSelect, this.suggested});
+/// Rel tab halaman di kiri: satu kolom tetap (ikon + label), urutannya tidak pernah berubah sehingga tangan anak
+/// hafal letaknya. Tinggi tab 64 dp (≥ 10 mm). Tab [suggested] diberi garis toska tebal dan digulir ke tampilan
+/// tanpa animasi (invarian 11).
+class _PageRail extends StatefulWidget {
+  const _PageRail({required this.pages, required this.selected, required this.onSelect, this.suggested});
 
   final List<BoardPage> pages;
   final int selected;
   final int? suggested;
   final ValueChanged<int> onSelect;
 
+  static const width = 92.0;
+
   @override
-  State<_PageTabs> createState() => _PageTabsState();
+  State<_PageRail> createState() => _PageRailState();
 }
 
-class _PageTabsState extends State<_PageTabs> {
-  // 13 tab: semuanya dibangun (Row, bukan ListView malas) supaya tab yang disarankan selalu bisa digulir ke tampilan.
+class _PageRailState extends State<_PageRail> {
+  // 13 tab: semuanya dibangun (Column, bukan ListView malas) supaya tab yang disarankan selalu bisa digulir ke tampilan.
   final _keys = <int, GlobalKey>{};
 
   @override
-  void didUpdateWidget(_PageTabs old) {
+  void didUpdateWidget(_PageRail old) {
     super.didUpdateWidget(old);
     final target = widget.suggested;
     if (target != null && target != old.suggested) {
@@ -363,14 +384,16 @@ class _PageTabsState extends State<_PageTabs> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 64,
-      color: AppColors.sand,
+      width: _PageRail.width,
+      decoration: const BoxDecoration(
+        color: AppColors.sand,
+        border: Border(right: BorderSide(color: AppColors.line)),
+      ),
       child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: Row(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+        child: Column(
           children: [
-            for (var i = 0; i < widget.pages.length; i++) ...[if (i > 0) const SizedBox(width: 6), _tab(widget.pages[i])],
+            for (var i = 0; i < widget.pages.length; i++) ...[if (i > 0) const SizedBox(height: 6), _tab(widget.pages[i])],
           ],
         ),
       ),
@@ -387,10 +410,12 @@ class _PageTabsState extends State<_PageTabs> {
       label: p.tabLabel,
       excludeSemantics: true,
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: () => widget.onSelect(p.page),
         child: Container(
-          height: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          width: double.infinity,
+          constraints: const BoxConstraints(minHeight: 64),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
           decoration: BoxDecoration(
             color: active ? AppColors.navySoft : AppColors.panel,
             border: Border.all(
@@ -403,13 +428,21 @@ class _PageTabsState extends State<_PageTabs> {
             ),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Row(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(pageIcons[p.page] ?? Icons.grid_view, color: suggested ? AppColors.teal : AppColors.navy, size: 22),
-              const SizedBox(width: 6),
+              Icon(pageIcons[p.page] ?? Icons.grid_view, color: suggested ? AppColors.teal : AppColors.navy, size: 24),
+              const SizedBox(height: 4),
               Text(
                 p.tabLabel,
-                style: TextStyle(fontSize: 14, fontWeight: active || suggested ? FontWeight.w800 : FontWeight.w600, color: AppColors.ink),
+                maxLines: 2,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.15,
+                  fontWeight: active || suggested ? FontWeight.w800 : FontWeight.w600,
+                  color: AppColors.ink,
+                ),
               ),
             ],
           ),

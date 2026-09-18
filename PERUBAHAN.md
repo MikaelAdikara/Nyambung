@@ -127,3 +127,16 @@ Format entri:
   terapis tanpa bantuan pengelola server setiap kali masuk; setiap terapis hanya melihat keluarga yang tertaut kepadanya.
   Papan anak (M1) tidak berubah dan tetap luring. Belum ada: lupa kata sandi, pembatasan laju login, hapus akun.
 
+
+## 10. Tab halaman papan pindah ke rel kiri dan diberi nama bermakna (12:05, jalur 1)
+- **Kondisi di proposal:** Tab 13 halaman berbaris horizontal di bawah papan dan bergulir ke samping. Halaman 1, 2, 4, 5
+  bernama KATA INTI 2, KATA INTI 3, KEGIATAN, KEGIATAN 2.
+- **Yang diubah:** Tab menjadi satu kolom tetap di kiri papan (ikon + label, tinggi 64 dp), urutan dan posisinya tidak
+  berubah. Nama baru: INTI, SIAPA & BOLEH, ARAH & JUMLAH, GERAK, SEHARI-HARI; halaman lain tetap. Nomor halaman dan
+  posisi kata tidak berubah, jadi peristiwa, sinkron, dan dasbor tidak terdampak. `pages.csv` dibaca ulang setiap
+  bootstrap, jadi perangkat yang sudah terpasang langsung memakai nama baru. Sel simbol kini menampilkan keadaan tekan
+  seketika (latar lebih gelap + garis 4 dp), tanpa transisi.
+- **Alasan:** Di baris horizontal sebagian besar kategori tersembunyi di luar layar, dan "KATA INTI 2/3" tidak bermakna
+  bagi anak maupun orang tua. Tanpa umpan balik tekan, papan terasa kaku dan anak tidak tahu sel mana yang tersentuh.
+- **Dampak terhadap masalah inti:** M1: kategori lebih cepat ditemukan dan tetap di tempat yang sama (perencanaan motorik).
+  Lebar grid berkurang ±92 dp; sel di HP 360 dp tetap ± 13 mm (≥ 10 mm, invarian 12). Kontras teks saat ditekan ≥ 6,4:1.

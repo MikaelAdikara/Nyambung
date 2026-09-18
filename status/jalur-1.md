@@ -4,7 +4,7 @@ Diperbarui: 12:00
 **Mulai 11:20 semua jalur bekerja langsung di `main`** (tidak ada lagi kerja paralel; branch jalur sudah tergabung).
 
 ## Sedang dikerjakan
-Paket HP kentang + UX (18 Sep siang): 1) optimasi O1–O3 ✔, 2) tab halaman di kiri + nama tab baru + keadaan tekan,
+Paket HP kentang + UX (18 Sep siang): 1) optimasi O1–O3 ✔, 2) tab halaman di kiri + nama tab baru + keadaan tekan ✔,
 3) geser urutan bilah ujaran, 4) animasi layar orang tua, 5) O4–O6 + ukur ulang. j1-suara ditahan: belum didengar manusia.
 
 ## Optimasi HP kentang (diukur di emulator arm64 Android 16, `-memory 2048 -cores 2`, APK rilis; **perkiraan, bukan HP fisik**)
@@ -24,6 +24,9 @@ Paket HP kentang + UX (18 Sep siang): 1) optimasi O1–O3 ✔, 2) tab halaman di
 - j1-kunci: screen pinning; Home tidak keluar dari papan anak (PINNED), tahan TAHAN 1,5 dtk → keluar + lepas kunci
 
 ## Selesai tanpa tag
+- Rel tab kiri (92 dp, tab 64 dp, 13 tab satu kolom) menggantikan tab bawah; penanda TUBUH sesudah SAKIT tetap jalan
+  di rel. Nama tab baru di `pages.csv` (dua salinan + hash PROVENANCE diperbarui, `validate_vocab` LULUS). Keadaan
+  tekan seketika di `SymbolCell`; bilah ujaran berbentuk jalur cekung; UCAPKAN tinggi 64 dp. Dicek di emulator
 - Penanda tab TUBUH setelah SAKIT (N1); tahan-untuk-memilih batal saat jari menggulir; label kata misi memakai
   `label_display`. Diuji di emulator: SAKIT → tab TUBUH bergaris toska → PERUT → UCAPKAN "sakit perut"
 - Hapus semua data juga menghapus rekaman keluarga dan berkas ekspor sementara (permintaan jalur 2, invarian 18)

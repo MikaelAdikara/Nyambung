@@ -27,6 +27,14 @@ class _SymbolCellState extends State<SymbolCell> {
   Timer? _timer;
   Offset _down = Offset.zero;
 
+  /// Jari sedang di atas sel. Ditampilkan seketika tanpa transisi (invarian 11): anak melihat sel mana yang
+  /// ia sentuh, tanpa gerakan.
+  bool _pressed = false;
+
+  void _setPressed(bool v) {
+    if (_pressed != v && mounted) setState(() => _pressed = v);
+  }
+
   void _cancel() {
     _timer?.cancel();
     _timer = null;
@@ -40,38 +48,53 @@ class _SymbolCellState extends State<SymbolCell> {
 
   @override
   Widget build(BuildContext context) {
-    final face = SymbolFace(symbol: widget.symbol, width: widget.width, height: widget.height);
-    final Widget input;
-    if (widget.holdMs <= 0) {
-      input = GestureDetector(behavior: HitTestBehavior.opaque, onTap: () => widget.onSelect(widget.symbol), child: face);
-    } else {
-      input = Listener(
-        behavior: HitTestBehavior.opaque,
-        onPointerDown: (e) {
-          _cancel();
-          _down = e.position;
+    final face = SymbolFace(symbol: widget.symbol, width: widget.width, height: widget.height, pressed: _pressed);
+    final hold = widget.holdMs > 0;
+    final Widget input = Listener(
+      behavior: HitTestBehavior.opaque,
+      onPointerDown: (e) {
+        _cancel();
+        _down = e.position;
+        _setPressed(true);
+        if (hold) {
           _timer = Timer(Duration(milliseconds: widget.holdMs), () {
             _timer = null;
             widget.onSelect(widget.symbol);
           });
-        },
-        // Jari yang bergeser sedang menggulir, bukan menahan: batalkan. Listener tidak menerima
-        // pointerCancel saat gulir menang di arena gestur.
-        onPointerMove: (e) {
-          if (_timer != null && (e.position - _down).distance > kTouchSlop) _cancel();
-        },
-        onPointerUp: (_) => _cancel(),
-        onPointerCancel: (_) => _cancel(),
-        child: face,
-      );
-    }
+        }
+      },
+      // Jari yang bergeser sedang menggulir, bukan memilih: batalkan penahanan dan keadaan tekan. Listener tidak
+      // menerima pointerCancel saat gulir menang di arena gestur.
+      onPointerMove: (e) {
+        if ((e.position - _down).distance > kTouchSlop) {
+          _cancel();
+          _setPressed(false);
+        }
+      },
+      onPointerUp: (_) {
+        _cancel();
+        _setPressed(false);
+      },
+      onPointerCancel: (_) {
+        _cancel();
+        _setPressed(false);
+      },
+      child: hold ? face : GestureDetector(behavior: HitTestBehavior.opaque, onTap: () => widget.onSelect(widget.symbol), child: face),
+    );
     return Semantics(button: true, label: widget.symbol.labelSpeech, excludeSemantics: true, child: input);
   }
 }
 
 /// Tampilan sel tanpa input. Dipakai juga oleh pratinjau (A4) dan bilah ujaran.
 class SymbolFace extends StatelessWidget {
-  const SymbolFace({super.key, required this.symbol, required this.width, required this.height, this.compact = false});
+  const SymbolFace({
+    super.key,
+    required this.symbol,
+    required this.width,
+    required this.height,
+    this.compact = false,
+    this.pressed = false,
+  });
 
   final WordSymbol symbol;
   final double width;
@@ -79,6 +102,9 @@ class SymbolFace extends StatelessWidget {
 
   /// Versi kecil untuk bilah ujaran: garis lebih tipis, tanpa penanda.
   final bool compact;
+
+  /// Sedang disentuh: latar sedikit lebih gelap dan garis tepi setebal 4 dp berwarna teks.
+  final bool pressed;
 
   @override
   Widget build(BuildContext context) {
@@ -95,8 +121,8 @@ class SymbolFace extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: style.fill,
-        border: Border.all(color: style.border, width: 2),
+        color: pressed ? Color.lerp(style.fill, style.border, 0.45) : style.fill,
+        border: Border.all(color: pressed ? style.text : style.border, width: pressed ? 4 : 2),
         borderRadius: BorderRadius.circular(compact ? 8 : 12),
       ),
       child: Stack(

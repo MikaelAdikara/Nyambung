@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:path/path.dart' as p;
 
 import '../data/models.dart';
 import 'constants.dart';
@@ -113,12 +114,27 @@ class SpeechService {
   /// Klip kartu frasa: berkas di folder aplikasi (jalur mutlak), diputar untuk anak maupun pendamping.
   String? _deviceClipFor(WordSymbol s) {
     final path = s.audioPath;
-    if (path == null || !path.startsWith('/')) return null;
+    if (path == null || !p.isAbsolute(path)) return null;
     return File(path).existsSync() ? path : null;
   }
 
+  /// True hanya bila suara anak tersedia tanpa TTS atau jaringan.
+  Future<bool> hasOfflineChildAudio(WordSymbol symbol) async {
+    if (_bundledFor(symbol) != null) return true;
+    final path = symbol.audioPath;
+    if (path == null || !p.isAbsolute(path)) return false;
+    try {
+      final file = File(path);
+      return await file.exists() && await file.length() > 0;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Source? _sourceFor(WordSymbol s, {required bool byParent}) {
-    if (byParent && s.familyAudio != null) return DeviceFileSource(s.familyAudio!);
+    if (byParent && s.familyAudio != null) {
+      return DeviceFileSource(s.familyAudio!);
+    }
     final clip = _deviceClipFor(s);
     if (clip != null) return DeviceFileSource(clip);
     final bundled = _bundledFor(s);

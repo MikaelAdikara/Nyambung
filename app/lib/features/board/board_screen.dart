@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../core/app_state.dart';
@@ -7,8 +9,10 @@ import '../../core/motion.dart';
 import '../../core/theme.dart';
 import '../../data/models.dart';
 import '../../data/repo/vocab_loader.dart';
+import '../../data/scene.dart';
 import 'hold_button.dart';
 import 'lock_task.dart';
+import '../scenes/scene_canvas.dart';
 import 'symbol_cell.dart';
 
 /// Ikon tab per halaman (02 §4).
@@ -73,6 +77,9 @@ class _BoardScreenState extends State<BoardScreen> {
   late AppState _app;
   bool _started = false;
   int _page = 0;
+  List<SceneBoard> _scenes = const [];
+  SceneBoard? _selectedScene;
+  bool _sceneMode = false;
 
   /// Halaman yang disarankan lewat penanda di tab (N1: sesudah SAKIT → halaman TUBUH). Hanya penanda;
   /// papan tidak pindah sendiri dan tidak ada yang menghalangi ketukan berikutnya.
@@ -90,6 +97,7 @@ class _BoardScreenState extends State<BoardScreen> {
       if (target != null) _page = target.page;
       if (widget.childMode && _app.childLock) LockTask.start();
       WidgetsBinding.instance.addPostFrameCallback((_) => _precacheBoard());
+      _loadScenes();
     }
   }
 
@@ -127,10 +135,15 @@ class _BoardScreenState extends State<BoardScreen> {
     });
   }
 
-  void _onSelect(WordSymbol s) {
+  Future<void> _loadScenes() async {
+    final scenes = await _app.scenes();
+    if (mounted) setState(() => _scenes = scenes);
+  }
+
+  void _onSelect(WordSymbol s, {String? method}) {
     _utterance.value = [..._utterance.value, _Word(s)];
     _app.speech.speakWord(s, byParent: _byParent);
-    _log(s.wordId, s.isCustom ? Method.prs : (_page == 0 ? Method.sel : Method.kat));
+    _log(s.wordId, method ?? (s.isCustom ? Method.prs : (_page == 0 ? Method.sel : Method.kat)));
     _suggestedPage.value = _suggestionAfter(s);
   }
 
@@ -143,9 +156,25 @@ class _BoardScreenState extends State<BoardScreen> {
 
   void _openPage(int p) {
     _suggestedPage.value = null;
-    setState(() => _page = p);
+    setState(() {
+      _page = p;
+      _sceneMode = false;
+      _selectedScene = null;
+    });
     _app.speech.preload(_app.cellsForPage(p));
   }
+
+  void _openScenes() {
+    _suggestedPage.value = null;
+    setState(() {
+      _sceneMode = true;
+      _selectedScene = null;
+    });
+  }
+
+  void _openScene(SceneBoard scene) => setState(() => _selectedScene = scene);
+
+  void _onSceneSelect(WordSymbol symbol) => _onSelect(symbol, method: symbol.isCustom ? Method.prs : Method.kat);
 
   void _onDelete() {
     final words = _utterance.value;
@@ -200,8 +229,14 @@ class _BoardScreenState extends State<BoardScreen> {
               children: [
                 ValueListenableBuilder<int?>(
                   valueListenable: _suggestedPage,
-                  builder: (context, suggested, _) =>
-                      _PageRail(pages: _app.pages, selected: _page, suggested: suggested, onSelect: _openPage),
+                  builder: (context, suggested, _) => _PageRail(
+                    pages: _app.pages,
+                    selected: _page,
+                    suggested: suggested,
+                    onSelect: _openPage,
+                    photoActive: _sceneMode,
+                    onPhoto: _openScenes,
+                  ),
                 ),
                 Expanded(
                   // Pindah halaman: isi lama memudar ke isi baru (150 ms). Letak sel tidak bergeser.
@@ -210,15 +245,27 @@ class _BoardScreenState extends State<BoardScreen> {
                     switchInCurve: Curves.easeOut,
                     switchOutCurve: Curves.easeIn,
                     layoutBuilder: (current, previous) => Stack(fit: StackFit.expand, children: [...previous, ?current]),
-                    child: _BoardGrid(
-                      key: ValueKey(_page),
-                      cells: _app.cellsForPage(_page),
-                      gridCols: _app.child?.gridCols ?? 3,
-                      isCorePage: _page == 0,
-                      holdMs: _app.holdMs,
-                      onSelect: _onSelect,
-                      highlight: widget.allowTurnToggle ? widget.highlightWord : null,
-                    ),
+                    child: _sceneMode
+                        ? _SceneArea(
+                            key: ValueKey(_selectedScene?.sceneId ?? 'scene-picker'),
+                            scenes: _scenes,
+                            selected: _selectedScene,
+                            coreSymbols: _app.cellsForPage(0).take(6).toList(),
+                            symbolById: _app.symbolById,
+                            holdMs: _app.holdMs,
+                            onOpen: _openScene,
+                            onBack: _openScenes,
+                            onSelect: _onSceneSelect,
+                          )
+                        : _BoardGrid(
+                            key: ValueKey(_page),
+                            cells: _app.cellsForPage(_page),
+                            gridCols: _app.child?.gridCols ?? 3,
+                            isCorePage: _page == 0,
+                            holdMs: _app.holdMs,
+                            onSelect: _onSelect,
+                            highlight: widget.allowTurnToggle ? widget.highlightWord : null,
+                          ),
                   ),
                 ),
               ],
@@ -481,7 +528,9 @@ class _BoardGrid extends StatelessWidget {
     // Simbol tersembunyi tetap memegang tempatnya tanpa tampil (invarian 8). Slot yang belum terisi di halaman
     // kategori diberi garis putus-putus: tempat kartu baru berikutnya (B5). Keduanya tidak bisa diketuk.
     if (s != null && s.isHidden) return SizedBox(width: w, height: h);
-    if (s == null) return isCorePage ? SizedBox(width: w, height: h) : EmptySlot(width: w, height: h);
+    if (s == null) {
+      return isCorePage ? SizedBox(width: w, height: h) : EmptySlot(width: w, height: h);
+    }
     final cell = SymbolCell(key: ValueKey(s.wordId), symbol: s, width: w, height: h, holdMs: holdMs, onSelect: onSelect);
     if (s.wordId != highlight) return cell;
     // Bingkai misi di luar sel (ukuran sel tidak berubah), plus tanda jari kecil di pojok kiri atas.
@@ -516,16 +565,185 @@ class _BoardGrid extends StatelessWidget {
   }
 }
 
+class _SceneArea extends StatelessWidget {
+  const _SceneArea({
+    super.key,
+    required this.scenes,
+    required this.selected,
+    required this.coreSymbols,
+    required this.symbolById,
+    required this.holdMs,
+    required this.onOpen,
+    required this.onBack,
+    required this.onSelect,
+  });
+
+  final List<SceneBoard> scenes;
+  final SceneBoard? selected;
+  final List<WordSymbol?> coreSymbols;
+  final WordSymbol? Function(String) symbolById;
+  final int holdMs;
+  final ValueChanged<SceneBoard> onOpen;
+  final VoidCallback onBack;
+  final ValueChanged<WordSymbol> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final scene = selected;
+    if (scene == null) {
+      if (scenes.isEmpty) {
+        return const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+              'Belum ada papan foto. Pendamping dapat membuatnya dari Pengaturan.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.ink),
+            ),
+          ),
+        );
+      }
+      return GridView.builder(
+        padding: const EdgeInsets.all(12),
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 260,
+          mainAxisExtent: 190,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        itemCount: scenes.length,
+        itemBuilder: (context, index) {
+          final item = scenes[index];
+          return Semantics(
+            button: true,
+            label: 'Buka papan ${item.title}',
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () => onOpen(item),
+              child: Ink(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: AppColors.line, width: 2),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                        child: Image.file(
+                          File(item.imagePath),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => const ColoredBox(
+                            color: AppColors.bg,
+                            child: Center(child: Icon(Icons.broken_image_outlined, size: 42)),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Text(
+                        item.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+    if (!File(scene.imagePath).existsSync()) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.broken_image_outlined, size: 56),
+            const SizedBox(height: 10),
+            const Text('Foto papan tidak ditemukan.', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            TextButton(onPressed: onBack, child: const Text('Kembali ke daftar')),
+          ],
+        ),
+      );
+    }
+    return Column(
+      children: [
+        SizedBox(
+          height: 48,
+          child: Row(
+            children: [
+              IconButton(onPressed: onBack, tooltip: 'Daftar papan foto', icon: const Icon(Icons.arrow_back_rounded)),
+              Expanded(
+                child: Text(
+                  scene.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Text(
+                  '${scene.payload.hotspots.length} area',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.muted),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Row(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 0, 4, 8),
+                  child: SceneCanvas(
+                    imagePath: scene.imagePath,
+                    imageSize: Size(scene.imageWidth.toDouble(), scene.imageHeight.toDouble()),
+                    hotspots: scene.payload.hotspots,
+                    symbolById: symbolById,
+                    holdMs: holdMs,
+                    onSelect: onSelect,
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 210,
+                child: _BoardGrid(cells: coreSymbols, gridCols: 2, isCorePage: true, holdMs: holdMs, onSelect: onSelect),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// Rel tab halaman di kiri: satu kolom tetap (ikon + label), urutannya tidak pernah berubah sehingga tangan anak
 /// hafal letaknya. Tinggi tab 64 dp (≥ 10 mm). Tab [suggested] diberi garis koral tebal dan digulir ke tampilan.
 /// Pergantian tab aktif berganti warna halus (160 ms).
 class _PageRail extends StatefulWidget {
-  const _PageRail({required this.pages, required this.selected, required this.onSelect, this.suggested});
+  const _PageRail({
+    required this.pages,
+    required this.selected,
+    required this.onSelect,
+    required this.photoActive,
+    required this.onPhoto,
+    this.suggested,
+  });
 
   final List<BoardPage> pages;
   final int selected;
   final int? suggested;
   final ValueChanged<int> onSelect;
+  final bool photoActive;
+  final VoidCallback onPhoto;
 
   static const width = 92.0;
 
@@ -564,11 +782,43 @@ class _PageRailState extends State<_PageRail> {
         child: Column(
           children: [
             for (var i = 0; i < widget.pages.length; i++) ...[if (i > 0) const SizedBox(height: 6), _tab(widget.pages[i])],
+            const SizedBox(height: 6),
+            _photoTab(),
           ],
         ),
       ),
     );
   }
+
+  Widget _photoTab() => Semantics(
+    button: true,
+    selected: widget.photoActive,
+    label: 'Foto',
+    excludeSemantics: true,
+    child: GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: widget.onPhoto,
+      child: AnimatedContainer(
+        duration: Motion.of(context, const Duration(milliseconds: 160)),
+        width: double.infinity,
+        constraints: const BoxConstraints(minHeight: 64),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+        decoration: BoxDecoration(
+          color: widget.photoActive ? AppColors.tealTint : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: widget.photoActive ? AppColors.tealDeep : Colors.transparent, width: 2),
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.photo_camera_back_outlined, size: 26),
+            SizedBox(height: 2),
+            Text('FOTO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900)),
+          ],
+        ),
+      ),
+    ),
+  );
 
   Widget _tab(BoardPage p) {
     final active = p.page == widget.selected;

@@ -155,6 +155,14 @@ CREATE TABLE IF NOT EXISTS phrase (
   audio_file TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_phrase_child ON phrase(child_id, created_at);
+
+-- Budget biaya vision. Foto dan output provider tidak disimpan.
+CREATE TABLE IF NOT EXISTS scene_ai_attempt (
+  request_id TEXT PRIMARY KEY,
+  child_id   TEXT NOT NULL REFERENCES child(child_id),
+  started_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_scene_ai_child ON scene_ai_attempt(child_id, started_at);
 """
 
 

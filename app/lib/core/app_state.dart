@@ -10,10 +10,13 @@ import 'package:uuid/uuid.dart';
 
 import '../data/db/app_database.dart';
 import '../data/db/dao.dart';
+import '../data/db/scene_dao.dart';
 import '../data/models.dart';
 import '../data/personal_card.dart';
 import '../data/phrase.dart';
 import '../data/repo/vocab_loader.dart';
+import '../data/repo/scene_repository.dart';
+import '../data/scene.dart';
 import 'constants.dart';
 import 'error_log.dart';
 import 'speech_service.dart';
@@ -47,6 +50,8 @@ class AppState extends ChangeNotifier {
   late LinkDao linkDao;
   late SummaryDao summaryDao;
   late PhraseDao phraseDao;
+  late SceneDao sceneDao;
+  late SceneRepository sceneRepository;
   late SharedPreferences prefs;
 
   bool _ready = false;
@@ -92,12 +97,15 @@ class AppState extends ChangeNotifier {
     linkDao = LinkDao(_db);
     summaryDao = SummaryDao(_db);
     phraseDao = PhraseDao(_db);
+    sceneDao = SceneDao(_db);
+    sceneRepository = SceneRepository(dao: sceneDao, speech: speech, symbolById: symbolById);
     final loader = VocabLoader(symbolDao, _bundle);
     await loader.ensureLoaded();
     pages = await loader.loadPages();
     await reloadSymbols();
     _child = await childDao.first();
     if (_child != null) {
+      await sceneRepository.cleanup(_child!.childId);
       final ts = await eventDao.lastParentTapTs(_child!.childId);
       _lastParentTap = ts == null ? null : DateTime.tryParse(ts);
     }
@@ -113,6 +121,57 @@ class AppState extends ChangeNotifier {
   Future<void> reloadSymbols() async {
     _symbols = await symbolDao.all();
     _byId = {for (final s in _symbols) s.wordId: s};
+    _bump();
+  }
+
+  /// Kosakata aktif yang boleh dipetakan ke area foto.
+  List<WordSymbol> get visibleSymbols => _symbols.where((symbol) => !symbol.isHidden).toList(growable: false);
+
+  Future<List<SceneBoard>> scenes() async {
+    final child = _child;
+    return child == null ? const [] : sceneRepository.list(child.childId);
+  }
+
+  Future<SceneBoard> publishScene({
+    required String title,
+    required String imagePath,
+    required int imageWidth,
+    required int imageHeight,
+    required List<DraftHotspot> hotspots,
+    required String source,
+    String? draftId,
+    SceneBoard? existing,
+  }) async {
+    final child = _child;
+    if (child == null) throw StateError('Belum ada profil anak.');
+    final result = await sceneRepository.publish(
+      childId: child.childId,
+      title: title,
+      imagePath: imagePath,
+      imageWidth: imageWidth,
+      imageHeight: imageHeight,
+      hotspots: hotspots,
+      source: source,
+      draftId: draftId,
+      existing: existing,
+    );
+    _bump();
+    return result;
+  }
+
+  Future<String> stageSceneDraftImage(String draftId, String sourcePath) => sceneRepository.stageDraftImage(draftId, sourcePath);
+
+  Future<void> saveSceneDraft(SceneDraft draft) => sceneDao.saveDraft(draft);
+
+  Future<SceneDraft?> latestSceneDraft({String? sceneId}) async {
+    final child = _child;
+    return child == null ? null : sceneDao.latestDraft(child.childId, sceneId: sceneId);
+  }
+
+  Future<void> deleteSceneDraft(String draftId) => sceneDao.deleteDraft(draftId);
+
+  Future<void> archiveScene(String sceneId) async {
+    await sceneDao.archive(sceneId, DateTime.now().toUtc().toIso8601String());
     _bump();
   }
 
@@ -145,7 +204,9 @@ class AppState extends ChangeNotifier {
   /// sel lain tidak bergeser (invarian 8).
   Future<WordSymbol> addPersonalCard({required String label, required int page, required String photoPath}) async {
     final display = normalizePersonalLabel(label);
-    if (display.isEmpty || page == 0) throw ArgumentError('label kosong atau halaman kata inti');
+    if (display.isEmpty || page == 0) {
+      throw ArgumentError('label kosong atau halaman kata inti');
+    }
     final wordId = personalWordId(display);
     final dir = Directory('${(await getApplicationDocumentsDirectory()).path}${Platform.pathSeparator}cards');
     await dir.create(recursive: true);
@@ -190,7 +251,9 @@ class AppState extends ChangeNotifier {
     final existing = phraseCard(p);
     if (existing != null) return existing;
     final target = page ?? defaultPhrasePage;
-    if (target == null || target == 0) throw ArgumentError('halaman kategori tidak ada');
+    if (target == null || target == 0) {
+      throw ArgumentError('halaman kategori tidak ada');
+    }
     final card = WordSymbol(
       wordId: p.wordId,
       labelDisplay: p.text.toUpperCase(),
@@ -229,14 +292,18 @@ class AppState extends ChangeNotifier {
   /// Pindahkan kata di halaman kategori [page] dari posisi [from] ke [to] (bertukar bila terisi). Halaman inti dan
   /// enam sel cermin tidak bisa dipindah: tangan anak menghafal letaknya (invarian 8, 03 §4).
   Future<void> moveSymbol(int page, int from, int to) async {
-    if (page == 0 || from < mirrorSlots || to < mirrorSlots) throw ArgumentError('halaman inti dan sel cermin terkunci');
+    if (page == 0 || from < mirrorSlots || to < mirrorSlots) {
+      throw ArgumentError('halaman inti dan sel cermin terkunci');
+    }
     await symbolDao.moveWithinPage(page, from, to);
     await reloadSymbols();
   }
 
   /// Hapus kartu foto atau kartu frasa beserta fotonya. Rekaman keluarga untuk kartu itu ikut dihapus.
   Future<void> deleteCard(WordSymbol s) async {
-    if (!s.isCustom) throw ArgumentError('kata bawaan hanya bisa disembunyikan');
+    if (!s.isCustom) {
+      throw ArgumentError('kata bawaan hanya bisa disembunyikan');
+    }
     await symbolDao.deleteCustom(s.wordId);
     for (final path in [if (s.symbolPath.startsWith('/')) s.symbolPath, ?s.familyAudio]) {
       try {

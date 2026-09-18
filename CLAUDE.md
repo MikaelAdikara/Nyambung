@@ -38,12 +38,13 @@ Aliran balik: usulan terapis → perangkat menarik target → keluarga terima/to
 ## Invarian (tidak dikompromikan)
 
 **Arsitektur**
-1. Luring penuh: papan, suara, misi, pencatatan jalan tanpa jaringan.
+1. Luring penuh: papan yang sudah disimpan, suara, misi, dan pencatatan jalan tanpa jaringan. Pembuatan frasa dan bantuan
+   AI untuk draf papan foto adalah alur authoring opsional yang memerlukan jaringan.
 2. Sumber kebenaran di perangkat; server hanya cermin.
 3. Log peristiwa append-only: tanpa UPDATE isi, tanpa DELETE. Sinkron idempoten berdasarkan `event_id`.
 4. Pola outbox: peristiwa ditulis ke antrean dalam transaksi yang sama dengan log.
-5. Tidak ada model yang dilatih dan tidak ada dependensi ML di aplikasi. Server boleh memanggil model suara hanya saat
-   frasa dibuat (PERUBAHAN #16); klipnya diputar luring.
+5. Tidak ada model yang dilatih dan tidak ada dependensi ML di aplikasi. Server boleh memanggil model suara saat frasa
+   dibuat dan vision AI saat pendamping meminta draf papan foto (PERUBAHAN #16 dan #22); hasil final diputar luring.
 6. Aplikasi hanya mengirim peristiwa mentah, tidak pernah angka agregat. Ringkasan dihitung server.
 7. Sasaran Android 8 (minSdk 26), RAM 2 GB, layar 7 inci.
 
@@ -68,6 +69,8 @@ Aliran balik: usulan terapis → perangkat menarik target → keluarga terima/to
     persetujuan eksplisit (PERUBAHAN #17). Server tidak menyimpan rekamannya, hanya `voice_id`.
 19. Target dari terapis berstatus usulan yang boleh ditolak tanpa alasan.
 20. Bukan alat diagnosis: tidak menyimpan diagnosis, skor klinis, atau penilaian kemampuan.
+21. Foto papan tetap lokal kecuali pendamping memilih bantuan AI dan menyetujui pengiriman foto pada permintaan itu.
+    Server tidak menyimpan foto; provider key tidak pernah masuk APK.
 
 ## Keputusan teknis
 

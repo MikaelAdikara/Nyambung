@@ -13,6 +13,7 @@ import '../../core/theme.dart';
 import '../../data/db/app_database.dart';
 import '../coach/companion_widgets.dart';
 import '../coach/mission_rules.dart';
+import '../scenes/scene_library_screen.dart';
 import '../vocab/family_voice_screen.dart';
 import '../vocab/manage_vocab_screen.dart';
 import '../start/parent_pin.dart';
@@ -72,7 +73,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           '• "Spontan" berarti tidak ada contoh dari pendamping dalam 60 detik sebelumnya. Ini aturan tetap aplikasi, '
           'bukan kode resmi LAM.\n'
           '• Kosakata awal 120 kata, belum semuanya ditinjau terapis wicara.\n'
-          '• Suara papan adalah klip sintetis. Rekaman keluarga dan foto kartu tidak pernah meninggalkan HP ini.\n'
+          '• Suara papan adalah klip sintetis. Rekaman keluarga dan papan foto tersimpan di HP ini. Foto hanya dikirim '
+          'ke server Nyambung dan layanan AI Google bila pendamping memilih bantuan AI dan menyetujuinya saat itu.\n'
           '• Catatan hanya sampai ke terapis bila keluarga menghubungkannya dengan kode undangan.',
           style: companionBodyStyle,
         ),
@@ -244,6 +246,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: 'Ganti PIN orang tua',
             subtitle: 'PIN menjaga layar orang tua dari ketukan anak',
             onTap: () => _open(ChangePinScreen(prefs: app!.prefs)),
+          ),
+          const SizedBox(height: 10),
+          NavRow(
+            icon: Icons.photo_camera_back_outlined,
+            title: 'Papan dari foto',
+            subtitle: 'Jadikan kegiatan nyata sebagai papan bicara interaktif',
+            tint: CompanionColors.skyTint,
+            iconColor: CompanionColors.skyText,
+            onTap: () => _open(const SceneLibraryScreen()),
           ),
           const SizedBox(height: 10),
           NavRow(

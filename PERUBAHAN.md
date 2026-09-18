@@ -286,3 +286,19 @@ Format entri:
 - **Alasan:** permintaan tim, supaya kosakata bisa disesuaikan keluarga.
 - **Dampak:** Invarian 8 kini berarti "papan tidak pernah memindahkan simbol sendiri". Layar menjelaskan bahwa anak
   belajar dari letak tetap (Thistle dkk. 2018) dan menyarankan pindahkan seperlunya.
+
+## 22. Foto menjadi visual scene AAC yang dapat dipakai luring (18 Sep 2026)
+- **Kondisi sebelumnya:** Satu foto hanya dapat menjadi satu kartu dengan satu label. Keluarga harus memotong atau
+  membuat banyak kartu untuk satu kegiatan nyata.
+- **Yang diubah:** Pengaturan → Papan dari foto membuat satu foto memiliki satu sampai enam hotspot. Pendamping dapat
+  menambah, menggeser, mengubah ukuran, memetakan kata, menyimpan draf, melanjutkan draf setelah aplikasi dibuka lagi,
+  mengedit versi, dan mengarsipkan papan. Tab FOTO memakai BoardScreen, bilah ujaran, tahan sentuh, screen pinning,
+  audio luring, serta event KAT/PRS yang sama dengan grid. Enam sel kata inti tetap berada di posisi tetap.
+- **Bantuan AI:** Dengan persetujuan per permintaan, server mengirim JPEG tanpa metadata dan inventaris kata aktif ke
+  Gemini untuk memperoleh maksimum enam kandidat. Token perangkat diperiksa sebelum body dibaca, body dibatasi 4 MiB,
+  JPEG 2 MiB/1280 px, satu request aktif per anak, dan sepuluh percobaan per 24 jam. AI hanya membuat draf; pemetaan
+  yang belum cocok tidak dapat disimpan sebelum diperbaiki keluarga. Tanpa key, tautan, atau internet, editor manual
+  tetap tersedia.
+- **Dampak:** Klaim luring berlaku pada papan final dan komunikasi anak. Foto meninggalkan perangkat hanya pada alur
+  bantuan AI yang disetujui; server tidak menyimpan foto. Fitur ini bukan pengenal maksud, emosi, hubungan keluarga,
+  diagnosis, atau rekomendasi klinis.

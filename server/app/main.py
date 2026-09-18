@@ -46,13 +46,18 @@ from .schemas import (
 )
 from .services import summary as agg
 from .services.voice import HttpVoiceProvider, VoiceError, VoiceProvider
+from .services.scene_ai import HttpSceneVisionProvider, SceneVisionProvider
+from .routes.scene_ai import register_scene_ai_routes
 
 # Batas pembuatan frasa per anak per hari: menahan biaya penyedia suara bila ada klien yang berulang.
 PHRASES_PER_DAY = 30
 
 
 def create_app(
-    db_path: Optional[Path | str] = None, therapist_tokens: Optional[str] = None, voice: Optional[VoiceProvider] = None
+    db_path: Optional[Path | str] = None,
+    therapist_tokens: Optional[str] = None,
+    voice: Optional[VoiceProvider] = None,
+    scene_vision: Optional[SceneVisionProvider] = None,
 ) -> FastAPI:
     conn: sqlite3.Connection = connect(db_path)
     voices: VoiceProvider = voice or HttpVoiceProvider()
@@ -65,6 +70,7 @@ def create_app(
     app.state.conn = conn
     # Dasbor berjalan di port lain dan mengirim Bearer lewat header (tanpa cookie).
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+    register_scene_ai_routes(app, conn, scene_vision or HttpSceneVisionProvider())
 
     # Semua endpoint `async def`: berjalan di satu thread event loop, jadi satu koneksi SQLite aman.
 

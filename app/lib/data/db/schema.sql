@@ -103,6 +103,33 @@ CREATE TABLE IF NOT EXISTS phrase (
   audio_path TEXT                      -- null sampai klip terunduh
 );
 
+CREATE TABLE IF NOT EXISTS scene_board (
+  scene_id TEXT PRIMARY KEY,
+  child_id TEXT NOT NULL REFERENCES child(child_id),
+  title TEXT NOT NULL,
+  image_path TEXT NOT NULL,
+  image_width INTEGER NOT NULL,
+  image_height INTEGER NOT NULL,
+  revision INTEGER NOT NULL DEFAULT 1,
+  payload_json TEXT NOT NULL,
+  source TEXT NOT NULL CHECK(source IN ('manual','ai')),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  archived_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_scene_child ON scene_board(child_id, archived_at);
+
+CREATE TABLE IF NOT EXISTS scene_draft (
+  draft_id TEXT PRIMARY KEY,
+  child_id TEXT NOT NULL REFERENCES child(child_id),
+  scene_id TEXT,
+  title TEXT NOT NULL,
+  image_path TEXT,
+  payload_json TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 -- Penegakan invarian 3: isi peristiwa tidak berubah, tidak dihapus.
 CREATE TRIGGER IF NOT EXISTS utterance_no_update BEFORE UPDATE OF
   event_id, child_id, ts_device, content, method, actor, prompt_level, context, session_id

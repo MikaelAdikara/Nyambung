@@ -1,12 +1,17 @@
 # Nyambung
 
 Nyambung adalah papan AAC (komunikasi augmentatif dan alternatif) berbahasa Indonesia untuk anak autis nonverbal,
-yang berjalan penuh tanpa internet. Di sekelilingnya ada pendampingan harian kurang dari lima menit untuk orang tua
+yang dapat dipakai penuh tanpa internet. Di sekelilingnya ada pendampingan harian kurang dari lima menit untuk orang tua
 (satu misi *aided language modeling* per hari), dan papan pantau untuk terapis wicara yang menerima pola pemakaian
 papan dari rumah. Aplikasi hanya mengirim peristiwa ketukan mentah; ringkasan dihitung di server, dan target dari
 terapis selalu berupa usulan yang boleh ditolak keluarga.
 
 > Nyambung bukan alat diagnosis. Angka di papan pantau adalah pola pemakaian, bukan ukuran kemampuan anak.
+
+Fitur **Papan dari foto** mengubah foto kegiatan menjadi visual scene AAC berisi sampai enam area bicara. Pendamping
+boleh menyusun area sendiri atau meminta vision AI membuat draf, lalu wajib memeriksa pemetaan kata sebelum menyimpan.
+Papan final, foto, suara, dan pemakaiannya tetap luring; foto hanya dikirim saat bantuan AI dipilih dengan persetujuan
+eksplisit pada setiap permintaan.
 
 ## Struktur repo
 
@@ -56,6 +61,10 @@ export NYAMBUNG_THERAPIST_TOKENS="token-demo-panjang-2026:Bu Rina (ilustratif)"
 
 Cek: `http://127.0.0.1:8000/v1/health` harus menjawab `{"ok": true, ...}`. Contoh isi `.env` ada di `server/.env.example`.
 Basis data ada di `server/data/nyambung.db` (tidak di-commit; ubah dengan `NYAMBUNG_DB_PATH`).
+
+Bantuan AI papan foto bersifat opsional. Set `GEMINI_API_KEY` dan `NYAMBUNG_VISION_MODEL` di lingkungan server agar
+endpoint status menyatakan tersedia. Kunci hanya berada di server. Tanpa kedua variabel itu, editor manual tetap bekerja.
+Server menerima maksimal satu analisis aktif dan sepuluh percobaan per anak dalam 24 jam pada konfigurasi prototype.
 
 Akun login terapis (email + kata sandi) dibuat oleh pengelola, tidak ada pendaftaran terbuka:
 

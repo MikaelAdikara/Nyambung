@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/app_state.dart';
@@ -10,6 +12,7 @@ import 'companion_widgets.dart';
 import 'lesson_screen.dart';
 import 'mission_rules.dart';
 import 'mission_screen.dart';
+import 'now_next_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.openChildBoard});
@@ -20,9 +23,27 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+  /// Selama beranda terpasang (termasuk saat papan dibuka di atasnya), catatan dicoba kirim berkala dan
+  /// usulan terapis ditarik. Tanpa jaringan percobaan ini gagal diam-diam; luring tetap keadaan biasa.
+  static const _autoSyncEvery = Duration(seconds: 20);
+
   CompanionController? _controller;
   AppState? _app;
+  Timer? _ticker;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _ticker = Timer.periodic(_autoSyncEvery, (_) => _controller?.autoSync());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Kembali ke aplikasi (mis. setelah mode pesawat dimatikan): coba kirim segera.
+    if (state == AppLifecycleState.resumed) _controller?.autoSync();
+  }
 
   @override
   void didChangeDependencies() {
@@ -38,6 +59,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _ticker?.cancel();
     _controller?.dispose();
     super.dispose();
   }
@@ -78,6 +101,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         await controller.load();
                         await controller.autoSync();
                       },
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NowNextScreen())),
+                  icon: const Icon(Icons.view_column_outlined),
+                  label: const Text('Sekarang → Nanti'),
                 ),
                 const SizedBox(height: 16),
                 _MissionCard(state: controller),
@@ -164,7 +193,7 @@ class _MissionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tekan ${mission.targetWord.toUpperCase()} lima kali saat ${state.routineLabel}',
+            'Tekan ${state.targetLabel} lima kali saat ${state.routineLabel}',
             style: const TextStyle(fontSize: 22, height: 1.25, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),

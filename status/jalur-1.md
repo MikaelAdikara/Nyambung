@@ -1,14 +1,15 @@
 # Status jalur 1 — Papan
-Diperbarui: 09:55
+Diperbarui: 10:05
 
 ## Sedang dikerjakan
-1.2 Skema + pemuat kosakata (tes CSV, paritas skema, cermin)
+1.3 Papan B4 + kategori B5
 
 ## Tonggak selesai (tag)
 - j1-kerangka (09:55): app terbuka, AppScope di atas MaterialApp, AppState + DAO nyata, DB terbuka, 120 kata termuat
+- j1-skema (10:05): skema = kontrak, pemuat CSV sekali, 10 tes lulus. 1 tes dilewati: 6 simbol gambar tim halaman 0 belum ada (menunggu j4-simbol-inti)
 
 ## Perkiraan tonggak berikutnya
-j1-skema sekitar 10:30
+j1-papan sekitar 12:00
 
 ## Terblokir oleh
 - (kosong)

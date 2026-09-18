@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
@@ -252,10 +253,21 @@ class AppState extends ChangeNotifier {
     _bump();
   }
 
-  /// "Hapus semua data" (C6): hapus berkas basis data dan preferensi, lalu bootstrap ulang.
+  /// "Hapus semua data" (C6): hapus berkas basis data, preferensi, dan semua berkas buatan aplikasi
+  /// (rekaman suara keluarga, ekspor sementara), lalu bootstrap ulang.
   Future<void> deleteAllData() async {
+    await speech.stop();
     await AppDatabase.deleteFile(_db);
     await prefs.clear();
+    for (final dir in [await getApplicationDocumentsDirectory(), await getTemporaryDirectory()]) {
+      try {
+        for (final entry in dir.listSync()) {
+          await entry.delete(recursive: true);
+        }
+      } catch (e, st) {
+        ErrorLog.record('hapusData', e, st);
+      }
+    }
     _child = null;
     _lastParentTap = null;
     await bootstrap();

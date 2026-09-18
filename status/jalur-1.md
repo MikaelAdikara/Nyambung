@@ -1,8 +1,8 @@
 # Status jalur 1 — Papan
-Diperbarui: 10:45
+Diperbarui: 10:55
 
 ## Sedang dikerjakan
-1.7 Pengerasan: menunggu layar jalur 2 untuk diganti di `main.dart`, uji HP fisik, uji 2 GB
+1.7 Pengerasan: tinggal uji HP fisik + RAM 2 GB (butuh perangkat). j1-suara ditahan: rekaman suara sedang dibuat manusia
 
 ## Tonggak selesai (tag)
 - j1-kerangka: app terbuka, AppScope di atas MaterialApp, AppState + DAO nyata, DB terbuka, 120 kata termuat
@@ -11,6 +11,11 @@ Diperbarui: 10:45
 - j1-outbox: event + outbox satu transaksi; 10 ketukan = 10 + 10 baris; matikan paksa → angka tetap; trigger menolak
   UPDATE isi/DELETE, UPDATE synced_at lolos (diuji dengan sqlite3 di emulator)
 - j1-kunci: screen pinning; Home tidak keluar dari papan anak (PINNED), tahan TAHAN 1,5 dtk → keluar + lepas kunci
+
+## Selesai tanpa tag
+- Hapus semua data juga menghapus rekaman keluarga dan berkas ekspor sementara (permintaan jalur 2, invarian 18)
+- Tanda tangan rilis: `android/key.properties` + `nyambung-release.jks` (dibuat 18 Sep, di-gitignore) dibaca lewat
+  `rootProject.file`; tanpa berkas itu rilis ditandatangani kunci debug. APK rilis arm64 = 18,8 MB, apksigner: CN=Nyambung
 
 ## Belum ditag
 - j1-suara: kode jalan; mode pesawat → ketuk MAU → TTS memutar audio (tercatat di dumpsys audio). **Belum didengar

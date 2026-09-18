@@ -55,7 +55,7 @@ class BoardScreen extends StatefulWidget {
 }
 
 class _BoardScreenState extends State<BoardScreen> {
-  final _utterance = ValueNotifier<List<WordSymbol>>(const []);
+  final _utterance = ValueNotifier<List<_Word>>(const []);
 
   /// Mode misi dimulai dengan giliran pendamping: contoh diberikan dulu di depan anak.
   final _parentTurn = ValueNotifier<bool>(true);
@@ -115,7 +115,7 @@ class _BoardScreenState extends State<BoardScreen> {
   }
 
   void _onSelect(WordSymbol s) {
-    _utterance.value = [..._utterance.value, s];
+    _utterance.value = [..._utterance.value, _Word(s)];
     _app.speech.speakWord(s, byParent: _byParent);
     _log(s.wordId, _page == 0 ? Method.sel : Method.kat);
     _suggestedPage.value = _suggestionAfter(s);
@@ -139,11 +139,18 @@ class _BoardScreenState extends State<BoardScreen> {
     if (words.isEmpty) return;
     _utterance.value = words.sublist(0, words.length - 1);
     _suggestedPage.value = null;
-    _log(words.last.wordId, Method.hap);
+    _log(words.last.symbol.wordId, Method.hap);
+  }
+
+  /// Geser urutan kata di bilah ujaran. Tidak ada peristiwa baru: UCAPKAN mencatat urutan akhir.
+  void _onReorder(int from, int to) {
+    final words = [..._utterance.value];
+    words.insert(to, words.removeAt(from));
+    _utterance.value = words;
   }
 
   void _onSpeak() {
-    final words = _utterance.value;
+    final words = [for (final w in _utterance.value) w.symbol];
     if (words.isEmpty) return;
     _app.speech.speakSentence(words, byParent: _byParent);
     _log(words.map((w) => w.wordId).join(' '), Method.ucp);
@@ -161,6 +168,7 @@ class _BoardScreenState extends State<BoardScreen> {
         children: [
           _SpeechBar(
             utterance: _utterance,
+            onReorder: _onReorder,
             onDelete: _onDelete,
             onSpeak: _onSpeak,
             leading: widget.childMode
@@ -207,18 +215,90 @@ class _BoardScreenState extends State<BoardScreen> {
   }
 }
 
-/// Bilah ujaran (tinggi 88 dp, latar panel) + HAPUS + UCAPKAN. Hanya bagian ini yang dibangun ulang saat ketukan.
-class _SpeechBar extends StatelessWidget {
-  const _SpeechBar({required this.utterance, required this.onDelete, required this.onSpeak, this.leading, this.trailing});
+/// Satu kata di bilah ujaran. Identitas objek menjadi kunci, jadi kata yang sama dua kali tetap dua item terpisah.
+class _Word {
+  _Word(this.symbol);
 
-  final ValueNotifier<List<WordSymbol>> utterance;
+  final WordSymbol symbol;
+}
+
+/// Bilah ujaran (tinggi 88 dp, latar panel) + HAPUS + UCAPKAN. Hanya bagian ini yang dibangun ulang saat ketukan.
+///
+/// Kata bisa digeser: tahan ± 0,5 detik lalu seret ke tempat baru. Ini satu-satunya gerakan di papan anak
+/// (pengecualian invarian 11, lihat PERUBAHAN.md): kata yang diangkat mengikuti jari, kata lain bergeser memberi
+/// tempat, dan semua itu hanya terjadi saat jari sedang menyeret.
+class _SpeechBar extends StatefulWidget {
+  const _SpeechBar({
+    required this.utterance,
+    required this.onReorder,
+    required this.onDelete,
+    required this.onSpeak,
+    this.leading,
+    this.trailing,
+  });
+
+  final ValueNotifier<List<_Word>> utterance;
+  final void Function(int from, int to) onReorder;
   final VoidCallback onDelete;
   final VoidCallback onSpeak;
   final Widget? leading;
   final Widget? trailing;
 
   @override
+  State<_SpeechBar> createState() => _SpeechBarState();
+}
+
+class _SpeechBarState extends State<_SpeechBar> {
+  final _scroll = ScrollController();
+  int _lastLength = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.utterance.addListener(_followNewWord);
+  }
+
+  @override
+  void dispose() {
+    widget.utterance.removeListener(_followNewWord);
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  /// Kata baru selalu terlihat: lompat (tanpa animasi) ke ujung kanan setiap kali kata bertambah.
+  void _followNewWord() {
+    final length = widget.utterance.value.length;
+    final grew = length > _lastLength;
+    _lastLength = length;
+    if (!grew) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scroll.hasClients) _scroll.jumpTo(_scroll.position.maxScrollExtent);
+    });
+  }
+
+  /// Kata yang sedang diangkat: sedikit membesar dengan bayangan tipis, supaya jelas sedang dipegang.
+  Widget _lifted(Widget child, int index, Animation<double> animation) => AnimatedBuilder(
+    animation: animation,
+    builder: (context, child) {
+      final t = Curves.easeOut.transform(animation.value);
+      return Transform.scale(
+        scale: 1 + 0.05 * t,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.18 * t), blurRadius: 8 * t, offset: Offset(0, 3 * t))],
+          ),
+          child: child,
+        ),
+      );
+    },
+    child: child,
+  );
+
+  @override
   Widget build(BuildContext context) {
+    final leading = widget.leading;
+    final trailing = widget.trailing;
     return Container(
       color: AppColors.panel,
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
@@ -238,14 +318,19 @@ class _SpeechBar extends StatelessWidget {
                       border: Border.all(color: AppColors.line, width: 2),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: ValueListenableBuilder<List<WordSymbol>>(
-                      valueListenable: utterance,
-                      builder: (context, words, _) => ListView.separated(
+                    child: ValueListenableBuilder<List<_Word>>(
+                      valueListenable: widget.utterance,
+                      builder: (context, words, _) => ReorderableListView.builder(
+                        scrollController: _scroll,
                         scrollDirection: Axis.horizontal,
-                        reverse: true,
                         itemCount: words.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 4),
-                        itemBuilder: (_, i) => SymbolFace(symbol: words[words.length - 1 - i], width: 68, height: 80, compact: true),
+                        onReorderItem: widget.onReorder,
+                        proxyDecorator: _lifted,
+                        itemBuilder: (_, i) => Padding(
+                          key: ObjectKey(words[i]),
+                          padding: EdgeInsets.only(right: i == words.length - 1 ? 0 : 4),
+                          child: SymbolFace(symbol: words[i].symbol, width: 68, height: 80, compact: true),
+                        ),
                       ),
                     ),
                   ),
@@ -257,12 +342,12 @@ class _SpeechBar extends StatelessWidget {
                   child: Tooltip(
                     message: 'Hapus',
                     child: InkResponse(
-                      onTap: onDelete,
+                      onTap: widget.onDelete,
                       child: const SizedBox(width: 64, height: 72, child: Icon(Icons.backspace_outlined, size: 32, color: AppColors.ink)),
                     ),
                   ),
                 ),
-                if (trailing != null) ...[const SizedBox(width: 4), trailing!],
+                if (trailing != null) ...[const SizedBox(width: 4), trailing],
               ],
             ),
           ),
@@ -275,7 +360,7 @@ class _SpeechBar extends StatelessWidget {
                 constraints: const BoxConstraints(minWidth: 140),
                 child: FilledButton.icon(
                   style: FilledButton.styleFrom(minimumSize: const Size(140, 64)),
-                  onPressed: onSpeak,
+                  onPressed: widget.onSpeak,
                   icon: const Icon(Icons.volume_up, size: 28),
                   label: const FittedBox(fit: BoxFit.scaleDown, child: Text('UCAPKAN')),
                 ),

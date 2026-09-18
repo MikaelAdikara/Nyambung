@@ -50,7 +50,8 @@ Aliran balik: usulan terapis → perangkat menarik target → keluarga terima/to
 8. Posisi simbol tidak pernah berpindah; simbol tersembunyi tetap memegang posisinya.
 9. *Presume competence*: tanpa penguncian tingkat.
 10. Warna tidak pernah satu-satunya pembawa makna: warna latar + penanda bentuk di sudut.
-11. Tanpa animasi, suara latar, hadiah, gamifikasi (layar orang tua tetap memakai transisi Android biasa).
+11. Tanpa animasi, suara latar, hadiah, gamifikasi. Pengecualian: menggeser urutan kata di bilah ujaran (gerak hanya
+    selama jari menyeret). Layar orang tua boleh memakai gerak halus yang menghormati setelan "hapus animasi".
 12. Kontras teks ≥ 4,5:1, target sentuh ≥ 10 mm.
 13. Status luring adalah keadaan normal, bukan peringatan.
 

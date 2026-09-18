@@ -140,3 +140,16 @@ Format entri:
   bagi anak maupun orang tua. Tanpa umpan balik tekan, papan terasa kaku dan anak tidak tahu sel mana yang tersentuh.
 - **Dampak terhadap masalah inti:** M1: kategori lebih cepat ditemukan dan tetap di tempat yang sama (perencanaan motorik).
   Lebar grid berkurang ±92 dp; sel di HP 360 dp tetap ± 13 mm (≥ 10 mm, invarian 12). Kontras teks saat ditekan ≥ 6,4:1.
+
+## 11. Urutan kata di bilah ujaran bisa digeser (12:15, jalur 1)
+- **Kondisi di proposal:** Bilah ujaran hanya bertambah dari kanan dan berkurang lewat HAPUS (satu langkah dari
+  belakang). Invarian 11: tanpa animasi di papan anak.
+- **Yang diubah:** Setiap kata di bilah bisa ditahan ± 0,5 detik lalu diseret ke tempat lain, di papan anak dan papan
+  misi. Kata yang diangkat sedikit membesar dengan bayangan tipis, kata lain bergeser memberi tempat. UCAPKAN
+  membunyikan urutan baru, dan peristiwa `UCP` mencatat urutan akhir itu. Tidak ada kode peristiwa baru. Invarian 11 di
+  CLAUDE.md diberi pengecualian untuk gerak ini.
+- **Alasan:** Anak (atau pendamping yang memberi contoh) sering memilih kata tidak berurutan, misalnya MAU lalu MAKAN
+  lalu AKU. Tanpa geser, satu-satunya cara memperbaiki kalimat adalah menghapus dari belakang dan mengetuk ulang.
+- **Dampak terhadap masalah inti:** M1: menyusun kalimat lebih murah langkahnya. Gerak hanya terjadi saat jari sedang
+  menyeret, jadi tidak ada gerakan yang tidak dipicu anak. Terapis tidak melihat penggeseran sebagai peristiwa
+  tersendiri; yang terlihat hanya urutan kalimat yang diucapkan.

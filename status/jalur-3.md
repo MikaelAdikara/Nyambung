@@ -1,10 +1,15 @@
 # Status jalur 3 — Server
-Diperbarui: 15:30
+Diperbarui: 20:35
 
 ## Sedang dikerjakan
 3.7 APK rilis: tanda tangan siap (keystore baru 18 Sep, jalur 1 menambah signingConfig). Tag j3-apk menunggu int-1-hp-ke-d2 (HP fisik)
 
 ## Tonggak selesai (tag)
+- (20:35, tanpa tag) Branch `codex/foto-jadi-papan` digabung ke `main` (papan dari foto + `/scene-ai/status` dan
+  `/scene-ai/analyze`). Kunci ElevenLabs juga dibaca dari nama `ELEVEN_LABS`; `GEMINI_API_KEY` dan
+  `NYAMBUNG_VISION_MODEL` kini dibaca dari `.env` seperti kunci suara. Diperiksa langsung ke penyedia (panggilan baca):
+  kunci OpenAI dan ElevenLabs sah, **tetapi akun ElevenLabs tier free tidak boleh klon suara** (`paid_plan_required`);
+  server kini menjelaskan hal itu alih-alih "kunci ditolak". Gemini belum dikonfigurasi. 63 tes pytest lulus.
 - (15:30, tanpa tag) `GET /v1/children/{id}/missions` (misi harian dari peristiwa mentah), simulator memakai
   id misi berkata. PROVENANCE: 245 hash OK. 55 tes pytest lulus.
 - (14:45, tanpa tag) Frasa bersuara: tabel `phrase` + `voice_clone`, `GET/POST /v1/children/{id}/phrases`,

@@ -185,3 +185,32 @@ def test_missions_track_word_source_and_status(vclient):
     assert rows["misi-w1"]["word"] == "lagi" and rows["misi-w1"]["status"] is None
     assert rows["misi-w1-berhenti"]["source"] == "terapis"
     assert vclient.get(f"/v1/children/{child}/missions", headers=bearer(dev)).status_code == 403
+
+
+def test_env_key_accepts_legacy_elevenlabs_name(tmp_path, monkeypatch):
+    from app.services import voice
+
+    monkeypatch.setattr(voice, "ROOT", tmp_path)  # abaikan .env milik mesin ini
+    monkeypatch.delenv("ELEVENLABS_API_KEY", raising=False)
+    monkeypatch.setenv("ELEVEN_LABS", "sk_legacy")
+    assert voice._eleven_env_key() == "sk_legacy"
+    monkeypatch.setenv("ELEVENLABS_API_KEY", "sk_new")
+    assert voice._eleven_env_key() == "sk_new"
+
+
+def test_free_plan_clone_rejection_is_explained(monkeypatch):
+    import io
+    import urllib.error
+    import urllib.request
+
+    from app.services import voice
+
+    body = b'{"detail":{"type":"payment_required","code":"paid_plan_required","status":"can_not_use_instant_voice_cloning"}}'
+
+    def reject(req, timeout=60):
+        raise urllib.error.HTTPError(req.full_url, 400, "Bad Request", {}, io.BytesIO(body))
+
+    monkeypatch.setattr(urllib.request, "urlopen", reject)
+    with pytest.raises(VoiceError) as err:
+        voice._request(urllib.request.Request("https://api.elevenlabs.io/v1/voices/add"))
+    assert "paket" in str(err.value) and err.value.status == 503

@@ -28,6 +28,12 @@ konfirmasi, papan anak + misi, Kembang, Terapis, Atur. 33 tes lulus, analyzer be
   lonjakan 40 ms saat papan dibuka. Raster 44–58 ms di emulator = SwiftShader, bukan angka GPU
 
 ## Tonggak selesai (tag)
+- (20:35, tanpa tag) QA papan dari foto di emulator (Android x86_64, data lama v3 → skema v4 termigrasi): buat papan
+  dari galeri, tambah/geser/ubah ukuran area, pulihkan draf, simpan "siap luring", mode pesawat → tab FOTO → MAU +
+  area MAKAN → UCAPKAN; tercatat KAT, KAT, UCP di outbox. Perbaikan: area editor sebelumnya tidak bisa digeser vertikal
+  (direbut gulir ListView) dan tertinggal dari jari; papan foto anak di HP portrait kini menaruh enam kata cermin di
+  atas dengan letak sama seperti halaman kategori (sebelumnya foto terjepit dan label terpotong); tab FOTO bergaya
+  sama dengan tab lain. 47 tes lulus, analyzer bersih. Bantuan AI belum dicoba langsung (Gemini belum diisi).
 - (15:30, tanpa tag) Simbol berwarna (99 Mulberry + 21 gambar tim, 0 huruf cadangan), migrasi `refreshBuiltIn`
   (kata bawaan bukan `is_custom`), sorotan kata target di papan misi, pindah/hapus kartu di DAO. Dicek di emulator.
 - j1-kerangka: app terbuka, AppScope di atas MaterialApp, AppState + DAO nyata, DB terbuka, 120 kata termuat

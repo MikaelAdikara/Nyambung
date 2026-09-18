@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
@@ -393,13 +394,11 @@ class _EditorCanvas extends StatelessWidget {
             for (var i = 0; i < hotspots.length; i++)
               Positioned.fromRect(
                 rect: sceneBoxToRect(hotspots[i].box, imageRect),
-                child: GestureDetector(
-                  onPanUpdate: (details) {
-                    final h = hotspots[i];
-                    final dx = details.delta.dx / imageRect.width;
-                    final dy = details.delta.dy / imageRect.height;
-                    final x = (h.box.x + dx).clamp(0.0, 1 - h.box.width);
-                    final y = (h.box.y + dy).clamp(0.0, 1 - h.box.height);
+                child: _EagerPan(
+                  capture: () => hotspots[i],
+                  onDrag: (h, total) {
+                    final x = (h.box.x + total.dx / imageRect.width).clamp(0.0, 1 - h.box.width);
+                    final y = (h.box.y + total.dy / imageRect.height).clamp(0.0, 1 - h.box.height);
                     final next = [...hotspots];
                     next[i] = h.copyWith(
                       box: SceneBox.checked(x: x, y: y, width: h.box.width, height: h.box.height),
@@ -420,14 +419,13 @@ class _EditorCanvas extends StatelessWidget {
                       Positioned(
                         right: 0,
                         bottom: 0,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onPanUpdate: (details) {
-                            final h = hotspots[i];
+                        child: _EagerPan(
+                          capture: () => hotspots[i],
+                          onDrag: (h, total) {
                             final minWidth = (48 / imageRect.width).clamp(0.08, 0.4);
                             final minHeight = (48 / imageRect.height).clamp(0.08, 0.4);
-                            final width = (h.box.width + details.delta.dx / imageRect.width).clamp(minWidth, 1 - h.box.x);
-                            final height = (h.box.height + details.delta.dy / imageRect.height).clamp(minHeight, 1 - h.box.y);
+                            final width = (h.box.width + total.dx / imageRect.width).clamp(minWidth, 1 - h.box.x);
+                            final height = (h.box.height + total.dy / imageRect.height).clamp(minHeight, 1 - h.box.y);
                             final next = [...hotspots];
                             next[i] = h.copyWith(
                               box: SceneBox.checked(x: h.box.x, y: h.box.y, width: width, height: height),
@@ -456,4 +454,58 @@ class _EditorCanvas extends StatelessWidget {
       },
     ),
   );
+}
+
+/// Geser yang langsung mengklaim sentuhan. Editor berada di dalam ListView; tanpa ini seretan vertikal di atas area
+/// direbut gulir halaman. [onDrag] menerima keadaan saat jari turun plus total geseran, jadi beberapa event dalam satu
+/// frame tidak saling menimpa dengan nilai yang belum dibangun ulang.
+class _EagerPan extends StatefulWidget {
+  const _EagerPan({required this.capture, required this.onDrag, required this.child});
+  final DraftHotspot Function() capture;
+  final void Function(DraftHotspot start, Offset total) onDrag;
+  final Widget child;
+
+  @override
+  State<_EagerPan> createState() => _EagerPanState();
+}
+
+class _EagerPanState extends State<_EagerPan> {
+  DraftHotspot? _start;
+  Offset _total = Offset.zero;
+
+  @override
+  Widget build(BuildContext context) => RawGestureDetector(
+    behavior: HitTestBehavior.opaque,
+    gestures: {
+      _EagerPanRecognizer: GestureRecognizerFactoryWithHandlers<_EagerPanRecognizer>(
+        _EagerPanRecognizer.new,
+        (r) => r
+          ..onDown = (_) {
+            _start = widget.capture();
+            _total = Offset.zero;
+          }
+          ..onUpdate = (details) {
+            final start = _start;
+            if (start == null) return;
+            _total += details.delta;
+            widget.onDrag(start, _total);
+          }
+          ..onEnd = ((_) {
+            _start = null;
+          })
+          ..onCancel = () {
+            _start = null;
+          },
+      ),
+    },
+    child: widget.child,
+  );
+}
+
+class _EagerPanRecognizer extends PanGestureRecognizer {
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    super.addAllowedPointer(event);
+    resolve(GestureDisposition.accepted);
+  }
 }

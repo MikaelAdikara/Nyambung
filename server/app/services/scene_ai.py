@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import json
-import os
 import urllib.error
 import urllib.request
 from typing import Protocol
+
+from .voice import _env_key
 
 
 class SceneVisionError(RuntimeError):
@@ -21,13 +22,13 @@ class SceneVisionProvider(Protocol):
 
 class HttpSceneVisionProvider:
     def available(self) -> bool:
-        return bool(os.environ.get("GEMINI_API_KEY", "").strip() and os.environ.get("NYAMBUNG_VISION_MODEL", "").strip())
+        return bool(_env_key("GEMINI_API_KEY") and _env_key("NYAMBUNG_VISION_MODEL"))
 
     def analyze(self, image: bytes, allowed_symbols: list[dict]) -> dict:
         import base64
 
-        key = os.environ.get("GEMINI_API_KEY", "").strip()
-        model = os.environ.get("NYAMBUNG_VISION_MODEL", "").strip()
+        key = _env_key("GEMINI_API_KEY") or ""
+        model = _env_key("NYAMBUNG_VISION_MODEL") or ""
         if not key or not model:
             raise SceneVisionError("provider vision belum dikonfigurasi")
         prompt = (

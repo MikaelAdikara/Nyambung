@@ -136,10 +136,14 @@ class _HotspotButtonState extends State<_HotspotButton> {
             width: double.infinity,
             color: AppColors.ink.withValues(alpha: 0.82),
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            child: Text(
-              widget.symbol.labelDisplay,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                widget.symbol.labelDisplay,
+                maxLines: 1,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
+              ),
             ),
           ),
         ),

@@ -251,6 +251,7 @@ class _BoardScreenState extends State<BoardScreen> {
                             scenes: _scenes,
                             selected: _selectedScene,
                             coreSymbols: _app.cellsForPage(0).take(6).toList(),
+                            gridCols: _app.child?.gridCols ?? 3,
                             symbolById: _app.symbolById,
                             holdMs: _app.holdMs,
                             onOpen: _openScene,
@@ -491,12 +492,23 @@ class _BoardGrid extends StatelessWidget {
   /// Halaman kategori: 18 slot (6 cermin + 12 konten).
   static const categorySlots = 18;
   static const gap = 6.0;
+  static const pad = 8.0;
+
+  /// Tinggi grid kata inti berisi [count] sel pada lebar [width], sama dengan hitungan di [build].
+  static double heightFor(double width, int cols, int count) {
+    final cellH = (width - pad * 2 - gap * (cols - 1)) / cols * 0.95;
+    final rows = (count / cols).ceil();
+    var height = pad * 2;
+    for (var r = 0; r < rows; r++) {
+      height += cellH + (r == 1 ? gap + 8 : gap);
+    }
+    return height;
+  }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, box) {
-        const pad = 8.0;
         final cellW = (box.maxWidth - pad * 2 - gap * (gridCols - 1)) / gridCols;
         final cellH = cellW * 0.95;
         final minSlots = isCorePage ? cells.length : categorySlots;
@@ -571,6 +583,7 @@ class _SceneArea extends StatelessWidget {
     required this.scenes,
     required this.selected,
     required this.coreSymbols,
+    required this.gridCols,
     required this.symbolById,
     required this.holdMs,
     required this.onOpen,
@@ -581,6 +594,7 @@ class _SceneArea extends StatelessWidget {
   final List<SceneBoard> scenes;
   final SceneBoard? selected;
   final List<WordSymbol?> coreSymbols;
+  final int gridCols;
   final WordSymbol? Function(String) symbolById;
   final int holdMs;
   final ValueChanged<SceneBoard> onOpen;
@@ -698,26 +712,43 @@ class _SceneArea extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: Row(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 0, 4, 8),
-                  child: SceneCanvas(
-                    imagePath: scene.imagePath,
-                    imageSize: Size(scene.imageWidth.toDouble(), scene.imageHeight.toDouble()),
-                    hotspots: scene.payload.hotspots,
-                    symbolById: symbolById,
-                    holdMs: holdMs,
-                    onSelect: onSelect,
+          child: LayoutBuilder(
+            builder: (context, box) {
+              final canvas = SceneCanvas(
+                imagePath: scene.imagePath,
+                imageSize: Size(scene.imageWidth.toDouble(), scene.imageHeight.toDouble()),
+                hotspots: scene.payload.hotspots,
+                symbolById: symbolById,
+                holdMs: holdMs,
+                onSelect: onSelect,
+              );
+              if (box.maxWidth >= 600) {
+                return Row(
+                  children: [
+                    Expanded(
+                      child: Padding(padding: const EdgeInsets.fromLTRB(8, 0, 4, 8), child: canvas),
+                    ),
+                    SizedBox(
+                      width: 210,
+                      child: _BoardGrid(cells: coreSymbols, gridCols: 2, isCorePage: true, holdMs: holdMs, onSelect: onSelect),
+                    ),
+                  ],
+                );
+              }
+              // Layar sempit: enam kata cermin di atas, dengan kolom dan ukuran sel yang sama seperti dua baris teratas
+              // halaman kategori, jadi letaknya tidak berubah saat anak pindah dari grid ke foto.
+              return Column(
+                children: [
+                  SizedBox(
+                    height: _BoardGrid.heightFor(box.maxWidth, gridCols, coreSymbols.length),
+                    child: _BoardGrid(cells: coreSymbols, gridCols: gridCols, isCorePage: true, holdMs: holdMs, onSelect: onSelect),
                   ),
-                ),
-              ),
-              SizedBox(
-                width: 210,
-                child: _BoardGrid(cells: coreSymbols, gridCols: 2, isCorePage: true, holdMs: holdMs, onSelect: onSelect),
-              ),
-            ],
+                  Expanded(
+                    child: Padding(padding: const EdgeInsets.fromLTRB(8, 0, 8, 8), child: canvas),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ],
@@ -800,20 +831,29 @@ class _PageRailState extends State<_PageRail> {
       onTap: widget.onPhoto,
       child: AnimatedContainer(
         duration: Motion.of(context, const Duration(milliseconds: 160)),
+        curve: Curves.easeOut,
         width: double.infinity,
         constraints: const BoxConstraints(minHeight: 64),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
         decoration: BoxDecoration(
-          color: widget.photoActive ? AppColors.tealTint : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: widget.photoActive ? AppColors.tealDeep : Colors.transparent, width: 2),
+          color: widget.photoActive ? AppColors.tealTint : AppColors.panel,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: widget.photoActive ? AppColors.teal : AppColors.line, width: widget.photoActive ? 3 : 1),
         ),
-        child: const Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.photo_camera_back_outlined, size: 26),
-            SizedBox(height: 2),
-            Text('FOTO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900)),
+            Icon(Icons.photo_camera_back_outlined, color: widget.photoActive ? AppColors.tealText : AppColors.muted, size: 24),
+            const SizedBox(height: 4),
+            Text(
+              'FOTO',
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.15,
+                fontWeight: widget.photoActive ? FontWeight.w800 : FontWeight.w600,
+                color: widget.photoActive ? AppColors.tealText : AppColors.ink,
+              ),
+            ),
           ],
         ),
       ),

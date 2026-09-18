@@ -74,12 +74,19 @@ def _env_key(name: str) -> Optional[str]:
     return None
 
 
+def _eleven_env_key() -> Optional[str]:
+    """`ELEVENLABS_API_KEY`, atau nama lama `ELEVEN_LABS` yang sempat dipakai di `.env` tim."""
+    return _env_key("ELEVENLABS_API_KEY") or _env_key("ELEVEN_LABS")
+
+
 def _request(req: urllib.request.Request, timeout: int = 60) -> bytes:
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.read()
     except urllib.error.HTTPError as e:
         detail = e.read().decode(errors="replace")[:300]
+        if "paid_plan_required" in detail or "voice_cloning" in detail:
+            raise VoiceError("paket ElevenLabs belum mendukung klon suara (butuh paket berbayar)", 503) from e
         if e.code in (401, 403):
             raise VoiceError(f"kunci API ditolak penyedia suara ({e.code})", 502) from e
         if e.code == 429:
@@ -108,7 +115,7 @@ class HttpVoiceProvider:
     """Penyedia sungguhan. Kunci dibaca setiap panggilan supaya mengisi `.env` tidak perlu memulai ulang server."""
 
     def available(self) -> dict[str, bool]:
-        return {"openai": bool(_env_key("OPENAI_API_KEY")), "elevenlabs": bool(_env_key("ELEVENLABS_API_KEY"))}
+        return {"openai": bool(_env_key("OPENAI_API_KEY")), "elevenlabs": bool(_eleven_env_key())}
 
     def _openai_key(self) -> str:
         key = _env_key("OPENAI_API_KEY")
@@ -117,7 +124,7 @@ class HttpVoiceProvider:
         return key
 
     def _eleven_key(self) -> str:
-        key = _env_key("ELEVENLABS_API_KEY")
+        key = _eleven_env_key()
         if not key:
             raise VoiceError("klon suara keluarga belum aktif di server (ELEVENLABS_API_KEY kosong)", 503)
         return key

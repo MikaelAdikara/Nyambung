@@ -135,7 +135,25 @@ keyPassword=<kata sandi>
 ```
 
 Tanpa `key.properties`, APK rilis ditandatangani kunci debug (tetap bisa dipasang untuk uji). Ukuran APK rilis
-(18 Sep 2026): `arm64-v8a` 18,8 MB, `armeabi-v7a` 16,3 MB.
+(18 Sep 2026, sesudah klip suara bundel): `arm64-v8a` 20,7 MB, `armeabi-v7a` 18,2 MB. `flutter build apk --release`
+tanpa `--split-per-abi` menghasilkan satu APK gemuk 56,4 MB; jangan bagikan yang itu.
+
+**HP berspesifikasi rendah.** Banyak HP murah Android 8 masih 32-bit: cek dengan
+`adb shell getprop ro.product.cpu.abi`, lalu pasang `app-armeabi-v7a-release.apk` bila hasilnya `armeabi-v7a`.
+Yang sudah disiapkan untuk HP seperti ini:
+
+- Klip kata diputar lewat SoundPool yang sudah dimuat; di emulator 2 GB / 2 inti, jeda dari ketukan diproses sampai
+  audio mulai turun dari median 98 ms ke 21 ms (APK rilis, 12 ketukan).
+- Semua gambar simbol didekode di latar sesudah papan terbuka; cache gambar dibatasi 48 MB.
+- Sinkron berkala berhenti selama papan terbuka dan saat aplikasi di latar belakang.
+- Perender: Flutter memakai Impeller (Vulkan bila ada, OpenGLES bila tidak; emulator memakai OpenGLES).
+
+- Waktu kerja thread UI per frame (APK profil, timeline VM service, buka papan + 9 ketukan + 7 pindah tab):
+  median 0,3 ms, p90 ≤ 3,1 ms. Lonjakan 40 ms hanya saat papan pertama kali dibuka.
+
+Semua angka di atas dari emulator, **belum dari HP fisik** 2 GB. Waktu rasterisasi di emulator ini (median 44–58 ms)
+tidak bisa dipakai: emulator menggambar dengan OpenGL perangkat lunak (SwiftShader), bukan GPU. Perilaku Impeller di
+GPU Mali/Adreno lama juga belum diuji.
 
 Di HP, isi alamat server di Pengaturan dengan IP laptop yang menjalankan server (mis. `http://192.168.1.10:8000`);
 emulator Android menjangkau laptop lewat `http://10.0.2.2:8000`.

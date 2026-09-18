@@ -5,7 +5,7 @@ Diperbarui: 12:00
 
 ## Sedang dikerjakan
 Paket HP kentang + UX (18 Sep siang): 1) optimasi O1–O3 ✔, 2) tab halaman di kiri + nama tab baru + keadaan tekan ✔,
-3) geser urutan bilah ujaran ✔, 4) animasi layar orang tua ✔, 5) O4–O6 + ukur ulang. j1-suara ditahan: belum didengar manusia.
+3) geser urutan bilah ujaran ✔, 4) animasi layar orang tua ✔, 5) O4–O6 + ukur ulang ✔. j1-suara ditahan: belum didengar manusia.
 
 ## Optimasi HP kentang (diukur di emulator arm64 Android 16, `-memory 2048 -cores 2`, APK rilis; **perkiraan, bukan HP fisik**)
 - O1 klip kata tunggal lewat SoundPool (`PlayerMode.lowLatency`, satu pemutar per klip, LRU 40), kata inti dimuat saat
@@ -14,6 +14,11 @@ Paket HP kentang + UX (18 Sep siang): 1) optimasi O1–O3 ✔, 2) tab halaman di
 - O2 sinkron berkala di beranda dilewati saat papan terbuka (`AppState.boardOpen`) dan saat aplikasi di latar belakang
 - O3 satu kunci cache gambar per simbol (256 px) untuk papan, bilah, pratinjau; semua halaman didekode di latar sesudah
   frame pertama papan; cache gambar dibatasi 48 MB (120 simbol ± 30 MB)
+- O4 perender: Impeller OpenGLES di emulator (tanpa Vulkan). Tidak diubah; belum diuji di GPU Mali/Adreno lama
+- O5 APK: gemuk 56,4 MB vs per-ABI `armeabi-v7a` 18,2 MB / `arm64-v8a` 20,7 MB. README: pasang per-ABI, cek ABI HP
+- O6 pembangunan ulang: satu-satunya pendengar `AppState` adalah `BootGate` (mengembalikan `const HomeScreen`), jadi
+  ketukan tidak membangun ulang layar lain; tidak ada yang diubah. Thread UI (APK profil): median 0,3 ms, p90 ≤ 3,1 ms,
+  lonjakan 40 ms saat papan dibuka. Raster 44–58 ms di emulator = SwiftShader, bukan angka GPU
 
 ## Tonggak selesai (tag)
 - j1-kerangka: app terbuka, AppScope di atas MaterialApp, AppState + DAO nyata, DB terbuka, 120 kata termuat

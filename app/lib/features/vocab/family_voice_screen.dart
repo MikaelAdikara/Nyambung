@@ -8,6 +8,7 @@ import 'package:record/record.dart';
 import '../../core/app_state.dart';
 import '../../core/error_log.dart';
 import '../../core/motion.dart';
+import '../../core/theme.dart';
 import '../../data/models.dart';
 import '../board/symbol_cell.dart';
 import '../coach/companion_widgets.dart';
@@ -124,35 +125,28 @@ class _FamilyVoiceScreenState extends State<FamilyVoiceScreen> {
     return CompanionPage(
       title: 'Suara keluarga',
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
         children: [
-          Text(
-            recorded == 0
-                ? 'Belum ada kata dengan suara keluarga. Papan memakai suara HP, dan itu tidak masalah.'
-                : '$recorded dari ${all.length} kata sudah punya suara keluarga. Sisanya memakai suara HP, dan itu tidak masalah.',
-            style: const TextStyle(fontSize: 18, height: 1.35, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Suara ini dipakai saat Ibu atau Ayah memberi contoh di papan, supaya anak mendengar orang yang dikenalnya. '
-            'Saat anak sendiri yang menekan, papan bicara dengan suara anak, karena itu suaranya.',
-            style: companionBodyStyle,
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Rekaman tersimpan di perangkat ini saja dan tidak pernah dikirim ke siapa pun, termasuk terapis.',
-            style: companionMutedStyle,
-          ),
-          if (_denied) ...[
-            const SizedBox(height: 12),
-            const Text('Izin mikrofon tidak diberikan. Tidak apa-apa; papan tetap memakai suara bawaan.', style: companionMutedStyle),
-          ],
-          for (final (title, words) in sections) ...[
-            const SizedBox(height: 16),
-            Text(
-              title.toUpperCase(),
-              style: const TextStyle(fontSize: 13, letterSpacing: 1.2, fontWeight: FontWeight.w800, color: CompanionColors.muted),
+          CompanionCard(
+            color: CompanionColors.coralTint,
+            borderColor: CompanionColors.coralTint,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Text(
+              '$recorded dari ${all.length} kata memakai suara keluarga saat Ibu atau Ayah memberi contoh.',
+              style: AppText.body.copyWith(fontSize: 15, color: CompanionColors.coralText),
             ),
+          ),
+          SmoothReveal(
+            child: !_denied
+                ? null
+                : const Padding(
+                    padding: EdgeInsets.only(top: 12),
+                    child: Text('Izin mikrofon tidak diberikan. Papan tetap memakai suara bawaan.', style: companionMutedStyle),
+                  ),
+          ),
+          for (final (title, words) in sections) ...[
+            const SizedBox(height: 18),
+            Eyebrow(title),
             const SizedBox(height: 8),
             for (final s in words) ...[_row(s), const SizedBox(height: 8)],
           ],
@@ -165,53 +159,93 @@ class _FamilyVoiceScreenState extends State<FamilyVoiceScreen> {
     final recordingThis = _recording == s.wordId;
     final busyOther = _recording != null && !recordingThis;
     final hasVoice = s.familyAudio != null;
-    return CompanionCard(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return AnimatedContainer(
+      duration: Motion.of(context, Motion.fade),
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+      decoration: BoxDecoration(
+        color: recordingThis ? CompanionColors.coralTint : CompanionColors.panel,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: recordingThis ? CompanionColors.coral : CompanionColors.line, width: recordingThis ? 2 : 1),
+      ),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Image(image: symbolImage(s.symbolPath), width: 40, height: 40, errorBuilder: (_, _, _) => const SizedBox(width: 40)),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(s.labelDisplay, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-              ),
-              if (recordingThis) ...[const RecordingDot(), const SizedBox(width: 6)],
-              Text(
-                recordingThis
-                    ? 'Sedang merekam…'
-                    : hasVoice
-                    ? 'Suara keluarga'
-                    : 'Suara papan',
-                style: companionMutedStyle,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              recordingThis
-                  ? FilledButton.icon(onPressed: () => _stop(s), icon: const Icon(Icons.stop), label: const Text('Berhenti'))
-                  : OutlinedButton.icon(
-                      onPressed: busyOther ? null : () => _start(s),
-                      icon: const Icon(Icons.mic),
-                      label: Text(hasVoice ? 'Ulangi' : 'Rekam'),
+          Image(image: symbolImage(s.symbolPath), width: 36, height: 36, errorBuilder: (_, _, _) => const SizedBox(width: 36)),
+          const SizedBox(width: 12),
+          Expanded(child: Text(s.labelDisplay, style: AppText.bodyStrong)),
+          AnimatedSwitcher(
+            duration: Motion.of(context, Motion.fade),
+            child: recordingThis
+                ? const Row(
+                    key: ValueKey('rekam'),
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      RecordingDot(),
+                      SizedBox(width: 6),
+                      Text('Merekam', style: AppText.cap),
+                    ],
+                  )
+                : hasVoice
+                ? Container(
+                    key: const ValueKey('ada'),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(color: CompanionColors.tealTint, borderRadius: BorderRadius.circular(99)),
+                    child: Text(
+                      'Terekam',
+                      style: AppText.cap.copyWith(color: CompanionColors.tealText, fontWeight: FontWeight.w800),
                     ),
-              if (hasVoice && !recordingThis) ...[
-                OutlinedButton.icon(
-                  onPressed: busyOther ? null : () => _play(s),
-                  icon: const Icon(Icons.play_arrow),
-                  label: const Text('Dengarkan'),
-                ),
-                TextButton(onPressed: busyOther ? null : () => _remove(s), child: const Text('Hapus rekaman')),
-              ],
-            ],
+                  )
+                : const SizedBox.shrink(key: ValueKey('kosong')),
+          ),
+          if (hasVoice && !recordingThis) ...[
+            _SmallIcon(icon: Icons.play_arrow_rounded, tooltip: 'Dengarkan', onTap: busyOther ? null : () => _play(s)),
+            _SmallIcon(icon: Icons.delete_outline_rounded, tooltip: 'Hapus rekaman', onTap: busyOther ? null : () => _remove(s)),
+          ],
+          _SmallIcon(
+            icon: recordingThis ? Icons.stop_rounded : Icons.mic_rounded,
+            tooltip: recordingThis ? 'Berhenti' : (hasVoice ? 'Rekam ulang' : 'Rekam'),
+            filled: true,
+            onTap: busyOther ? null : (recordingThis ? () => _stop(s) : () => _start(s)),
           ),
         ],
       ),
     );
   }
+}
+
+/// Tombol ikon bulat 44 dp di baris rekaman. [filled] = tombol mikrofon koral.
+class _SmallIcon extends StatelessWidget {
+  const _SmallIcon({required this.icon, required this.tooltip, required this.onTap, this.filled = false});
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onTap;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(left: 6),
+    child: PressScale(
+      child: Tooltip(
+        message: tooltip,
+        child: Semantics(
+          button: true,
+          label: tooltip,
+          excludeSemantics: true,
+          child: GestureDetector(
+            onTap: onTap,
+            child: AnimatedOpacity(
+              opacity: onTap == null ? 0.4 : 1,
+              duration: Motion.of(context, Motion.fade),
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(color: filled ? CompanionColors.coralTint : CompanionColors.sand, shape: BoxShape.circle),
+                child: Icon(icon, size: 22, color: filled ? CompanionColors.coralText : CompanionColors.tealText),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }

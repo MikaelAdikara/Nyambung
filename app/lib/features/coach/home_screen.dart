@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../core/app_state.dart';
+import '../../core/brand.dart';
 import '../../core/motion.dart';
+import '../../core/theme.dart';
 import '../board/board_screen.dart';
 import '../progress/progress_screen.dart';
 import '../settings/settings_screen.dart';
@@ -112,22 +114,41 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         return Scaffold(
           backgroundColor: CompanionColors.bg,
           body: AnimatedSwitcher(
-            duration: Motion.of(context, Motion.fade),
+            duration: Motion.of(context, Motion.resize),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween(begin: const Offset(0, 0.015), end: Offset.zero).animate(animation),
+                child: child,
+              ),
+            ),
             child: !ready
                 ? const Center(key: ValueKey('memuat'), child: CircularProgressIndicator())
                 : KeyedSubtree(key: ValueKey(_tab), child: _tabBody(controller)),
           ),
           bottomNavigationBar: !ready
               ? null
-              : NavigationBar(
-                  selectedIndex: _tab,
-                  onDestinationSelected: _openTab,
-                  destinations: const [
-                    NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Beranda'),
-                    NavigationDestination(icon: Icon(Icons.bar_chart_outlined), selectedIcon: Icon(Icons.bar_chart), label: 'Perkembangan'),
-                    NavigationDestination(icon: Icon(Icons.people_outline), selectedIcon: Icon(Icons.people), label: 'Terapis'),
-                    NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'Pengaturan'),
-                  ],
+              : DecoratedBox(
+                  decoration: const BoxDecoration(
+                    border: Border(top: BorderSide(color: CompanionColors.line)),
+                  ),
+                  child: NavigationBar(
+                    selectedIndex: _tab,
+                    onDestinationSelected: _openTab,
+                    animationDuration: Motion.of(context, Motion.resize),
+                    destinations: const [
+                      NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Hari Ini'),
+                      NavigationDestination(
+                        icon: Icon(Icons.bar_chart_outlined),
+                        selectedIcon: Icon(Icons.bar_chart_rounded),
+                        label: 'Kembang',
+                      ),
+                      NavigationDestination(icon: Icon(Icons.link_rounded), selectedIcon: Icon(Icons.link_rounded), label: 'Terapis'),
+                      NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings_rounded), label: 'Atur'),
+                    ],
+                  ),
                 ),
         );
       },
@@ -143,64 +164,51 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Widget _home(CompanionController controller) {
     final child = controller.child;
+    final sections = <Widget>[
+      PrimaryButton(label: 'Buka Papan Bicara untuk anak', icon: Icons.grid_view_rounded, onPressed: () => _openBoard(controller)),
+      _MissionCard(state: controller),
+      if (controller.pendingTargets.isNotEmpty) _ProposalCard(state: controller, onOpen: () => _openTab(2)),
+      WeekCard(state: controller),
+      NavRow(
+        icon: Icons.view_column_rounded,
+        title: 'Sekarang → Nanti',
+        subtitle: 'Urutan kegiatan dengan dua gambar',
+        tint: CompanionColors.lavenderTint,
+        iconColor: CompanionColors.lavenderDeep,
+        onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NowNextScreen())),
+      ),
+      _SyncCard(state: controller),
+    ];
     return Scaffold(
       backgroundColor: CompanionColors.bg,
-      appBar: AppBar(
-        backgroundColor: CompanionColors.bg,
-        elevation: 0,
-        title: Text('Halo, keluarga ${child?.nickname ?? ''}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-      ),
-      body: RefreshIndicator(
-        onRefresh: controller.load,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-          children: [
-            _MissionCard(state: controller),
-            SmoothReveal(
-              child: controller.pendingTargets.isEmpty
-                  ? null
-                  : Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: _ProposalCard(state: controller, onOpen: () => _openTab(2)),
-                    ),
-            ),
-            const SizedBox(height: 16),
-            BoardPreviewCard(state: controller, onOpen: () => _openBoard(controller)),
-            const SizedBox(height: 8),
-            PressScale(
-              child: OutlinedButton.icon(
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NowNextScreen())),
-                icon: const Icon(Icons.view_column_outlined),
-                label: const Text('Sekarang → Nanti'),
+      body: SafeArea(
+        bottom: false,
+        child: RefreshIndicator(
+          onRefresh: controller.load,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+            children: [
+              Row(
+                children: [
+                  const BrandMark(size: 40),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text('Halo, keluarga ${child?.nickname ?? ''}', style: AppText.h2)),
+                ],
               ),
-            ),
-            const SizedBox(height: 20),
-            const _SectionLabel('SEPEKAN INI'),
-            const SizedBox(height: 8),
-            WeekCard(state: controller),
-            const SizedBox(height: 8),
-            Text(controller.weeklySummary, style: companionMutedStyle),
-            const SizedBox(height: 16),
-            _SyncCard(state: controller),
-          ],
+              const SizedBox(height: 18),
+              for (var i = 0; i < sections.length; i++) ...[
+                if (i > 0) const SizedBox(height: 14),
+                FadeSlideIn(key: ValueKey(sections[i].runtimeType), index: i, child: sections[i]),
+              ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Text(
-    text,
-    style: const TextStyle(fontSize: 13, letterSpacing: 1.4, fontWeight: FontWeight.w800, color: CompanionColors.muted),
-  );
-}
-
+/// Kartu misi hari ini: gradasi tosca, satu kalimat misi, dua tombol.
 class _MissionCard extends StatelessWidget {
   const _MissionCard({required this.state});
 
@@ -209,28 +217,36 @@ class _MissionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mission = state.mission;
-    return CompanionCard(
-      color: CompanionColors.navySoft,
+    final log = state.todayLog;
+    return HeroCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Tekan ${state.targetLabel} lima kali saat ${state.routineLabel}',
-            style: const TextStyle(fontSize: 22, height: 1.25, fontWeight: FontWeight.w800),
-          ),
+          const Eyebrow('Misi hari ini', color: CompanionColors.tealTint),
           const SizedBox(height: 8),
-          const Text('Ibu atau Ayah yang menekan sambil bicara. Anak tidak perlu menekan apa pun.', style: companionBodyStyle),
+          Text('Tekan ${state.targetLabel} lima kali saat ${state.routineLabel}', style: AppText.h2.copyWith(color: Colors.white)),
+          const SizedBox(height: 6),
+          Text('Ibu atau Ayah yang menekan sambil bicara.', style: AppText.body.copyWith(color: Colors.white, fontSize: 15)),
           SmoothReveal(
-            child: state.todayLog == null
+            child: log == null
                 ? null
                 : Padding(
-                    key: ValueKey(state.todayLog!.status),
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      state.todayLog!.status == 'selesai'
-                          ? 'Misi hari ini sudah selesai. Terima kasih.'
-                          : 'Hari ini belum sempat. Tidak apa-apa, besok ada lagi.',
-                      style: companionMutedStyle,
+                    key: ValueKey(log.status),
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(99)),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.check_rounded, size: 18, color: Colors.white),
+                          const SizedBox(width: 6),
+                          Text(
+                            log.status == 'selesai' ? 'Sudah selesai hari ini' : 'Belum sempat hari ini',
+                            style: const TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
           ),
@@ -238,24 +254,22 @@ class _MissionCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: PressScale(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => LessonScreen(state: state, lessonKey: mission.lessonKey),
-                      ),
+                child: _HeroButton(
+                  label: 'Pelajaran 60 detik',
+                  filled: false,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => LessonScreen(state: state, lessonKey: mission.lessonKey),
                     ),
-                    child: const Text('Pelajaran 60 detik', textAlign: TextAlign.center),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
-                child: PressScale(
-                  child: FilledButton(
-                    onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => MissionScreen(state: state))),
-                    child: const Text('Mulai misi'),
-                  ),
+                child: _HeroButton(
+                  label: 'Mulai misi',
+                  filled: true,
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => MissionScreen(state: state))),
                 ),
               ),
             ],
@@ -266,6 +280,32 @@ class _MissionCard extends StatelessWidget {
   }
 }
 
+class _HeroButton extends StatelessWidget {
+  const _HeroButton({required this.label, required this.filled, required this.onTap});
+
+  final String label;
+  final bool filled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => PressScale(
+    child: SizedBox(
+      height: 50,
+      child: FilledButton(
+        onPressed: onTap,
+        style: FilledButton.styleFrom(
+          backgroundColor: filled ? Colors.white : Colors.white.withValues(alpha: 0.18),
+          foregroundColor: filled ? CompanionColors.tealText : Colors.white,
+          minimumSize: const Size(0, 50),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          textStyle: AppText.button.copyWith(fontSize: 15),
+        ),
+        child: FittedBox(fit: BoxFit.scaleDown, child: Text(label)),
+      ),
+    ),
+  );
+}
+
 class _ProposalCard extends StatelessWidget {
   const _ProposalCard({required this.state, required this.onOpen});
 
@@ -273,30 +313,22 @@ class _ProposalCard extends StatelessWidget {
   final VoidCallback onOpen;
 
   @override
-  Widget build(BuildContext context) => PressScale(
-    child: InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: onOpen,
-      child: CompanionCard(
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${state.pendingTargets.length} usulan kata dari terapis menunggu jawaban',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text('Boleh diterima atau ditolak tanpa alasan.', style: companionMutedStyle),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right),
-          ],
+  Widget build(BuildContext context) => TapCard(
+    onTap: onOpen,
+    color: CompanionColors.sunTint,
+    borderColor: CompanionColors.sunLine,
+    child: Row(
+      children: [
+        const IconBadge(icon: Icons.lightbulb_outline_rounded, tint: Colors.white, color: CompanionColors.sunText),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            '${state.pendingTargets.length} usulan kata dari terapis menunggu jawaban',
+            style: AppText.bodyStrong.copyWith(color: CompanionColors.sunText),
+          ),
         ),
-      ),
+        const Icon(Icons.chevron_right_rounded, color: CompanionColors.sunText),
+      ],
     ),
   );
 }
@@ -307,27 +339,36 @@ class _SyncCard extends StatelessWidget {
   final CompanionController state;
 
   @override
-  Widget build(BuildContext context) => CompanionCard(
-    color: CompanionColors.sand,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          !state.linkedToTherapist
-              ? 'Belum terhubung ke terapis. Catatan tetap tersimpan di perangkat.'
-              : state.outboxCount == 0
-              ? 'Semua catatan sudah sampai ke terapis.${state.lastSyncedAt == null ? '' : ' Terakhir ${formatWaktuSingkat(state.lastSyncedAt!)}.'}'
-              : state.lastAttemptOffline
-              ? 'Tidak ada jaringan saat ini. ${state.outboxCount} catatan tersimpan di perangkat dan akan terkirim nanti.'
-              : '${state.outboxCount} catatan tersimpan di perangkat dan akan terkirim nanti.',
-          style: companionBodyStyle,
-        ),
-        const SizedBox(height: 12),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton(onPressed: state.canSync && !state.syncing ? state.syncNow : null, child: const Text('Kirim sekarang')),
-        ),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    final (icon, color, text) = !state.linkedToTherapist
+        ? (Icons.phone_android_rounded, CompanionColors.muted, 'Catatan tersimpan di perangkat ini')
+        : state.outboxCount == 0
+        ? (
+            Icons.check_circle_rounded,
+            CompanionColors.leafText,
+            'Semua catatan sudah sampai ke terapis${state.lastSyncedAt == null ? '' : ' · ${formatWaktuSingkat(state.lastSyncedAt!)}'}',
+          )
+        : (
+            state.lastAttemptOffline ? Icons.cloud_off_rounded : Icons.cloud_upload_outlined,
+            CompanionColors.skyText,
+            '${state.outboxCount} catatan menunggu jaringan',
+          );
+    return CompanionCard(
+      padding: const EdgeInsets.fromLTRB(16, 10, 10, 10),
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: Motion.of(context, Motion.fade),
+              child: Text(text, key: ValueKey(text), style: AppText.body.copyWith(fontSize: 15)),
+            ),
+          ),
+          if (state.canSync && state.outboxCount > 0)
+            TextButton(onPressed: state.syncing ? null : state.syncNow, child: Text(state.syncing ? 'Mengirim…' : 'Kirim')),
+        ],
+      ),
+    );
+  }
 }

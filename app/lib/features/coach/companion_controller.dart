@@ -99,7 +99,7 @@ class CompanionController extends ChangeNotifier {
   String get weeklySummary {
     final name = child?.nickname ?? 'anak';
     final word = weeklyTopWord;
-    if (word == null) return 'Papan belum dipakai $name pekan ini. Tidak apa-apa; contoh dari Ibu dan Ayah tetap berarti.';
+    if (word == null) return 'Papan belum dipakai $name pekan ini.';
     final others = weeklyOtherWords == 0 ? '' : ', dan $weeklyOtherWords kata lain';
     return 'Pekan ini $name menekan ${wordLabel(word)} $weeklyTopCount kali$others.';
   }

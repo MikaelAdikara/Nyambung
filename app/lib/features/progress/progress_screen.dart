@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants.dart';
 import '../../core/motion.dart';
+import '../../core/theme.dart';
 import '../../core/time.dart';
 import '../../data/models.dart';
 import '../board/symbol_cell.dart';
@@ -117,40 +118,72 @@ class _ProgressScreenState extends State<ProgressScreen> {
           );
     final (done, dayCount) = missionDoneSince(data.logs, from == null || from.isBefore(data.since) ? data.since : from, now);
     final share = stats.spontaneousShare;
+    final bars = weeklyUniqueBars(data.events, now, weeks: 6);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _StatCard(
-          eyebrow: 'KATA BERBEDA YANG DIPAKAI ${name.toUpperCase()}',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(child: Text('${stats.uniqueWords}', style: _bigNumber)),
-                  WeekBars(values: weeklyUniqueBars(data.events, now, weeks: 6)),
-                ],
-              ),
-              if (prev != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  _compare(stats.uniqueWords, prev.uniqueWords, _range == _Range.week ? 'pekan lalu' : 'sebulan sebelumnya'),
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        Row(
+          children: [
+            Expanded(
+              child: _MetricTile(
+                label: 'Kata berbeda',
+                value: CountUp(
+                  value: stats.uniqueWords,
+                  style: _tileNumber.copyWith(color: CompanionColors.tealText),
                 ),
-              ],
-              const SizedBox(height: 8),
-              Text(
-                'Jumlah kata berbeda yang $name tekan sendiri. Angka naik atau turun itu wajar; yang dilihat terapis adalah '
-                'arah dalam beberapa pekan.',
-                style: companionMutedStyle,
+                note: prev == null ? 'sejak awal' : 'vs ${prev.uniqueWords} ${_range == _Range.week ? 'pekan lalu' : 'sebelumnya'}',
               ),
-            ],
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _MetricTile(
+                label: 'Ketukan spontan',
+                value: share == null
+                    ? Text('–', style: _tileNumber.copyWith(color: CompanionColors.lavenderDeep))
+                    : CountUp(
+                        value: (share * 100).round(),
+                        suffix: '%',
+                        style: _tileNumber.copyWith(color: CompanionColors.lavenderDeep),
+                      ),
+                note: 'tanpa contoh 60 dtk',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _MetricTile(
+                label: 'Hari misi selesai',
+                value: Text('$done/$dayCount', style: _tileNumber.copyWith(color: CompanionColors.leafText)),
+                note: _range.label.toLowerCase(),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _MetricTile(
+                label: 'Ketukan $name',
+                value: CountUp(value: stats.childTaps, style: _tileNumber),
+                note: _range.label.toLowerCase(),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _StatCard(
+          eyebrow: 'Kata berbeda per pekan',
+          child: LayoutBuilder(
+            builder: (context, box) {
+              const gap = 8.0;
+              final w = (box.maxWidth - gap * (bars.length - 1)) / bars.length;
+              return WeekBars(values: bars, height: 84, barWidth: w.clamp(8, 48), gap: gap);
+            },
           ),
         ),
         const SizedBox(height: 12),
         _StatCard(
-          eyebrow: 'KATA YANG PALING SERING DIPAKAI',
+          eyebrow: 'Kata yang paling sering',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -158,35 +191,17 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 Text('$name belum menekan papan dalam rentang ini.', style: companionMutedStyle)
               else
                 for (final w in stats.topWords) _TopWordRow(word: w, max: stats.topWords.first.count, state: widget.state),
-              const SizedBox(height: 8),
-              Text(
-                'Kata yang paling sering dipakai biasanya kata yang paling berguna untuk $name sekarang. Bukan berarti kata '
-                'lain gagal.',
-                style: companionMutedStyle,
-              ),
             ],
           ),
         ),
         const SizedBox(height: 12),
         _StatCard(
-          eyebrow: 'UJARAN SPONTAN',
+          eyebrow: 'Spontan atau dipancing',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(share == null ? '–' : '${(share * 100).round()}%', style: _bigNumber),
-                  const SizedBox(width: 10),
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 6),
-                    child: Text('tanpa dipancing', style: companionBodyStyle),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
               _SplitBar(share: share ?? 0),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               const Wrap(
                 spacing: 16,
                 children: [
@@ -194,35 +209,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
                   _Legend(filled: false, text: 'setelah dipancing'),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Spontan berarti $name menekan simbol tanpa contoh dari Ibu atau Ayah semenit sebelumnya. Keduanya sama '
-                'pentingnya; dipancing bukan hal buruk.',
-                style: companionMutedStyle,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        _StatCard(
-          eyebrow: 'HARI DENGAN MISI MODELING SELESAI',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('$done dari $dayCount', style: _bigNumber),
-              const SizedBox(height: 8),
-              const Text('Ini catatan, bukan nilai. Hari yang terlewat tidak menghapus apa pun.', style: companionMutedStyle),
             ],
           ),
         ),
       ],
     );
-  }
-
-  static String _compare(int now, int before, String label) {
-    if (now > before) return 'Naik ${now - before} dari $label ($before kata)';
-    if (now < before) return '$label: $before kata';
-    return 'Sama dengan $label';
   }
 
   String _contextLabel(String? context) {
@@ -232,12 +223,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   Widget _todayCard(List<JournalItem> items, String name) {
-    return CompanionCard(
+    return _StatCard(
+      eyebrow: 'Hari ini',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Hari ini', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 8),
           if (items.isEmpty)
             const Text('Belum ada ketukan papan hari ini.', style: companionMutedStyle)
           else
@@ -245,16 +235,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
               Text(
                 '${item.at.hour.toString().padLeft(2, '0')}.${item.at.minute.toString().padLeft(2, '0')}'
                 '${_contextLabel(item.context)} · ${item.actor == Actor.anak ? name : 'contoh Ibu/Ayah'}'
-                '${item.spoken ? '' : ' · ditekan tanpa UCAPKAN'}',
-                style: companionMutedStyle,
+                '${item.spoken ? '' : ' · tanpa UCAPKAN'}',
+                style: AppText.cap,
               ),
-              Text(
-                '"${item.words.map(widget.state.wordLabel).join(' ')}"',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-              ),
+              const SizedBox(height: 2),
+              Text('"${item.words.map(widget.state.wordLabel).join(' ')}"', style: AppText.bodyStrong),
               const SizedBox(height: 10),
             ],
-          const Text('Tersusun sendiri dari ketukan papan. Tidak ada yang perlu diisi.', style: companionMutedStyle),
         ],
       ),
     );
@@ -273,16 +260,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
               ? const Center(key: ValueKey('memuat'), child: CircularProgressIndicator())
               : ListView(
                   key: const ValueKey('isi'),
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
                   children: [
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        for (final r in _Range.values)
-                          ChoiceChip(label: Text(r.label), selected: r == _range, onSelected: (_) => setState(() => _range = r)),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
+                    _RangeSwitch(value: _range, onChanged: (r) => setState(() => _range = r)),
+                    const SizedBox(height: 14),
                     AnimatedSwitcher(
                       duration: Motion.of(context, Motion.fade),
                       child: KeyedSubtree(key: ValueKey(_range), child: _rangeCards(snap.data!, name)),
@@ -290,22 +271,21 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     const SizedBox(height: 12),
                     _todayCard(snap.data!.today, name),
                     const SizedBox(height: 20),
-                    const Text(
-                      'KATA BARU PER PEKAN',
-                      style: TextStyle(fontSize: 13, letterSpacing: 1.2, fontWeight: FontWeight.w800, color: CompanionColors.muted),
-                    ),
+                    const Eyebrow('Kata baru per pekan'),
                     const SizedBox(height: 8),
                     for (final week in snap.data!.weeks) ...[
                       CompanionCard(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Pekan ${week.week}: ${week.uniqueWords} kata berbeda dari $name',
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                            Row(
+                              children: [
+                                Expanded(child: Text('Pekan ${week.week}', style: AppText.h3)),
+                                Text('${week.uniqueWords} kata', style: AppText.bodyStrong.copyWith(color: CompanionColors.tealText)),
+                              ],
                             ),
                             if (week.newWords.isNotEmpty) ...[
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 10),
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
@@ -315,9 +295,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
                     ],
-                    const Text('Ini catatan pemakaian, bukan penilaian kemampuan.', style: companionMutedStyle),
+                    const SizedBox(height: 6),
+                    const Text('Angka ini pola pemakaian, bukan ukuran kemampuan anak.', textAlign: TextAlign.center, style: AppText.cap),
                   ],
                 ),
         ),
@@ -325,6 +306,96 @@ class _ProgressScreenState extends State<ProgressScreen> {
     );
   }
 }
+
+/// Pilihan rentang: tiga pil dalam satu rel; penanda putih bergeser ke pilihan (240 ms).
+class _RangeSwitch extends StatelessWidget {
+  const _RangeSwitch({required this.value, required this.onChanged});
+
+  final _Range value;
+  final ValueChanged<_Range> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    const values = _Range.values;
+    final index = values.indexOf(value);
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(color: CompanionColors.sand, borderRadius: BorderRadius.circular(99)),
+      child: Stack(
+        children: [
+          AnimatedAlign(
+            duration: Motion.of(context, Motion.resize),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment(-1 + 2 * index / (values.length - 1), 0),
+            child: FractionallySizedBox(
+              widthFactor: 1 / values.length,
+              heightFactor: 1,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(99),
+                  boxShadow: const [BoxShadow(color: Color(0x1A038075), blurRadius: 6, offset: Offset(0, 2))],
+                ),
+              ),
+            ),
+          ),
+          Row(
+            children: [
+              for (final r in values)
+                Expanded(
+                  child: Semantics(
+                    button: true,
+                    selected: r == value,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => onChanged(r),
+                      child: Center(
+                        child: AnimatedDefaultTextStyle(
+                          duration: Motion.of(context, Motion.fade),
+                          style: TextStyle(
+                            fontFamily: 'Nunito',
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w800,
+                            color: r == value ? CompanionColors.tealText : CompanionColors.muted,
+                          ),
+                          child: Text(r.label),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  const _MetricTile({required this.label, required this.value, required this.note});
+
+  final String label;
+  final Widget value;
+  final String note;
+
+  @override
+  Widget build(BuildContext context) => CompanionCard(
+    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.cap),
+        const SizedBox(height: 2),
+        value,
+        Text(note, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.cap),
+      ],
+    ),
+  );
+}
+
+const _tileNumber = TextStyle(fontFamily: 'Fredoka', fontSize: 30, height: 1.15, fontWeight: FontWeight.w600, color: CompanionColors.ink);
 
 class _WordChip extends StatelessWidget {
   const _WordChip({required this.word, required this.state});
@@ -337,11 +408,7 @@ class _WordChip extends StatelessWidget {
     final symbol = state.app.symbolById(word);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: CompanionColors.sand,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: CompanionColors.line),
-      ),
+      decoration: BoxDecoration(color: CompanionColors.tealTint, borderRadius: BorderRadius.circular(99)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -355,8 +422,6 @@ class _WordChip extends StatelessWidget {
   }
 }
 
-const _bigNumber = TextStyle(fontSize: 52, height: 1, fontWeight: FontWeight.w800);
-
 class _StatCard extends StatelessWidget {
   const _StatCard({required this.eyebrow, required this.child});
 
@@ -365,17 +430,7 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => CompanionCard(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          eyebrow,
-          style: const TextStyle(fontSize: 13, letterSpacing: 1.2, fontWeight: FontWeight.w800, color: CompanionColors.muted),
-        ),
-        const SizedBox(height: 12),
-        child,
-      ],
-    ),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Eyebrow(eyebrow), const SizedBox(height: 12), child]),
   );
 }
 
@@ -415,7 +470,7 @@ class _TopWordRow extends StatelessWidget {
               curve: Curves.easeOutCubic,
               builder: (context, v, _) => ClipRRect(
                 borderRadius: BorderRadius.circular(99),
-                child: LinearProgressIndicator(value: v, minHeight: 14, color: CompanionColors.navy, backgroundColor: CompanionColors.sand),
+                child: LinearProgressIndicator(value: v, minHeight: 12, color: CompanionColors.teal, backgroundColor: CompanionColors.sand),
               ),
             ),
           ),
@@ -445,7 +500,12 @@ class _SplitBar extends StatelessWidget {
     curve: Curves.easeOutCubic,
     builder: (context, v, _) => ClipRRect(
       borderRadius: BorderRadius.circular(99),
-      child: LinearProgressIndicator(value: v, minHeight: 16, color: CompanionColors.navy, backgroundColor: const Color(0xFFDCE6F1)),
+      child: LinearProgressIndicator(
+        value: v,
+        minHeight: 16,
+        color: CompanionColors.lavender,
+        backgroundColor: CompanionColors.lavenderTint,
+      ),
     ),
   );
 }
@@ -465,9 +525,9 @@ class _Legend extends StatelessWidget {
         width: 14,
         height: 14,
         decoration: BoxDecoration(
-          color: filled ? CompanionColors.navy : const Color(0xFFDCE6F1),
+          color: filled ? CompanionColors.lavender : CompanionColors.lavenderTint,
           borderRadius: BorderRadius.circular(3),
-          border: filled ? null : Border.all(color: CompanionColors.navy, width: 1.5),
+          border: filled ? null : Border.all(color: CompanionColors.lavenderDeep, width: 1.5),
         ),
       ),
       const SizedBox(width: 6),

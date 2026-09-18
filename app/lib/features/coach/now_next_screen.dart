@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/app_state.dart';
+import '../../core/motion.dart';
+import '../../core/theme.dart';
 import '../../data/models.dart';
 import '../board/symbol_cell.dart';
 import 'companion_widgets.dart';
@@ -65,16 +67,15 @@ class _NowNextScreenState extends State<NowNextScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          const Text(
-            'Tunjukkan urutan kegiatan dengan dua gambar: apa yang terjadi sekarang, lalu apa yang terjadi nanti. '
-            'Tanpa jam, tanpa hadiah, tanpa penilaian.',
-            style: companionBodyStyle,
-          ),
+          const Text('Apa yang terjadi sekarang, lalu apa yang terjadi nanti.', style: AppText.muted),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(child: _slot('SEKARANG', _now, _fillingNow, () => setState(() => _fillingNow = true))),
-              const Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Icon(Icons.arrow_forward, size: 32)),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                child: Icon(Icons.arrow_forward_rounded, size: 32, color: CompanionColors.teal),
+              ),
               Expanded(child: _slot('NANTI', _next, !_fillingNow, () => setState(() => _fillingNow = false))),
             ],
           ),
@@ -85,7 +86,10 @@ class _NowNextScreenState extends State<NowNextScreen> {
             onPressed: ready ? () => Navigator.of(context).push(NowNextView.route(_now!, _next!)) : null,
           ),
           const SizedBox(height: 20),
-          Text('Pilih kata untuk ${_fillingNow ? 'SEKARANG' : 'NANTI'}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          AnimatedSwitcher(
+            duration: Motion.of(context, Motion.fade),
+            child: Text('Pilih kata untuk ${_fillingNow ? 'SEKARANG' : 'NANTI'}', key: ValueKey(_fillingNow), style: AppText.h3),
+          ),
           const SizedBox(height: 8),
           SizedBox(
             height: 48,
@@ -136,16 +140,17 @@ class _NowNextScreenState extends State<NowNextScreen> {
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,
-        child: Container(
+        child: AnimatedContainer(
+          duration: Motion.of(context, Motion.fade),
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: active ? CompanionColors.navySoft : CompanionColors.panel,
-            border: Border.all(color: active ? CompanionColors.navy : CompanionColors.line, width: active ? 3 : 1),
-            borderRadius: BorderRadius.circular(14),
+            color: active ? CompanionColors.tealTint : CompanionColors.panel,
+            border: Border.all(color: active ? CompanionColors.teal : CompanionColors.line, width: active ? 3 : 1),
+            borderRadius: BorderRadius.circular(18),
           ),
           child: Column(
             children: [
-              Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+              Eyebrow(title, color: active ? CompanionColors.tealText : CompanionColors.muted),
               const SizedBox(height: 6),
               LayoutBuilder(
                 builder: (context, box) => s == null
@@ -155,7 +160,10 @@ class _NowNextScreenState extends State<NowNextScreen> {
                           child: Text('Ketuk kata di bawah', textAlign: TextAlign.center, style: companionMutedStyle),
                         ),
                       )
-                    : SymbolFace(symbol: s, width: box.maxWidth, height: box.maxWidth * 0.95),
+                    : PopIn(
+                        key: ValueKey(s.wordId),
+                        child: SymbolFace(symbol: s, width: box.maxWidth, height: box.maxWidth * 0.95),
+                      ),
               ),
             ],
           ),
@@ -165,7 +173,7 @@ class _NowNextScreenState extends State<NowNextScreen> {
   }
 }
 
-/// N2 tampilan anak: dua kartu besar, tanpa statistik dan tanpa animasi. Mengetuk kartu membunyikan
+/// N2 tampilan anak: dua kartu besar, tanpa statistik; hanya memudar masuk. Mengetuk kartu membunyikan
 /// "sekarang {kata}" / "nanti {kata}" tanpa mencatat peristiwa (bukan ketukan papan).
 class NowNextView extends StatelessWidget {
   const NowNextView({super.key, required this.nowId, required this.nextId});
@@ -175,8 +183,14 @@ class NowNextView extends StatelessWidget {
 
   static Route<void> route(String nowId, String nextId) => PageRouteBuilder<void>(
     pageBuilder: (_, _, _) => NowNextView(nowId: nowId, nextId: nextId),
-    transitionDuration: Duration.zero,
-    reverseTransitionDuration: Duration.zero,
+    transitionDuration: const Duration(milliseconds: 200),
+    reverseTransitionDuration: const Duration(milliseconds: 160),
+    transitionsBuilder: (context, animation, _, child) => Motion.reduced(context)
+        ? child
+        : FadeTransition(
+            opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+            child: child,
+          ),
   );
 
   @override
@@ -201,10 +215,7 @@ class NowNextView extends StatelessWidget {
           onTap: () => say(time, word),
           child: Column(
             children: [
-              Text(
-                title,
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: CompanionColors.ink),
-              ),
+              Text(title, style: AppText.h1),
               const SizedBox(height: 12),
               Expanded(
                 child: LayoutBuilder(

@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/app_state.dart';
+import '../../core/brand.dart';
+import '../../core/motion.dart';
+import '../../core/theme.dart';
 import '../board/symbol_cell.dart';
 import '../coach/companion_widgets.dart';
 import '../coach/mission_rules.dart';
 import 'family_voice_recorder.dart';
 import 'therapist_entry.dart';
 
+/// A1–A6. Latar bergantian mint dan tosca, kaki halaman awan, satu tombol lime di setiap layar.
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({super.key, this.onFinished});
 
@@ -17,6 +22,9 @@ class OnboardingFlow extends StatefulWidget {
 }
 
 class _OnboardingFlowState extends State<OnboardingFlow> {
+  static const _count = 6;
+  static const _slide = Duration(milliseconds: 420);
+
   final _pages = PageController();
   final _name = TextEditingController();
   int _page = 0;
@@ -37,10 +45,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     super.dispose();
   }
 
-  void _next() {
+  void _go(int page) {
     FocusScope.of(context).unfocus();
-    if (_page < 5) _pages.nextPage(duration: const Duration(milliseconds: 220), curve: Curves.easeOut);
+    final d = Motion.of(context, _slide);
+    d == Duration.zero ? _pages.jumpToPage(page) : _pages.animateToPage(page, duration: d, curve: Curves.easeOutCubic);
   }
+
+  void _next() => _go((_page + 1).clamp(0, _count - 1));
+  void _back() => _go((_page - 1).clamp(0, _count - 1));
 
   Future<void> _finish(AfterOnboarding next) async {
     _app!.afterOnboarding = next;
@@ -50,47 +62,90 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: CompanionColors.bg,
-    body: SafeArea(
-      child: Column(
+    backgroundColor: AppColors.bg,
+    body: PageView(
+      controller: _pages,
+      physics: const NeverScrollableScrollPhysics(),
+      onPageChanged: (value) => setState(() => _page = value),
+      children: [
+        _IntroPage(onNext: _next),
+        _ProfilePage(
+          nameController: _name,
+          ageYears: _ageYears,
+          onAgeChanged: (age) => setState(() => _ageYears = age),
+          onNext: _next,
+          onBack: _back,
+        ),
+        _RoutinePage(routine: _routine, onChanged: (value) => setState(() => _routine = value), onNext: _next, onBack: _back),
+        _BoardPreviewPage(onNext: _next, onBack: _back),
+        _FamilyVoicePage(onNext: _next, onBack: _back),
+        _FinishPage(name: _name.text.trim(), routine: _routine, onFinish: _finish, onBack: _back),
+      ],
+    ),
+  );
+}
+
+/// Satu layar pemasangan: baris atas (kembali + titik langkah), isi yang bisa digulir, dan kaki awan.
+class _OnboardingPage extends StatelessWidget {
+  const _OnboardingPage({
+    required this.step,
+    required this.children,
+    required this.footer,
+    this.dark = false,
+    this.onBack,
+    this.trailing,
+    this.footerHeight = 150,
+    this.background,
+  });
+
+  final int step;
+  final bool dark;
+  final VoidCallback? onBack;
+  final Widget? trailing;
+  final List<Widget> children;
+  final Widget footer;
+  final double footerHeight;
+  final Widget? background;
+
+  @override
+  Widget build(BuildContext context) => AnnotatedRegion<SystemUiOverlayStyle>(
+    value: dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+    child: ColoredBox(
+      color: dark ? AppColors.tosca : AppColors.bg,
+      child: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-            child: Row(
-              children: List.generate(
-                6,
-                (index) => Expanded(
-                  child: Container(
-                    height: 6,
-                    margin: EdgeInsets.only(right: index == 5 ? 0 : 8),
-                    decoration: BoxDecoration(
-                      color: index <= _page ? CompanionColors.navy : CompanionColors.line,
-                      borderRadius: BorderRadius.circular(99),
+          ?background,
+          Column(
+            children: [
+              SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 16, 0),
+                  child: SizedBox(
+                    height: 52,
+                    child: Row(
+                      children: [
+                        if (onBack != null)
+                          RoundIconButton(icon: Icons.arrow_back_rounded, tooltip: 'Kembali', onDark: dark, onPressed: onBack)
+                        else
+                          const SizedBox(width: 52),
+                        const Spacer(),
+                        _StepDots(step: step, dark: dark),
+                        const Spacer(),
+                        trailing ?? const SizedBox(width: 52),
+                      ],
                     ),
                   ),
                 ),
               ),
-            ),
-          ),
-          Expanded(
-            child: PageView(
-              controller: _pages,
-              physics: const NeverScrollableScrollPhysics(),
-              onPageChanged: (value) => setState(() => _page = value),
-              children: [
-                _IntroPage(onNext: _next),
-                _ProfilePage(
-                  nameController: _name,
-                  ageYears: _ageYears,
-                  onAgeChanged: (age) => setState(() => _ageYears = age),
-                  onNext: _next,
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                  children: [for (var i = 0; i < children.length; i++) FadeSlideIn(index: i, child: children[i])],
                 ),
-                _RoutinePage(routine: _routine, onChanged: (value) => setState(() => _routine = value), onNext: _next),
-                _BoardPreviewPage(onNext: _next),
-                _FamilyVoicePage(onNext: _next),
-                _FinishPage(name: _name.text.trim(), routine: _routine, onFinish: _finish),
-              ],
-            ),
+              ),
+              CloudFooter(color: dark ? Colors.white : AppColors.teal, height: footerHeight, child: footer),
+            ],
           ),
         ],
       ),
@@ -98,25 +153,55 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   );
 }
 
-class _PageShell extends StatelessWidget {
-  const _PageShell({required this.title, required this.body, required this.bottom});
+/// Enam titik langkah; titik aktif memanjang jadi pil.
+class _StepDots extends StatelessWidget {
+  const _StepDots({required this.step, required this.dark});
 
-  final String title;
-  final List<Widget> body;
-  final Widget bottom;
+  final int step;
+  final bool dark;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: const TextStyle(fontSize: 30, height: 1.15, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 16),
-        Expanded(child: ListView(children: body)),
-        const SizedBox(height: 16),
-        bottom,
-      ],
+  Widget build(BuildContext context) {
+    final on = dark ? Colors.white : AppColors.teal;
+    final off = dark ? Colors.white.withValues(alpha: 0.35) : AppColors.sandDeep;
+    return Semantics(
+      label: 'Langkah ${step + 1} dari 6',
+      excludeSemantics: true,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < 6; i++)
+            AnimatedContainer(
+              duration: Motion.of(context, Motion.resize),
+              curve: Curves.easeOutCubic,
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              width: i == step ? 22 : 8,
+              height: 8,
+              decoration: BoxDecoration(color: i <= step ? on : off, borderRadius: BorderRadius.circular(99)),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+TextStyle _title(bool dark) => AppText.h1.copyWith(color: dark ? Colors.white : AppColors.ink);
+TextStyle _lead(bool dark) => AppText.body.copyWith(color: dark ? Colors.white : AppColors.muted);
+
+/// Kartu mint dengan teks toska tua (kutipan langsung dari desain).
+class _MintCard extends StatelessWidget {
+  const _MintCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+    decoration: BoxDecoration(color: AppColors.mint, borderRadius: BorderRadius.circular(24)),
+    child: DefaultTextStyle.merge(
+      style: AppText.body.copyWith(color: AppColors.mintText, fontWeight: FontWeight.w700),
+      child: child,
     ),
   );
 }
@@ -127,42 +212,62 @@ class _IntroPage extends StatelessWidget {
   final VoidCallback onNext;
 
   @override
-  Widget build(BuildContext context) => _PageShell(
-    title: 'Nyambung',
-    body: const [
+  Widget build(BuildContext context) => _OnboardingPage(
+    step: 0,
+    background: const Positioned(right: -24, top: 36, child: SunDecoration(size: 170)),
+    footer: SizedBox(
+      width: 220,
+      child: PrimaryButton(label: 'Mulai', onPressed: onNext),
+    ),
+    children: [
+      const SizedBox(height: 12),
+      const Align(alignment: Alignment.centerLeft, child: BrandMark(size: 72)),
+      const SizedBox(height: 20),
       Text(
-        'Suara anak, sampai.',
-        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: CompanionColors.teal),
+        'Nyambung',
+        style: AppText.display.copyWith(
+          fontSize: 48,
+          color: AppColors.tealDeep,
+          shadows: const [
+            Shadow(color: Colors.white, offset: Offset(2, 2)),
+            Shadow(color: Colors.white, offset: Offset(-2, -2)),
+            Shadow(color: Colors.white, offset: Offset(2, -2)),
+            Shadow(color: Colors.white, offset: Offset(-2, 2)),
+            Shadow(color: Color(0x2E038075), offset: Offset(0, 10), blurRadius: 24),
+          ],
+        ),
       ),
-      SizedBox(height: 24),
-      Text(
-        'Papan bicara berbahasa Indonesia untuk anak, dan satu misi kecil setiap hari untuk Ibu dan Ayah. Semuanya jalan tanpa internet. Tidak ada akun, surel, atau kata sandi.',
-        style: companionBodyStyle,
+      Text('Suara anak, sampai.', style: AppText.h2.copyWith(color: AppColors.tealText)),
+      const SizedBox(height: 20),
+      const _MintCard(child: Text('Papan bicara berbahasa Indonesia untuk anak, dan satu misi kecil setiap hari untuk Ibu dan Ayah.')),
+      const SizedBox(height: 20),
+      // Pintu kedua, sengaja kecil: hampir semua yang membuka aplikasi adalah keluarga.
+      Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton(
+          onPressed: () => showTherapistEntry(context),
+          style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+          child: const Text('Saya terapis →'),
+        ),
       ),
     ],
-    bottom: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        PrimaryButton(label: 'Mulai', onPressed: onNext),
-        const SizedBox(height: 8),
-        // Pintu kedua, sengaja kecil: 90% yang membuka aplikasi adalah keluarga.
-        TextButton(
-          onPressed: () => showTherapistEntry(context),
-          style: TextButton.styleFrom(minimumSize: const Size(48, 48), foregroundColor: CompanionColors.navy),
-          child: const Text('Saya terapis →', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-        ),
-      ],
-    ),
   );
 }
 
 class _ProfilePage extends StatefulWidget {
-  const _ProfilePage({required this.nameController, required this.ageYears, required this.onAgeChanged, required this.onNext});
+  const _ProfilePage({
+    required this.nameController,
+    required this.ageYears,
+    required this.onAgeChanged,
+    required this.onNext,
+    required this.onBack,
+  });
 
   final TextEditingController nameController;
   final int? ageYears;
   final ValueChanged<int?> onAgeChanged;
   final VoidCallback onNext;
+  final VoidCallback onBack;
 
   @override
   State<_ProfilePage> createState() => _ProfilePageState();
@@ -184,123 +289,248 @@ class _ProfilePageState extends State<_ProfilePage> {
   void _refresh() => setState(() {});
 
   @override
-  Widget build(BuildContext context) => _PageShell(
-    title: 'Siapa nama panggilannya?',
-    body: [
-      const Text(
-        'Hanya dua hal: nama panggilan dan usia. Tidak ada pertanyaan diagnosis atau riwayat medis. Usia dipakai untuk memilih ukuran sel yang nyaman, bukan untuk membatasi kosakata.',
-        style: companionBodyStyle,
-      ),
+  Widget build(BuildContext context) => _OnboardingPage(
+    step: 1,
+    dark: true,
+    onBack: widget.onBack,
+    footer: SizedBox(
+      width: 220,
+      child: PrimaryButton(label: 'Lanjut', onPressed: widget.nameController.text.trim().isEmpty ? null : widget.onNext),
+    ),
+    children: [
+      Text('Siapa nama panggilannya?', style: _title(true)),
+      const SizedBox(height: 8),
+      Text('Nama panggilan dan usia, itu saja.', style: _lead(true)),
       const SizedBox(height: 24),
+      const Eyebrow('Nama panggilan', color: Colors.white),
+      const SizedBox(height: 8),
       TextField(
         controller: widget.nameController,
         textCapitalization: TextCapitalization.words,
-        decoration: const InputDecoration(labelText: 'Nama panggilan', border: OutlineInputBorder()),
+        style: AppText.h3.copyWith(fontSize: 20, color: AppColors.tealText),
+        decoration: InputDecoration(
+          hintText: 'mis. Naya',
+          hintStyle: AppText.body.copyWith(color: AppColors.muted),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: AppColors.lime, width: 3),
+          ),
+        ),
       ),
-      const SizedBox(height: 16),
-      DropdownButtonFormField<int?>(
-        initialValue: widget.ageYears,
-        decoration: const InputDecoration(labelText: 'Usia', border: OutlineInputBorder()),
-        items: [
-          const DropdownMenuItem<int?>(value: null, child: Text('Lewati')),
-          ...List.generate(11, (index) => DropdownMenuItem<int?>(value: index + 2, child: Text('${index + 2} tahun'))),
+      const SizedBox(height: 22),
+      const Eyebrow('Usia (boleh dilewati)', color: Colors.white),
+      const SizedBox(height: 10),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (var age = 2; age <= 12; age++)
+            _AgePill(age: age, selected: widget.ageYears == age, onTap: () => widget.onAgeChanged(widget.ageYears == age ? null : age)),
         ],
-        onChanged: widget.onAgeChanged,
       ),
     ],
-    bottom: PrimaryButton(label: 'Lanjut', onPressed: widget.nameController.text.trim().isEmpty ? null : widget.onNext),
+  );
+}
+
+class _AgePill extends StatelessWidget {
+  const _AgePill({required this.age, required this.selected, required this.onTap});
+
+  final int age;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    selected: selected,
+    label: '$age tahun',
+    excludeSemantics: true,
+    child: PressScale(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: Motion.of(context, Motion.fade),
+          curve: Curves.easeOut,
+          width: 56,
+          height: 56,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected ? AppColors.lime : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: selected ? const [BoxShadow(color: Color(0x40000000), blurRadius: 10, offset: Offset(0, 4))] : null,
+          ),
+          child: Text('$age', style: AppText.h3.copyWith(fontSize: 20, color: selected ? AppColors.limeText : AppColors.tealText)),
+        ),
+      ),
+    ),
   );
 }
 
 class _RoutinePage extends StatelessWidget {
-  const _RoutinePage({required this.routine, required this.onChanged, required this.onNext});
+  const _RoutinePage({required this.routine, required this.onChanged, required this.onNext, required this.onBack});
 
   final String routine;
   final ValueChanged<String> onChanged;
   final VoidCallback onNext;
+  final VoidCallback onBack;
+
+  static const _options = [
+    ('makan', 'Makan sore', Icons.restaurant_rounded, AppColors.coralDeep, AppColors.coralTint),
+    ('mandi', 'Mandi sore', Icons.bathtub_rounded, AppColors.skyText, AppColors.skyTint),
+    ('main', 'Main pagi', Icons.toys_rounded, AppColors.sunText, AppColors.sunTint),
+  ];
 
   @override
-  Widget build(BuildContext context) => _PageShell(
-    title: 'Kegiatan mana yang paling teratur waktunya?',
-    body: [
-      const Text(
-        'Misi harian akan menempel pada kegiatan ini, supaya pendampingan tidak menambah pekerjaan baru. Bisa diganti kapan saja di pengaturan.',
-        style: companionBodyStyle,
-      ),
+  Widget build(BuildContext context) => _OnboardingPage(
+    step: 2,
+    onBack: onBack,
+    footer: SizedBox(
+      width: 220,
+      child: PrimaryButton(label: 'Lanjut', onPressed: onNext),
+    ),
+    children: [
+      Text('Kegiatan mana yang paling teratur waktunya?', style: _title(false)),
+      const SizedBox(height: 8),
+      Text('Misi harian menempel pada kegiatan ini.', style: _lead(false)),
       const SizedBox(height: 20),
-      for (final option in const [
-        ('makan', 'Makan sore', Icons.restaurant),
-        ('mandi', 'Mandi sore', Icons.bathtub),
-        ('main', 'Main pagi', Icons.toys),
-      ])
+      for (final (value, label, icon, color, tint) in _options)
         Padding(
           padding: const EdgeInsets.only(bottom: 12),
-          child: CompanionCard(
-            color: routine == option.$1 ? CompanionColors.navySoft : CompanionColors.panel,
-            child: RadioGroup<String>(
-              groupValue: routine,
-              onChanged: (value) {
-                if (value != null) onChanged(value);
-              },
-              child: RadioListTile<String>(
-                value: option.$1,
-                secondary: Icon(option.$3, size: 32),
-                title: Text(option.$2, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-              ),
-            ),
+          child: _RoutineCard(
+            label: label,
+            icon: icon,
+            color: color,
+            tint: tint,
+            selected: routine == value,
+            onTap: () => onChanged(value),
           ),
         ),
     ],
-    bottom: PrimaryButton(label: 'Lanjut', onPressed: onNext),
   );
+}
+
+class _RoutineCard extends StatelessWidget {
+  const _RoutineCard({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.tint,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color color;
+  final Color tint;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final d = Motion.of(context, Motion.fade);
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      excludeSemantics: true,
+      child: PressScale(
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: d,
+            curve: Curves.easeOut,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: selected ? AppColors.tealTint : AppColors.panel,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: selected ? AppColors.teal : AppColors.line, width: 2),
+            ),
+            child: Row(
+              children: [
+                AnimatedContainer(
+                  duration: d,
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(color: selected ? color : tint, borderRadius: BorderRadius.circular(15)),
+                  child: Icon(icon, color: selected ? Colors.white : color, size: 26),
+                ),
+                const SizedBox(width: 14),
+                Expanded(child: Text(label, style: AppText.h3)),
+                AnimatedScale(
+                  scale: selected ? 1 : 0.4,
+                  duration: d,
+                  curve: Curves.easeOutBack,
+                  child: AnimatedOpacity(
+                    opacity: selected ? 1 : 0,
+                    duration: d,
+                    child: const Icon(Icons.check_circle_rounded, color: AppColors.tealDeep, size: 28),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _BoardPreviewPage extends StatelessWidget {
-  const _BoardPreviewPage({required this.onNext});
+  const _BoardPreviewPage({required this.onNext, required this.onBack});
 
   final VoidCallback onNext;
+  final VoidCallback onBack;
 
   @override
-  Widget build(BuildContext context) => _PageShell(
-    title: 'Papan awal sudah jadi',
-    body: [
-      const Text(
-        'Dua belas kata inti Bahasa Indonesia langsung tersusun. Anak mengakses seluruh papan sejak hari pertama; tidak ada tingkat yang harus dibuka. Posisi setiap kata tidak akan pernah berpindah.',
-        style: companionBodyStyle,
+  Widget build(BuildContext context) {
+    final words = AppScope.of(context).symbolsForPage(0).where((s) => !s.isHidden).toList();
+    return _OnboardingPage(
+      step: 3,
+      dark: true,
+      onBack: onBack,
+      footer: SizedBox(
+        width: 220,
+        child: PrimaryButton(label: 'Lanjut', onPressed: onNext),
       ),
-      const SizedBox(height: 20),
-      GridView.count(
-        crossAxisCount: 3,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        childAspectRatio: 1.05,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        children: const ['MAU', 'BERHENTI', 'BANTU', 'TIDAK', 'SELESAI', 'SAKIT', 'AKU', 'MAKAN', 'MINUM', 'YA', 'LAGI', 'ITU']
-            .map(
-              (word) => Container(
-                alignment: Alignment.center,
-                decoration: BoxDecoration(color: CompanionColors.navySoft, borderRadius: BorderRadius.circular(12)),
-                child: Text(
-                  word,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-              ),
-            )
-            .toList(),
-      ),
-    ],
-    bottom: PrimaryButton(label: 'Lanjut', onPressed: onNext),
-  );
+      children: [
+        Text('Papan awal sudah jadi', style: _title(true)),
+        const SizedBox(height: 20),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22)),
+          child: LayoutBuilder(
+            builder: (context, box) {
+              const gap = 8.0;
+              final w = (box.maxWidth - gap * 2) / 3;
+              return Wrap(
+                spacing: gap,
+                runSpacing: gap,
+                children: [
+                  // Sel masuk bergantian, sekali, saat layar ini pertama tampil.
+                  for (var i = 0; i < words.length; i++)
+                    FadeSlideIn(
+                      index: 2 + i ~/ 3,
+                      child: SymbolFace(symbol: words[i], width: w, height: w * 0.92),
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
 }
 
-/// A5: enam kata yang paling sering dicontohkan. Ketuk baris untuk memilih kata, rekam, lalu kata berikutnya yang
-/// belum direkam terpilih sendiri. Setiap rekaman langsung tersimpan; "Lewati" tetap setara.
+/// A5: enam kata yang paling sering dicontohkan. Pilih kata, rekam, lalu kata berikutnya yang belum direkam
+/// terpilih sendiri. Setiap rekaman langsung tersimpan; "Lewati" tetap setara.
 class _FamilyVoicePage extends StatefulWidget {
-  const _FamilyVoicePage({required this.onNext});
+  const _FamilyVoicePage({required this.onNext, required this.onBack});
 
   final VoidCallback onNext;
+  final VoidCallback onBack;
 
   @override
   State<_FamilyVoicePage> createState() => _FamilyVoicePageState();
@@ -324,132 +554,130 @@ class _FamilyVoicePageState extends State<_FamilyVoicePage> {
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     final recorded = _words.where((w) => app.symbolById(w)?.familyAudio != null).length;
-    return _PageShell(
-      title: 'Mau pakai suaramu?',
-      body: [
-        const Text(
-          'Anak biasanya lebih cepat mengenali suara orang tuanya daripada suara bawaan HP. Enam kata saja, bisa juga '
-          'nanti. Rekaman tersimpan di HP ini saja dan tidak pernah dikirim ke siapa pun, termasuk terapis.',
-          style: companionBodyStyle,
-        ),
-        const SizedBox(height: 16),
-        CompanionCard(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          child: Column(
-            children: [
-              for (final w in _words)
-                if (app.symbolById(w) case final s?)
-                  InkWell(
-                    onTap: () => setState(() => _selected = w),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-                      decoration: BoxDecoration(
-                        color: w == _selected ? CompanionColors.navySoft : null,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        children: [
-                          Image(
-                            image: symbolImage(s.symbolPath),
-                            width: 36,
-                            height: 36,
-                            errorBuilder: (_, _, _) => const SizedBox(width: 36),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(s.labelDisplay, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                          ),
-                          Text(
-                            s.familyAudio != null ? 'sudah direkam' : 'belum',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: s.familyAudio != null ? CompanionColors.green : CompanionColors.muted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        FamilyVoiceRecorder(key: ValueKey(_selected), wordId: _selected, onRecorded: (path) => _saved(_selected, path)),
-      ],
-      bottom: Column(
-        children: [
-          PrimaryButton(label: recorded == 0 ? 'Lanjut' : 'Simpan dan lanjut', onPressed: widget.onNext),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: EqualOutlineButton(label: 'Lewati, rekam nanti saja', onPressed: widget.onNext),
-          ),
-        ],
+    return _OnboardingPage(
+      step: 4,
+      onBack: widget.onBack,
+      trailing: TextButton(
+        onPressed: widget.onNext,
+        style: TextButton.styleFrom(backgroundColor: AppColors.sand, minimumSize: const Size(48, 44)),
+        child: const Text('Lewati'),
       ),
+      footer: SizedBox(
+        width: 240,
+        child: PrimaryButton(label: recorded == 0 ? 'Lanjut' : 'Simpan', onPressed: widget.onNext),
+      ),
+      children: [
+        Text('Rekam suara Ibu atau Ayah', style: _title(false)),
+        const SizedBox(height: 8),
+        Text('Enam kata saja. Bisa juga nanti.', style: _lead(false)),
+        const SizedBox(height: 18),
+        FamilyVoiceRecorder(key: ValueKey(_selected), wordId: _selected, onRecorded: (path) => _saved(_selected, path)),
+        const SizedBox(height: 14),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final w in _words)
+              if (app.symbolById(w) case final s?)
+                _WordChip(
+                  label: s.labelDisplay,
+                  selected: w == _selected,
+                  done: s.familyAudio != null,
+                  onTap: () => setState(() => _selected = w),
+                ),
+          ],
+        ),
+      ],
     );
   }
 }
 
+class _WordChip extends StatelessWidget {
+  const _WordChip({required this.label, required this.selected, required this.done, required this.onTap});
+
+  final String label;
+  final bool selected;
+  final bool done;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    selected: selected,
+    label: '$label, ${done ? 'sudah direkam' : 'belum direkam'}',
+    excludeSemantics: true,
+    child: PressScale(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: Motion.of(context, Motion.fade),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.tealTint : AppColors.panel,
+            borderRadius: BorderRadius.circular(99),
+            border: Border.all(color: selected ? AppColors.teal : AppColors.line, width: 2),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (done) ...[const Icon(Icons.check_rounded, size: 18, color: AppColors.leafText), const SizedBox(width: 4)],
+              Text(
+                label,
+                style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.ink),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 class _FinishPage extends StatelessWidget {
-  const _FinishPage({required this.name, required this.routine, required this.onFinish});
+  const _FinishPage({required this.name, required this.routine, required this.onFinish, required this.onBack});
 
   final String name;
   final String routine;
 
   /// Dipanggil dengan tujuan setelah pemasangan: misi hari ini atau papan.
   final ValueChanged<AfterOnboarding> onFinish;
+  final VoidCallback onBack;
 
   @override
-  Widget build(BuildContext context) {
-    final selectedRoutineLabel = routineDisplayLabel(routine);
-    return _PageShell(
-      title: 'Papan $name siap dipakai',
-      body: [
-        const Text('Semuanya tersimpan di HP ini. Papan tetap jalan walau tidak ada jaringan.', style: companionBodyStyle),
-        const SizedBox(height: 16),
-        CompanionCard(
-          color: CompanionColors.navy,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'MISI HARI PERTAMA',
-                style: TextStyle(fontSize: 13, letterSpacing: 1.2, fontWeight: FontWeight.w800, color: Color(0xFFF1E6C8)),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Saat $selectedRoutineLabel nanti, tekan simbol MAU lima kali sambil mengucapkannya.',
-                style: const TextStyle(fontSize: 22, height: 1.3, fontWeight: FontWeight.w800, color: Colors.white),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '$name tidak perlu ikut menekan. Kurang dari lima menit.',
-                style: const TextStyle(fontSize: 16, height: 1.4, color: Color(0xFFDCE6F1)),
-              ),
-            ],
-          ),
+  Widget build(BuildContext context) => _OnboardingPage(
+    step: 5,
+    dark: true,
+    onBack: onBack,
+    footerHeight: 190,
+    footer: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 260,
+          child: PrimaryButton(label: 'Buka misi hari ini', onPressed: () => onFinish(AfterOnboarding.mission)),
         ),
-        const SizedBox(height: 12),
-        const CompanionCard(
-          color: CompanionColors.sand,
-          child: Text(
-            'Terapis bisa dihubungkan nanti dengan kode undangan. Tanpa itu pun aplikasi tetap berguna. '
-            'Tidak ada skor dan tidak ada hari yang gagal.',
-            style: companionBodyStyle,
-          ),
-        ),
+        const SizedBox(height: 4),
+        TextButton(onPressed: () => onFinish(AfterOnboarding.board), child: const Text('Lihat papan dulu')),
       ],
-      bottom: Column(
+    ),
+    children: [
+      Text('Misi hari pertama', style: _title(true)),
+      const SizedBox(height: 16),
+      _MintCard(
+        child: Text(
+          'Saat ${routineDisplayLabel(routine)} nanti: tekan MAU sambil berkata "mau", lima kali. '
+          '${name.isEmpty ? 'Anak' : name} tidak perlu menekan apa pun. Itu saja untuk hari ini.',
+        ),
+      ),
+      const SizedBox(height: 14),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          PrimaryButton(label: 'Buka misi hari ini', onPressed: () => onFinish(AfterOnboarding.mission)),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: EqualOutlineButton(label: 'Lihat papan dulu', onPressed: () => onFinish(AfterOnboarding.board)),
-          ),
+          const Icon(Icons.check_rounded, color: Colors.white, size: 20),
+          const SizedBox(width: 8),
+          Expanded(child: Text('Tidak ada skor. Kalau belum sempat, besok ada lagi.', style: _lead(true))),
         ],
       ),
-    );
-  }
+    ],
+  );
 }

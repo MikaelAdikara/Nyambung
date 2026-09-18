@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/app_state.dart';
 import '../../core/motion.dart';
+import '../../core/theme.dart';
 import '../board/board_screen.dart';
 import '../board/symbol_cell.dart';
 import 'companion_controller.dart';
@@ -22,98 +23,85 @@ class ConfirmScreen extends StatelessWidget {
     final name = state.child?.nickname ?? 'Anak';
     // Ketukan pendamping pada kata target di papan misi hari ini (penghitung misi), bukan semua ketukan.
     final reps = state.mission.repsCounted;
-    return CompanionPage(
-      title: done ? 'Tercatat' : 'Tercatat: belum sempat',
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Masuk yang sama persis untuk kedua jawaban: tidak ada perayaan untuk "Selesai" (invarian 15).
-            FadeSlideIn(
-              index: 0,
-              child: Text(
-                done
-                    ? 'Kamu memodelkan ${state.targetLabel} $reps kali saat ${state.routineLabel}. Tidak perlu tepat lima, '
-                          'yang penting anak melihatnya.'
-                    : 'Hari ini belum sempat. Besok ada misi yang sama, dan hari ini tidak menghapus apa pun.',
-                style: const TextStyle(fontSize: 22, height: 1.3, fontWeight: FontWeight.w800),
+    return Scaffold(
+      backgroundColor: CompanionColors.bg,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+          child: Column(
+            children: [
+              const Spacer(),
+              // Masuk yang sama persis untuk kedua jawaban: tidak ada perayaan khusus untuk "Selesai" (invarian 15).
+              PopIn(
+                child: Container(
+                  width: 76,
+                  height: 76,
+                  decoration: const BoxDecoration(color: CompanionColors.leafTint, shape: BoxShape.circle),
+                  child: const Icon(Icons.check_rounded, size: 38, color: CompanionColors.leafText),
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            FadeSlideIn(
-              index: 1,
-              child: CompanionCard(
+              const SizedBox(height: 18),
+              const FadeSlideIn(index: 1, child: Text('Tercatat', style: AppText.h1)),
+              const SizedBox(height: 6),
+              FadeSlideIn(
+                index: 2,
+                child: Text(
+                  done ? 'Misi hari ini selesai.' : 'Belum sempat hari ini. Besok ada lagi.',
+                  textAlign: TextAlign.center,
+                  style: AppText.body.copyWith(color: CompanionColors.muted),
+                ),
+              ),
+              const SizedBox(height: 22),
+              FadeSlideIn(
+                index: 3,
+                child: CompanionCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          if (target != null)
+                            Image(
+                              image: symbolImage(target.symbolPath),
+                              width: 40,
+                              height: 40,
+                              errorBuilder: (_, _, _) => const SizedBox(width: 40),
+                            ),
+                          const SizedBox(width: 12),
+                          Expanded(child: Text(state.targetLabel, style: AppText.h3)),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      CheckRow(text: '$reps ketukan Ibu/Ayah saat memberi contoh'),
+                      CheckRow(text: childTaps == 0 ? '$name sedang melihat contohmu' : '$childTaps ketukan $name sendiri'),
+                    ],
+                  ),
+                ),
+              ),
+              const Spacer(flex: 2),
+              FadeSlideIn(
+                index: 4,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'YANG TERCATAT HARI INI',
-                      style: TextStyle(fontSize: 13, letterSpacing: 1.2, fontWeight: FontWeight.w800, color: CompanionColors.muted),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        if (target != null)
-                          Image(
-                            image: symbolImage(target.symbolPath),
-                            width: 44,
-                            height: 44,
-                            errorBuilder: (_, _, _) => const SizedBox(width: 44),
-                          ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(state.targetLabel, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                        ),
-                        Text('$reps kali', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                      ],
-                    ),
-                    const Divider(height: 24, color: CompanionColors.line),
-                    Text(
-                      childTaps == 0
-                          ? '$name belum menekan sendiri di papan misi. Tidak apa-apa, ia sedang melihat contohmu.'
-                          : '$name sendiri menekan papan $childTaps kali. Itu ikut tercatat, terpisah dari ketukanmu.',
-                      style: companionMutedStyle,
+                    PrimaryButton(label: 'Kembali ke beranda', onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst)),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: EqualOutlineButton(
+                        label: 'Buka Papan Bicara',
+                        icon: Icons.grid_view_rounded,
+                        onPressed: () {
+                          final nav = Navigator.of(context);
+                          nav.popUntil((route) => route.isFirst);
+                          nav.push(BoardScreen.childRoute());
+                        },
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            FadeSlideIn(
-              index: 2,
-              child: CompanionCard(
-                color: CompanionColors.sand,
-                child: Text(
-                  state.linkedToTherapist
-                      ? 'Catatan hari ini terkirim sendiri ke terapis saat ada jaringan, tanpa perlu kamu buka lagi.'
-                      : 'Catatan hari ini tersimpan di HP ini. Tidak ada yang perlu dilaporkan lagi.',
-                  style: companionBodyStyle,
-                ),
-              ),
-            ),
-            const Spacer(),
-            FadeSlideIn(
-              index: 3,
-              child: Column(
-                children: [
-                  PrimaryButton(label: 'Selesai', onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst)),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: EqualOutlineButton(
-                      label: 'Buka Papan Bicara',
-                      onPressed: () {
-                        final nav = Navigator.of(context);
-                        nav.popUntil((route) => route.isFirst);
-                        nav.push(BoardScreen.childRoute());
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

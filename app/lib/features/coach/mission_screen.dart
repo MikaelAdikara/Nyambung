@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../board/board_screen.dart';
 import '../../core/motion.dart';
+import '../../core/theme.dart';
 import 'companion_widgets.dart';
 import 'confirm_screen.dart';
 import 'companion_controller.dart';
@@ -30,68 +31,81 @@ class MissionScreen extends StatelessWidget {
       final shownReps = mission.repsCounted.clamp(0, mission.repsTarget);
       return CompanionPage(
         title: 'Misi berjalan',
-        body: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-          children: [
-            Text(
-              'Tekan ${state.targetLabel} sambil bicara, 5 kali, saat ${state.routineLabel}.',
-              style: const TextStyle(fontSize: 24, height: 1.3, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 8),
-            const Text('Anak tidak perlu menekan. Kalau ia menekan sendiri, itu bonus dan ikut tercatat.', style: companionMutedStyle),
-            const SizedBox(height: 24),
-            CompanionCard(
-              child: Column(
-                children: [
-                  AnimatedSwitcher(
-                    duration: Motion.of(context, Motion.fade),
-                    child: Text(
-                      '$shownReps dari ${mission.repsTarget}',
-                      key: ValueKey(shownReps),
-                      style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w800),
+        body: LayoutBuilder(
+          builder: (context, box) => SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: box.maxHeight - 32),
+              child: IntrinsicHeight(
+                child: Column(
+                  children: [
+                    Text(
+                      'Tekan ${state.targetLabel} sambil bicara, ${mission.repsTarget} kali, saat ${state.routineLabel}.',
+                      textAlign: TextAlign.center,
+                      style: AppText.body.copyWith(color: CompanionColors.muted),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  _RepDots(filled: shownReps, total: mission.repsTarget),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Terisi sendiri dari papan. Penghitung ini mencatat contoh yang Ibu atau Ayah berikan, bukan menilai anak.',
-                    textAlign: TextAlign.center,
-                    style: companionMutedStyle,
-                  ),
-                ],
+                    const SizedBox(height: 28),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        AnimatedSwitcher(
+                          duration: Motion.of(context, Motion.resize),
+                          transitionBuilder: (child, a) => FadeTransition(
+                            opacity: a,
+                            child: SlideTransition(
+                              position: Tween(
+                                begin: const Offset(0, 0.3),
+                                end: Offset.zero,
+                              ).animate(CurvedAnimation(parent: a, curve: Curves.easeOutCubic)),
+                              child: child,
+                            ),
+                          ),
+                          child: Text('$shownReps', key: ValueKey(shownReps), style: AppText.number.copyWith(fontSize: 72)),
+                        ),
+                        Text(' dari ${mission.repsTarget}', style: AppText.h2.copyWith(color: CompanionColors.muted)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _RepDots(filled: shownReps, total: mission.repsTarget),
+                    const SizedBox(height: 14),
+                    const Text('Terisi sendiri dari papan. Bukan menilai anak.', textAlign: TextAlign.center, style: AppText.cap),
+                    const Spacer(),
+                    const SizedBox(height: 28),
+                    PrimaryButton(
+                      label: 'Buka papan bersama anak',
+                      icon: Icons.grid_view_rounded,
+                      onPressed: () async {
+                        if (openBoard != null) {
+                          await openBoard!();
+                        } else {
+                          await Navigator.of(
+                            context,
+                          ).push(MaterialPageRoute<void>(builder: (_) => BoardScreen(missionContext: mission.id, allowTurnToggle: true)));
+                        }
+                        await state.load();
+                        await state.autoSync();
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    // Dua jawaban setara secara visual (invarian 15).
+                    Row(
+                      children: [
+                        Expanded(
+                          child: EqualOutlineButton(label: 'Belum sempat hari ini', onPressed: () => _confirm(context, 'belum_sempat')),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: EqualOutlineButton(label: 'Selesai', onPressed: () => _confirm(context, 'selesai')),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 20),
-            PrimaryButton(
-              label: 'Buka papan bersama anak',
-              icon: Icons.grid_view_rounded,
-              onPressed: () async {
-                if (openBoard != null) {
-                  await openBoard!();
-                } else {
-                  await Navigator.of(context)
-                      .push(MaterialPageRoute<void>(builder: (_) => BoardScreen(missionContext: mission.id, allowTurnToggle: true)));
-                }
-                await state.load();
-                await state.autoSync();
-              },
-            ),
-            const SizedBox(height: 20),
-            const Text('Kedua tombol di bawah sama nilainya. Tidak ada hari yang gagal.', style: companionMutedStyle),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: EqualOutlineButton(label: 'Belum sempat hari ini', onPressed: () => _confirm(context, 'belum_sempat')),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: EqualOutlineButton(label: 'Selesai', onPressed: () => _confirm(context, 'selesai')),
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
       );
     },
@@ -155,14 +169,18 @@ class _RepDotsState extends State<_RepDots> with SingleTickerProviderStateMixin 
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         for (var i = 0; i < widget.total; i++)
-          Container(
-            width: 30,
-            height: 30,
-            margin: const EdgeInsets.symmetric(horizontal: 5),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color.lerp(CompanionColors.panel, CompanionColors.teal, _level(i)),
-              border: Border.all(color: CompanionColors.teal, width: 2),
+          Transform.scale(
+            // Lingkaran yang baru terisi membesar sedikit lalu kembali, supaya terasa "masuk".
+            scale: 1 + 0.18 * (1 - (2 * _level(i) - 1).abs()) * (i >= _from && i < widget.filled ? 1 : 0),
+            child: Container(
+              width: 26,
+              height: 26,
+              margin: const EdgeInsets.symmetric(horizontal: 6),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Color.lerp(CompanionColors.panel, CompanionColors.teal, _level(i)),
+                border: Border.all(color: Color.lerp(CompanionColors.sandDeep, CompanionColors.teal, _level(i))!, width: 2),
+              ),
             ),
           ),
       ],

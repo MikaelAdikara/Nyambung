@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/app_state.dart';
+import '../../core/motion.dart';
+import '../../core/theme.dart';
 import '../../data/models.dart';
 import '../board/symbol_cell.dart';
 import '../coach/companion_widgets.dart';
@@ -45,18 +47,20 @@ class _ManageVocabScreenState extends State<ManageVocabScreen> {
     final words = _app.symbolsForPage(_page);
     final hiddenCount = _app.allSymbols.where((s) => s.isHidden).length;
     return CompanionPage(
-      title: 'Kelola kosakata',
+      title: 'Kosakata',
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
         children: [
-          const Text(
-            'Ketuk kata untuk menyembunyikan atau menampilkannya lagi. Posisinya tidak bisa dipindahkan: kata yang '
-            'disembunyikan tetap memegang tempatnya, supaya letaknya tidak berubah bila ditampilkan kembali. '
-            'Anak mengingat letak kata, bukan hanya gambarnya.',
-            style: companionBodyStyle,
+          CompanionCard(
+            color: CompanionColors.sand,
+            borderColor: CompanionColors.sand,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Text(
+              'Ketuk kata untuk menyembunyikan atau menampilkannya. '
+              '${hiddenCount == 0 ? 'Semua kata tampil.' : '$hiddenCount kata disembunyikan.'}',
+              style: AppText.body.copyWith(fontSize: 15),
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(hiddenCount == 0 ? 'Semua kata tampil.' : '$hiddenCount kata sedang disembunyikan.', style: companionMutedStyle),
           const SizedBox(height: 12),
           SizedBox(
             height: 48,
@@ -80,13 +84,7 @@ class _ManageVocabScreenState extends State<ManageVocabScreen> {
             },
           ),
           const SizedBox(height: 16),
-          Text(
-            _page == 0
-                ? 'Halaman kata inti tetap 12 kata. Kartu baru masuk ke halaman kategori.'
-                : 'Kartu baru mengisi kotak kosong berikutnya di halaman ini (posisi ${_app.nextCardSlot(_page) + 1}).',
-            style: companionMutedStyle,
-          ),
-          const SizedBox(height: 12),
+
           PrimaryButton(label: 'Tambah kartu baru', icon: Icons.add_a_photo_outlined, onPressed: _addCard),
         ],
       ),
@@ -106,30 +104,39 @@ class _ManageVocabScreenState extends State<ManageVocabScreen> {
           height: h,
           child: Stack(
             children: [
-              Opacity(
+              AnimatedOpacity(
                 opacity: s.isHidden ? 0.35 : 1,
+                duration: Motion.of(context, Motion.fade),
                 child: SymbolFace(symbol: s, width: w, height: h),
               ),
-              if (s.isHidden)
-                Positioned(
-                  left: 6,
-                  top: 6,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(color: CompanionColors.ink, borderRadius: BorderRadius.circular(8)),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.visibility_off, size: 14, color: Colors.white),
-                        SizedBox(width: 4),
-                        Text(
-                          'Tersembunyi',
-                          style: TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w700),
-                        ),
-                      ],
+              Positioned(
+                left: 6,
+                top: 6,
+                child: AnimatedScale(
+                  scale: s.isHidden ? 1 : 0.6,
+                  duration: Motion.of(context, Motion.fade),
+                  curve: Curves.easeOutBack,
+                  child: AnimatedOpacity(
+                    opacity: s.isHidden ? 1 : 0,
+                    duration: Motion.of(context, Motion.fade),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(color: CompanionColors.ink, borderRadius: BorderRadius.circular(8)),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.visibility_off, size: 14, color: Colors.white),
+                          SizedBox(width: 4),
+                          Text(
+                            'Tersembunyi',
+                            style: TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
+              ),
             ],
           ),
         ),

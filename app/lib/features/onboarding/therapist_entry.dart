@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/app_state.dart';
 import '../../core/constants.dart';
+import '../../core/theme.dart';
 import '../coach/companion_widgets.dart';
 
 /// Pintu terapis dari A1. Aplikasi ini untuk keluarga; terapis bekerja di papan pantau web dengan
@@ -22,13 +23,9 @@ Future<void> showTherapistEntry(BuildContext context) {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Untuk terapis', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+            const Text('Untuk terapis', style: AppText.h1),
             const SizedBox(height: 12),
-            const Text(
-              'Aplikasi ini dipasang di perangkat keluarga. Terapis memantau keluarga binaan lewat papan pantau di '
-              'browser, masuk dengan email dan kata sandi dari pengelola klinik.',
-              style: companionBodyStyle,
-            ),
+            const Text('Terapis memantau keluarga lewat papan pantau di browser.', style: companionBodyStyle),
             const SizedBox(height: 16),
             CompanionCard(
               padding: const EdgeInsets.all(16),
@@ -46,11 +43,7 @@ Future<void> showTherapistEntry(BuildContext context) {
               },
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Untuk menautkan keluarga: buat kode undangan di papan pantau, lalu keluarga memasukkannya di '
-              'beranda → Terapis.',
-              style: companionMutedStyle,
-            ),
+            const Text('Buat kode undangan di papan pantau, lalu keluarga memasukkannya di tab Terapis.', style: companionMutedStyle),
           ],
         ),
       ),

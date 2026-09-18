@@ -8,6 +8,8 @@ import 'package:path_provider/path_provider.dart';
 import '../../core/app_state.dart';
 import '../../core/constants.dart';
 import '../../core/error_log.dart';
+import '../../core/motion.dart';
+import '../../core/theme.dart';
 import '../../data/db/app_database.dart';
 import '../coach/companion_widgets.dart';
 import '../coach/mission_rules.dart';
@@ -181,27 +183,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return CompanionPage(
       title: 'Pengaturan',
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
         children: [
-          const _Eyebrow('PAPAN BICARA'),
+          const _Section('Papan bicara'),
           CompanionCard(
-            padding: const EdgeInsets.fromLTRB(20, 8, 12, 8),
+            padding: const EdgeInsets.fromLTRB(18, 6, 12, 6),
             child: Column(
               children: [
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Susunan sel', style: _rowTitle),
-                  subtitle: const Text('Tetap, supaya letak kata tidak pernah berpindah', style: companionMutedStyle),
                   trailing: Text('${app?.child?.gridCols ?? 3} kolom', style: _rowValue),
                 ),
-                const Divider(height: 1, color: CompanionColors.line),
+                const Divider(),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Kunci mode anak', style: _rowTitle),
-                  subtitle: const Text(
-                    'Tombol Home dan kembali terkunci selama papan anak terbuka. Tahan tombol kunci 1,5 detik untuk keluar.',
-                    style: companionMutedStyle,
-                  ),
+                  subtitle: const Text('Tahan tombol kunci 1,5 detik untuk keluar', style: AppText.cap),
                   value: app?.childLock ?? true,
                   onChanged: app == null
                       ? null
@@ -213,186 +211,114 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
+          _ChoiceCard(
+            title: 'Suara papan',
+            options: const [('cowo', 'Cowok'), ('cewe', 'Cewek')],
+            value: app?.voiceSet,
+            onChanged: _changeVoiceSet,
+          ),
+          const SizedBox(height: 10),
+          _ChoiceCard(
+            title: 'Tahan untuk memilih',
+            subtitle: 'Untuk anak yang tangannya sering menyenggol layar.',
+            options: [for (final v in Limits.holdMsOptions) (v, v == 0 ? 'Tidak' : '$v ms')],
+            value: _holdMs,
+            onChanged: (selected) async {
+              await _app!.setHoldMs(selected);
+              if (mounted) setState(() => _holdMs = selected);
+            },
+          ),
+          const SizedBox(height: 10),
+          _ChoiceCard(
+            title: 'Rutinitas misi',
+            options: [for (final r in Routine.all) (r, _capitalize(routineDisplayLabel(r)))],
+            value: app?.child?.routine,
+            onChanged: _changeRoutine,
+          ),
+          const SizedBox(height: 10),
+          NavRow(
+            icon: Icons.mic_rounded,
+            title: 'Suara keluarga',
+            tint: CompanionColors.coralTint,
+            iconColor: CompanionColors.coralText,
+            onTap: () => _open(const FamilyVoiceScreen()),
+          ),
+          const SizedBox(height: 10),
+          NavRow(
+            icon: Icons.menu_book_rounded,
+            title: 'Kelola kosakata',
+            tint: CompanionColors.leafTint,
+            iconColor: CompanionColors.leafText,
+            onTap: () => _open(const ManageVocabScreen()),
+          ),
+          const _Section('Data di perangkat ini'),
+          NavRow(
+            icon: Icons.download_rounded,
+            title: 'Ekspor catatan',
+            subtitle: _dataMb == null ? null : '${_dataMb!.toStringAsFixed(1).replaceAll('.', ',')} MB tersimpan',
+            tint: CompanionColors.skyTint,
+            iconColor: CompanionColors.skyText,
+            onTap: _export,
+          ),
+          const SizedBox(height: 10),
+          EqualOutlineButton(label: 'Hapus semua data $name', color: CompanionColors.caution, onPressed: _deleteAllData),
+          const _Section('Tentang'),
+          NavRow(icon: Icons.info_outline_rounded, title: 'Batas produk', onTap: _showLimits),
+          const SizedBox(height: 10),
+          const CompanionCard(child: Text('Simbol: Mulberry Symbols © Steve Lee, CC BY-SA 4.0, mulberrysymbols.org', style: AppText.cap)),
+          const _Section('Teknis'),
           CompanionCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Suara papan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                const Text('Suara saat anak menekan kata. Klip tersimpan di aplikasi, jalan tanpa internet.', style: companionMutedStyle),
-                RadioGroup<String>(
-                  groupValue: app?.voiceSet,
-                  onChanged: (value) => value == null ? null : _changeVoiceSet(value),
-                  child: const Column(
-                    children: [
-                      RadioListTile<String>(contentPadding: EdgeInsets.zero, value: 'cowo', title: Text('Suara cowok')),
-                      RadioListTile<String>(contentPadding: EdgeInsets.zero, value: 'cewe', title: Text('Suara cewek')),
-                    ],
-                  ),
-                ),
-                const Text(
-                  'Saat Ibu atau Ayah memberi contoh, suara keluarga dipakai lebih dulu bila sudah direkam.',
-                  style: companionMutedStyle,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          CompanionCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Tahan untuk memilih', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                const Text('Untuk anak yang tangannya sering menyenggol layar.', style: companionMutedStyle),
-                DropdownButton<int>(
-                  value: _holdMs,
-                  isExpanded: true,
-                  items: Limits.holdMsOptions
-                      .map((value) => DropdownMenuItem(value: value, child: Text(value == 0 ? 'Tidak ditahan' : '$value ms')))
-                      .toList(),
-                  onChanged: (value) async {
-                    final selected = value ?? 0;
-                    await _app!.setHoldMs(selected);
-                    if (mounted) setState(() => _holdMs = selected);
-                  },
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          CompanionCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Rutinitas misi', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                const Text('Misi harian menempel pada kegiatan ini.', style: companionMutedStyle),
-                RadioGroup<String>(
-                  groupValue: app?.child?.routine,
-                  onChanged: (value) => value == null ? null : _changeRoutine(value),
-                  child: Column(
-                    children: [
-                      for (final routine in Routine.all)
-                        RadioListTile<String>(
-                          contentPadding: EdgeInsets.zero,
-                          value: routine,
-                          title: Text(_capitalize(routineDisplayLabel(routine))),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          CompanionCard(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Column(
-              children: [
-                ListTile(
-                  title: const Text('Suara keluarga', style: _rowTitle),
-                  subtitle: const Text('Rekam suara Ibu atau Ayah untuk kata inti dan kartu personal', style: companionMutedStyle),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _open(const FamilyVoiceScreen()),
-                ),
-                const Divider(height: 1, color: CompanionColors.line),
-                ListTile(
-                  title: const Text('Kelola kosakata', style: _rowTitle),
-                  subtitle: const Text('Sembunyikan kata atau tambah kartu dari foto', style: companionMutedStyle),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _open(const ManageVocabScreen()),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          const _Eyebrow('DATA DI HP INI'),
-          CompanionCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Seluruh catatan, rekaman, dan foto kartu tersimpan di HP ini.'
-                  '${_dataMb == null ? '' : ' Ukurannya sekarang ${_dataMb!.toStringAsFixed(1).replaceAll('.', ',')} MB.'}'
-                  ' Aplikasi tidak pernah menyalakan mikrofon sendiri.',
-                  style: companionBodyStyle,
-                ),
-                const SizedBox(height: 16),
-                EqualOutlineButton(label: 'Simpan salinan ke berkas', onPressed: _export),
+                const Text('Alamat server', style: _rowTitle),
                 const SizedBox(height: 10),
-                SizedBox(
-                  height: 56,
-                  child: OutlinedButton(
-                    onPressed: _deleteAllData,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF9B2C2C),
-                      side: const BorderSide(color: Color(0xFF9B2C2C), width: 2),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(controller: _server, keyboardType: TextInputType.url),
                     ),
-                    child: Text('Hapus semua data $name'),
-                  ),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: _testing ? null : _saveServer,
+                      style: TextButton.styleFrom(backgroundColor: CompanionColors.sand, minimumSize: const Size(72, 52)),
+                      child: Text(_testing ? '…' : 'Uji'),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          const _Eyebrow('TENTANG'),
-          CompanionCard(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Column(
-              children: [
-                ListTile(
-                  title: const Text('Batas produk', style: _rowTitle),
-                  trailing: const Text('Baca', style: _rowValue),
-                  onTap: _showLimits,
+                SmoothReveal(
+                  child: _connectionResult == null
+                      ? null
+                      : Padding(
+                          key: ValueKey(_connectionResult),
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(_connectionResult!, style: AppText.cap),
+                        ),
                 ),
-                const Divider(height: 1, color: CompanionColors.line),
-                const ListTile(
-                  title: Text('Sumber simbol', style: _rowTitle),
-                  subtitle: Text('Mulberry Symbols © Steve Lee, CC BY-SA 4.0, mulberrysymbols.org', style: companionMutedStyle),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          const CompanionCard(
-            color: CompanionColors.sand,
-            child: Text(
-              'Nyambung adalah alat bantu komunikasi dan pencatatan. Bukan alat diagnosis dan bukan pengganti terapi.',
-              style: companionBodyStyle,
-            ),
-          ),
-          const SizedBox(height: 20),
-          const _Eyebrow('TEKNIS'),
-          CompanionCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Alamat server', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: _server,
-                  keyboardType: TextInputType.url,
-                  decoration: const InputDecoration(border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: OutlinedButton(onPressed: _testing ? null : _saveServer, child: Text(_testing ? 'Menguji…' : 'Uji')),
-                ),
-                if (_connectionResult != null) Text(_connectionResult!, style: companionMutedStyle),
-                const Divider(height: 28, color: CompanionColors.line),
                 Text(
-                  'Suara Bahasa Indonesia: ${app?.speech.ttsIdAvailable == true ? 'tersedia' : 'tidak tersedia'} · '
+                  'Suara Bahasa Indonesia ${app?.speech.ttsIdAvailable == true ? 'tersedia' : 'tidak tersedia'} · '
                   'jeda ${app?.speech.firstUtteranceLatencyMs ?? '-'} ms',
-                  style: companionMutedStyle,
+                  style: AppText.cap,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Wrap(
                   spacing: 8,
+                  runSpacing: 8,
                   children: [
-                    OutlinedButton(onPressed: _testVoice, child: const Text('Uji suara')),
-                    OutlinedButton(onPressed: _showDiagnostics, child: const Text('Diagnosa')),
+                    TextButton.icon(
+                      onPressed: _testVoice,
+                      style: TextButton.styleFrom(backgroundColor: CompanionColors.sand),
+                      icon: const Icon(Icons.volume_up_rounded),
+                      label: const Text('Uji suara'),
+                    ),
+                    TextButton.icon(
+                      onPressed: _showDiagnostics,
+                      style: TextButton.styleFrom(backgroundColor: CompanionColors.sand),
+                      icon: const Icon(Icons.bug_report_outlined),
+                      label: const Text('Diagnosa'),
+                    ),
                   ],
                 ),
               ],
@@ -404,20 +330,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-const _rowTitle = TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: CompanionColors.ink);
-const _rowValue = TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: CompanionColors.muted);
+const _rowTitle = TextStyle(fontFamily: 'Nunito', fontSize: 16.5, fontWeight: FontWeight.w800, color: CompanionColors.ink);
+const _rowValue = TextStyle(fontFamily: 'Nunito', fontSize: 15, fontWeight: FontWeight.w700, color: CompanionColors.muted);
 
-class _Eyebrow extends StatelessWidget {
-  const _Eyebrow(this.text);
+class _Section extends StatelessWidget {
+  const _Section(this.text);
 
   final String text;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(left: 4, bottom: 8),
-    child: Text(
-      text,
-      style: const TextStyle(fontSize: 13, letterSpacing: 1.2, fontWeight: FontWeight.w800, color: CompanionColors.muted),
+  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.fromLTRB(4, 22, 0, 10), child: Eyebrow(text));
+}
+
+/// Kartu pilihan tunggal berupa pil. Pil terpilih berlatar toska muda.
+class _ChoiceCard<T> extends StatelessWidget {
+  const _ChoiceCard({required this.title, required this.options, required this.value, required this.onChanged, this.subtitle});
+
+  final String title;
+  final String? subtitle;
+  final List<(T, String)> options;
+  final T? value;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) => CompanionCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: _rowTitle),
+        if (subtitle != null) Text(subtitle!, style: AppText.cap),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final (v, label) in options)
+              ChoiceChip(
+                label: Text(label),
+                selected: v == value,
+                onSelected: (_) => onChanged(v),
+                labelStyle: TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: v == value ? CompanionColors.tealText : CompanionColors.ink,
+                ),
+                side: BorderSide(color: v == value ? CompanionColors.teal : CompanionColors.line, width: v == value ? 2 : 1),
+              ),
+          ],
+        ),
+      ],
     ),
   );
 }

@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/app_state.dart';
 import '../../core/error_log.dart';
 import '../../core/motion.dart';
+import '../../core/theme.dart';
 import '../../data/models.dart';
 import '../../data/personal_card.dart';
 import '../board/symbol_cell.dart';
@@ -117,16 +118,22 @@ class _PhotoCardScreenState extends State<PhotoCardScreen> {
       child: KeyedSubtree(
         key: ValueKey(_step),
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
           children: [
-            Text('Langkah $_step dari 3', style: companionMutedStyle),
-            const SizedBox(height: 12),
+            _Stepper(step: _step),
+            const SizedBox(height: 18),
             ...switch (_step) {
               1 => _stepPhoto(),
               2 => _stepLabel(),
               _ => _stepDone(),
             },
-            if (_error != null) ...[const SizedBox(height: 12), Text(_error!, style: const TextStyle(color: Color(0xFF9B2C2C)))],
+            if (_error != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                _error!,
+                style: const TextStyle(color: CompanionColors.caution, fontWeight: FontWeight.w700),
+              ),
+            ],
           ],
         ),
       ),
@@ -134,10 +141,13 @@ class _PhotoCardScreenState extends State<PhotoCardScreen> {
   );
 
   List<Widget> _stepPhoto() => [
-    const Text(
-      'Foto benda milik anak di rumah: gelas kesayangannya, boneka, sepeda. Kartu ini mengisi kotak kosong di papan.',
-      style: companionBodyStyle,
+    Container(
+      height: 180,
+      decoration: BoxDecoration(color: CompanionColors.sand, borderRadius: BorderRadius.circular(20)),
+      child: const Center(child: Icon(Icons.photo_camera_outlined, size: 48, color: CompanionColors.muted)),
     ),
+    const SizedBox(height: 12),
+    const Text('Foto benda milik anak: gelas kesayangannya, boneka, sepeda.', style: companionMutedStyle),
     const SizedBox(height: 16),
     PrimaryButton(label: 'Ambil foto', icon: Icons.photo_camera_outlined, onPressed: () => _pick(ImageSource.camera)),
     const SizedBox(height: 12),
@@ -145,8 +155,6 @@ class _PhotoCardScreenState extends State<PhotoCardScreen> {
       width: double.infinity,
       child: EqualOutlineButton(label: 'Pilih dari galeri', onPressed: () => _pick(ImageSource.gallery)),
     ),
-    const SizedBox(height: 16),
-    const Text('Foto hanya tersimpan di HP ini dan tidak pernah dikirim ke terapis.', style: companionMutedStyle),
   ];
 
   List<Widget> _stepLabel() {
@@ -175,14 +183,9 @@ class _PhotoCardScreenState extends State<PhotoCardScreen> {
               maxLength: personalLabelMax,
               textCapitalization: TextCapitalization.characters,
               inputFormatters: [_UpperCase()],
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+              style: AppText.h2,
               decoration: const InputDecoration(hintText: 'mis. GELAS', border: OutlineInputBorder()),
               onChanged: (_) => setState(() {}),
-            ),
-            const Text(
-              'Label ditulis huruf kapital dan dibacakan oleh suara HP. Kalau mau, kamu bisa merekam suaramu sendiri '
-              'setelah kartu tersimpan.',
-              style: companionMutedStyle,
             ),
           ],
         ),
@@ -221,13 +224,7 @@ class _PhotoCardScreenState extends State<PhotoCardScreen> {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              page == null
-                  ? ''
-                  : 'Kartu masuk ke kotak kosong berikutnya di halaman $pageLabel, posisi ${_app.nextCardSlot(page) + 1}. '
-                        'Sel lain tidak bergeser.',
-              style: companionMutedStyle,
-            ),
+            child: Text(page == null ? '' : 'Halaman $pageLabel, posisi ${_app.nextCardSlot(page) + 1}', style: companionMutedStyle),
           ),
         ],
       ),
@@ -247,7 +244,7 @@ class _PhotoCardScreenState extends State<PhotoCardScreen> {
     return [
       Row(
         children: [
-          SymbolFace(symbol: card, width: 104, height: 100),
+          PopIn(child: SymbolFace(symbol: card, width: 104, height: 100)),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -257,13 +254,7 @@ class _PhotoCardScreenState extends State<PhotoCardScreen> {
           ),
         ],
       ),
-      const SizedBox(height: 12),
-      const Text(
-        'Saat anak menekan kartu ini, terapis melihat labelnya saja. Fotonya tetap di HP ini. Kartu bisa disembunyikan '
-        'kapan saja di Kelola kosakata tanpa menggeser kata lain.',
-        style: companionMutedStyle,
-      ),
-      const SizedBox(height: 20),
+      const SizedBox(height: 24),
       PrimaryButton(label: 'Selesai', onPressed: () => Navigator.of(context).pop()),
       const SizedBox(height: 12),
       SizedBox(
@@ -289,7 +280,52 @@ class _PhotoCardScreenState extends State<PhotoCardScreen> {
   }
 }
 
-const _eyebrow = TextStyle(fontSize: 13, letterSpacing: 1.2, fontWeight: FontWeight.w800, color: CompanionColors.muted);
+const _eyebrow = AppText.eyebrow;
+
+/// Tiga langkah (Foto → Label → Simpan): lingkaran terisi toska dengan centang bila sudah lewat.
+class _Stepper extends StatelessWidget {
+  const _Stepper({required this.step});
+
+  final int step;
+
+  @override
+  Widget build(BuildContext context) {
+    const labels = ['Foto', 'Label', 'Simpan'];
+    return Row(
+      children: [
+        for (var i = 0; i < 3; i++) ...[
+          if (i > 0)
+            Expanded(
+              child: AnimatedContainer(
+                duration: Motion.of(context, Motion.resize),
+                height: 3,
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  color: i < step ? CompanionColors.teal : CompanionColors.line,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+            ),
+          AnimatedContainer(
+            duration: Motion.of(context, Motion.resize),
+            width: 30,
+            height: 30,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(color: i < step ? CompanionColors.tealDeep : CompanionColors.sand, shape: BoxShape.circle),
+            child: i < step - 1 || (step == 3 && i == 2)
+                ? const Icon(Icons.check_rounded, size: 18, color: Colors.white)
+                : Text(
+                    '${i + 1}',
+                    style: TextStyle(fontWeight: FontWeight.w900, color: i < step ? Colors.white : CompanionColors.muted),
+                  ),
+          ),
+          const SizedBox(width: 6),
+          Text(labels[i], style: AppText.cap.copyWith(color: i < step ? CompanionColors.ink : CompanionColors.muted)),
+        ],
+      ],
+    );
+  }
+}
 
 class _UpperCase extends TextInputFormatter {
   @override

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../core/app_state.dart';
 import '../../core/motion.dart';
-import '../../data/models.dart';
-import '../board/symbol_cell.dart';
+import '../../core/theme.dart';
 import 'companion_controller.dart';
 import 'companion_widgets.dart';
 
@@ -28,10 +26,12 @@ class WeekCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const Eyebrow('Sepekan ini'),
+                const SizedBox(height: 10),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -39,9 +39,12 @@ class WeekCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('$now', style: const TextStyle(fontSize: 56, height: 1, fontWeight: FontWeight.w800)),
-                          const SizedBox(height: 6),
-                          Text('kata berbeda dipakai $name', style: companionBodyStyle),
+                          CountUp(
+                            value: now,
+                            style: AppText.number.copyWith(color: CompanionColors.tealText),
+                          ),
+                          const SizedBox(height: 4),
+                          Text('kata berbeda dipakai $name', style: AppText.muted),
                         ],
                       ),
                     ),
@@ -54,30 +57,30 @@ class WeekCard extends StatelessWidget {
                   spacing: 10,
                   runSpacing: 6,
                   children: [
-                    if (diff > 0) _Pill(icon: Icons.arrow_upward, text: 'naik $diff'),
-                    Text(diff == 0 && prev > 0 ? 'sama dengan pekan lalu' : 'pekan lalu $prev kata', style: companionMutedStyle),
+                    if (diff > 0) _Pill(icon: Icons.arrow_upward_rounded, text: 'naik $diff'),
+                    Text(diff == 0 && prev > 0 ? 'sama dengan pekan lalu' : 'pekan lalu $prev kata', style: AppText.muted),
                   ],
                 ),
+                const SizedBox(height: 10),
+                Text(state.weeklySummary, style: AppText.body.copyWith(fontSize: 15)),
               ],
             ),
           ),
-          const Divider(height: 1, color: CompanionColors.line),
+          const Divider(height: 1),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Hari dengan misi modeling selesai', style: companionMutedStyle),
+                const Text('Hari dengan misi selesai', style: AppText.muted),
                 const SizedBox(height: 10),
                 Row(
                   children: [
                     for (var i = 0; i < dots.length; i++) ...[Expanded(child: _MissionDot(done: dots[i])), const SizedBox(width: 6)],
                     const SizedBox(width: 4),
-                    Text('$done dari ${dots.length}', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                    Text('$done dari ${dots.length}', style: AppText.h3),
                   ],
                 ),
-                const SizedBox(height: 8),
-                const Text('Hari kosong tidak menghapus apa pun.', style: companionMutedStyle),
               ],
             ),
           ),
@@ -87,14 +90,32 @@ class WeekCard extends StatelessWidget {
   }
 }
 
-/// Batang kecil kata berbeda per pekan. Pekan ini paling gelap. Batang tumbuh sekali saat pertama tampil
+/// Angka yang naik dari 0 ke [value] sekali saat pertama tampil (600 ms), lalu mengikuti perubahan nilai.
+class CountUp extends StatelessWidget {
+  const CountUp({super.key, required this.value, required this.style, this.suffix = ''});
+
+  final int value;
+  final TextStyle style;
+  final String suffix;
+
+  @override
+  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
+    tween: Tween(begin: 0, end: value.toDouble()),
+    duration: Motion.of(context, const Duration(milliseconds: 600)),
+    curve: Curves.easeOutCubic,
+    builder: (context, v, _) => Text('${v.round()}$suffix', style: style.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),
+  );
+}
+
+/// Batang kecil kata berbeda per pekan. Pekan ini toska, pekan lain netral. Batang tumbuh sekali saat pertama tampil
 /// (320 ms), seketika bila animasi Android dimatikan.
 class WeekBars extends StatelessWidget {
-  const WeekBars({super.key, required this.values, this.height = 72, this.barWidth = 14});
+  const WeekBars({super.key, required this.values, this.height = 72, this.barWidth = 14, this.gap = 5});
 
   final List<int> values;
   final double height;
   final double barWidth;
+  final double gap;
 
   @override
   Widget build(BuildContext context) {
@@ -113,17 +134,13 @@ class WeekBars extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               for (var i = 0; i < values.length; i++) ...[
-                if (i > 0) const SizedBox(width: 5),
+                if (i > 0) SizedBox(width: gap),
                 Container(
                   width: barWidth,
                   height: 6 + (max == 0 ? 0 : (height - 6) * values[i] / max) * t,
                   decoration: BoxDecoration(
-                    color: Color.lerp(
-                      const Color(0xFFDCE6F1),
-                      CompanionColors.navy,
-                      i >= values.length - 2 ? 1 : 0.15 + 0.5 * i / values.length,
-                    ),
-                    borderRadius: BorderRadius.circular(4),
+                    color: i == values.length - 1 ? CompanionColors.teal : CompanionColors.sandDeep,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(5), bottom: Radius.circular(2)),
                   ),
                 ),
               ],
@@ -144,11 +161,7 @@ class _Pill extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-    decoration: BoxDecoration(
-      color: const Color(0xFFDDE8DD),
-      borderRadius: BorderRadius.circular(99),
-      border: Border.all(color: const Color(0xFFA9C4A9)),
-    ),
+    decoration: BoxDecoration(color: CompanionColors.leafTint, borderRadius: BorderRadius.circular(99)),
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -173,90 +186,14 @@ class _MissionDot extends StatelessWidget {
   @override
   Widget build(BuildContext context) => AspectRatio(
     aspectRatio: 1,
-    child: Container(
+    child: AnimatedContainer(
+      duration: Motion.of(context, Motion.resize),
       decoration: BoxDecoration(
-        color: done == true ? CompanionColors.navy : CompanionColors.bg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: done == true ? CompanionColors.navy : CompanionColors.line, width: 1.5),
+        color: done == true ? CompanionColors.teal : CompanionColors.bg,
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: done == true ? CompanionColors.teal : CompanionColors.sandDeep, width: 2),
       ),
+      child: done == true ? const FittedBox(child: Icon(Icons.check_rounded, color: Colors.white)) : null,
     ),
   );
-}
-
-/// B1 "Buka Papan Bicara": empat kata kecil yang sering dipakai keluarga ini, ketuk kartu untuk membuka papan anak.
-class BoardPreviewCard extends StatelessWidget {
-  const BoardPreviewCard({super.key, required this.state, required this.onOpen});
-
-  final CompanionController state;
-  final VoidCallback onOpen;
-
-  List<WordSymbol> _words(AppState app) {
-    final ids = <String>{state.mission.targetWord, ...state.weeklyWords, 'mau', 'makan', 'minum', 'lagi'};
-    return [
-      for (final id in ids)
-        if (app.symbolById(id) case final s? when !s.isHidden) s,
-    ].take(4).toList();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final words = _words(AppScope.of(context));
-    return PressScale(
-      child: Material(
-        color: CompanionColors.panel,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: onOpen,
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: CompanionColors.line),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Buka Papan Bicara', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-                          SizedBox(height: 2),
-                          Text('Mode anak, terkunci sampai kamu buka', style: companionMutedStyle),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: 52,
-                      height: 44,
-                      decoration: BoxDecoration(color: CompanionColors.navy, borderRadius: BorderRadius.circular(12)),
-                      child: const Icon(Icons.arrow_forward, color: Colors.white),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                LayoutBuilder(
-                  builder: (context, box) {
-                    const gap = 8.0;
-                    final w = (box.maxWidth - gap * 3) / 4;
-                    return Row(
-                      children: [
-                        for (var i = 0; i < words.length; i++) ...[
-                          if (i > 0) const SizedBox(width: gap),
-                          SymbolFace(symbol: words[i], width: w, height: w * 0.95, compact: true),
-                        ],
-                      ],
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }

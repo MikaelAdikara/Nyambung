@@ -6,6 +6,8 @@ import '../../core/theme.dart';
 import 'companion_widgets.dart';
 import 'confirm_screen.dart';
 import 'companion_controller.dart';
+import 'visual_steps.dart';
+import '../board/symbol_cell.dart';
 
 class MissionScreen extends StatelessWidget {
   const MissionScreen({super.key, required this.state, this.openBoard});
@@ -29,6 +31,7 @@ class MissionScreen extends StatelessWidget {
     builder: (context, _) {
       final mission = state.mission;
       final shownReps = mission.repsCounted.clamp(0, mission.repsTarget);
+      final target = state.app.symbolById(mission.targetWord);
       return CompanionPage(
         title: 'Misi berjalan',
         body: LayoutBuilder(
@@ -39,12 +42,22 @@ class MissionScreen extends StatelessWidget {
               child: IntrinsicHeight(
                 child: Column(
                   children: [
+                    if (target != null) SymbolFace(symbol: target, width: 128, height: 124),
+                    const SizedBox(height: 12),
                     Text(
                       'Tekan ${state.targetLabel} sambil bicara, ${mission.repsTarget} kali, saat ${state.routineLabel}.',
                       textAlign: TextAlign.center,
-                      style: AppText.body.copyWith(color: CompanionColors.muted),
+                      style: AppText.body.copyWith(color: CompanionColors.ink),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(color: CompanionColors.sand, borderRadius: BorderRadius.circular(99)),
+                      child: Text(state.missionReason, textAlign: TextAlign.center, style: AppText.cap),
+                    ),
+                    const SizedBox(height: 18),
+                    VisualSteps(steps: missionSteps(mission.targetWord, state.targetLabel)),
+                    const SizedBox(height: 22),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -74,15 +87,18 @@ class MissionScreen extends StatelessWidget {
                     const Spacer(),
                     const SizedBox(height: 28),
                     PrimaryButton(
-                      label: 'Buka papan bersama anak',
-                      icon: Icons.grid_view_rounded,
+                      label: 'Mulai: tekan ${state.targetLabel} di papan',
+                      icon: Icons.touch_app_rounded,
                       onPressed: () async {
                         if (openBoard != null) {
                           await openBoard!();
                         } else {
-                          await Navigator.of(
-                            context,
-                          ).push(MaterialPageRoute<void>(builder: (_) => BoardScreen(missionContext: mission.id, allowTurnToggle: true)));
+                          await Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  BoardScreen(missionContext: mission.id, allowTurnToggle: true, highlightWord: mission.targetWord),
+                            ),
+                          );
                         }
                         await state.load();
                         await state.autoSync();

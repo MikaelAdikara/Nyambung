@@ -6,6 +6,7 @@ import type {
   ChildrenOverview,
   DemoFile,
   InviteOut,
+  MissionDay,
   PhraseOut,
   PhraseVoice,
   SessionNote,
@@ -42,6 +43,7 @@ export interface DataSource {
   recordReview(childId: string, seconds: number): void
   // Frasa bersuara. Frasa dari terapis sampai ke keluarga sebagai usulan.
   phrases(childId: string): Promise<PhraseOut[]>
+  missions(childId: string, days?: number): Promise<MissionDay[]>
   voiceStatus(childId: string): Promise<VoiceStatus>
   createPhrase(childId: string, text: string, voice: PhraseVoice): Promise<PhraseOut>
   // URL objek untuk <audio>; null bila klip tidak tersedia (mode demo).
@@ -159,6 +161,9 @@ export class ApiSource implements DataSource {
   phrases(childId: string) {
     return this.req<PhraseOut[]>('GET', `/v1/children/${encodeURIComponent(childId)}/phrases`)
   }
+  missions(childId: string, days = 14) {
+    return this.req<MissionDay[]>('GET', `/v1/children/${encodeURIComponent(childId)}/missions?days=${days}`)
+  }
   voiceStatus(childId: string) {
     return this.req<VoiceStatus>('GET', `/v1/children/${encodeURIComponent(childId)}/voice`)
   }
@@ -236,6 +241,10 @@ export class DemoSource implements DataSource {
       { ...base, phrase_id: `demo-2-${childId}`, text: 'Jangan nyontek', voice: 'keluarga', word_id: 'frs-jangan_nyontek-demo0002', created_by: 'Bu Rina (ilustratif)', created_at: day(6), status: 'diterima', answered_at: day(5), used_count: 4 },
       { ...base, phrase_id: `demo-3-${childId}`, text: 'Mau main di luar', voice: 'cowo', word_id: 'frs-mau_main_di_luar-demo0003', created_by: 'keluarga', created_at: day(9), status: 'diterima', answered_at: day(9), used_count: 11 },
     ]
+  }
+  async missions(childId: string, days = 14) {
+    if (!this.agg.child(childId)) throw new ApiError(404, 'anak tidak ditemukan')
+    return this.agg.missions(childId, days)
   }
   async voiceStatus(): Promise<VoiceStatus> {
     return { openai: false, elevenlabs: false, clone_active: false, clone_consent_by: null, clone_consent_at: null }

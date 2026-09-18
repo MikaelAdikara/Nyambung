@@ -4,6 +4,7 @@ import { useApp, useAsync } from '../ctx'
 import { fmtDate, pct, relTime, wordLabel } from '../format'
 import { attentionSignals } from '../attention'
 import { BarChart, ChildHeader, ErrorBox, Loading, Panel, StatCard, TrendBadge, WordIcon } from '../ui'
+import type { MissionDay, VocabWord } from '../types'
 
 const HOURS = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0'))
 const WEEKS = ['5 pk lalu', '4 pk lalu', '3 pk lalu', '2 pk lalu', 'pekan lalu', 'pekan ini']
@@ -12,8 +13,8 @@ const WEEKS = ['5 pk lalu', '4 pk lalu', '3 pk lalu', '2 pk lalu', 'pekan lalu',
 export function D2({ childId }: { childId: string }) {
   const { source, vocab } = useApp()
   const [res] = useAsync(async () => {
-    const [summary, targets] = await Promise.all([source.summary(childId, 7), source.targets(childId)])
-    return { summary, targets }
+    const [summary, targets, missions] = await Promise.all([source.summary(childId, 7), source.targets(childId), source.missions(childId, 14)])
+    return { summary, targets, missions }
   }, [source, childId])
 
   if (res.state === 'loading') return <Loading />
@@ -90,6 +91,8 @@ export function D2({ childId }: { childId: string }) {
           sub={`${s.child_taps} ketukan anak, termasuk ${s.parent_taps} ketukan orang tua saat modeling`}
         />
       </div>
+      <MissionPanel days={res.data.missions} vocab={vocab} />
+
       <p className="note">
         <strong>Angka ini pola pemakaian, bukan ukuran kemampuan anak.</strong> "Tanpa contoh" hanya berarti tidak ada
         ketukan pendamping dalam 60 detik sebelumnya; aplikasi tidak merekam suara, jadi tidak tahu apakah anak dipancing
@@ -161,5 +164,60 @@ export function D2({ childId }: { childId: string }) {
         </a>
       </nav>
     </section>
+  )
+}
+
+// Misi harian: kata, asalnya, dan hasil per hari. Aturan generator ada di aplikasi (mission_rules.dart):
+// urutan kata inti per rutinitas, diganti usulan terapis yang diterima keluarga. Semua dari peristiwa mentah.
+function MissionPanel({ days, vocab }: { days: MissionDay[]; vocab: Map<string, VocabWord> }) {
+  const latest = days[0]
+  const byDate = new Map<string, MissionDay>()
+  // Satu sel per hari: misi yang dikonfirmasi didahulukan bila hari itu punya lebih dari satu misi.
+  for (const d of days) if (!byDate.has(d.date) || (d.status && !byDate.get(d.date)?.status)) byDate.set(d.date, d)
+  const today = new Date()
+  const cells = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (13 - i))
+    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    return { iso, d, m: byDate.get(iso) }
+  })
+  return (
+    <Panel title="Misi harian orang tua" icon="calendar" className="section-gap">
+      {latest ? (
+        <div className="mission-now">
+          {latest.word && <WordIcon id={latest.word} size={56} />}
+          <div>
+            <strong>
+              {latest.word ? wordLabel(vocab, latest.word) : 'kata tidak tercatat'}
+              {latest.week !== null && ` · pekan ke-${latest.week}`}
+            </strong>
+            <span>
+              {latest.source === 'terapis'
+                ? 'Dari usulanmu yang diterima keluarga. Berlaku sampai ada usulan baru.'
+                : 'Urutan bawaan: 12 kata inti, mulai dari fungsi meminta, satu kata per pekan sesuai rutinitas keluarga.'}
+            </span>
+          </div>
+        </div>
+      ) : (
+        <p className="panel-empty">Belum ada misi yang tercatat dalam 14 hari terakhir.</p>
+      )}
+      <ol className="mission-days" aria-label="14 hari terakhir">
+        {cells.map(({ iso, d, m }) => (
+          <li key={iso} className={`mday ${m?.status ?? (m ? 'dibuka' : 'kosong')}`} title={m ? `${m.mission_id}: ${m.parent_taps} contoh pendamping, ${m.child_taps} ketukan anak` : 'tidak ada misi'}>
+            <span className="mday-date">{d.getDate()}</span>
+            <span className="mday-mark" aria-hidden="true">
+              {m?.status === 'selesai' ? '✓' : m?.status === 'belum_sempat' ? '–' : m ? '•' : ''}
+            </span>
+            <span className="mday-reps">{m ? `${Math.min(m.parent_taps, 99)}×` : ''}</span>
+            <span className="sr-only">
+              {iso}: {m?.status === 'selesai' ? 'selesai' : m?.status === 'belum_sempat' ? 'belum sempat' : m ? 'dibuka tanpa konfirmasi' : 'tidak ada misi'}
+            </span>
+          </li>
+        ))}
+      </ol>
+      <p className="panel-foot">
+        ✓ selesai · – belum sempat · • papan misi dibuka tanpa konfirmasi · angka = contoh pendamping pada kata misi hari itu. Belum sempat bukan
+        kegagalan.
+      </p>
+    </Panel>
   )
 }

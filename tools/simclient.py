@@ -40,7 +40,12 @@ WIB = timezone(timedelta(hours=7))
 BATCH = 40
 
 ROUTINE_HOUR = {"makan": 18, "mandi": 17, "main": 8}
-MISSION_WORDS = ["mau", "lagi", "tidak", "berhenti", "bantu", "selesai", "minum", "makan"]
+# Sama dengan app/lib/features/coach/mission_rules.dart (routineMissionWords).
+MISSION_WORDS = {
+    "makan": ["mau", "lagi", "selesai", "tidak", "bantu", "minum", "berhenti", "makan"],
+    "mandi": ["lagi", "berhenti", "selesai", "mau", "bantu", "tidak", "sakit", "aku"],
+    "main": ["mau", "lagi", "bantu", "berhenti", "selesai", "tidak", "itu", "aku"],
+}
 # Kata yang dipakai anak, urut dari yang paling awal muncul.
 CHILD_POOL = ["mau", "lagi", "tidak", "makan", "minum", "selesai", "bantu", "itu", "ya", "aku", "main", "mandi", "susu", "bola", "ibu"]
 
@@ -206,8 +211,12 @@ def generate(dev: Device, fam: dict, days: int, now: datetime, rng: random.Rando
     for d in range(days - 1, -1, -1):
         vocab = week_vocab(fam["weekly"], d)
         week_index = (days - 1 - d) // 7 + 1
-        mission_id = f"misi-w{week_index}"
-        target_word = MISSION_WORDS[(week_index - 1) % len(MISSION_WORDS)]
+        words = MISSION_WORDS[routine]
+        target_word = words[(week_index - 1) % len(words)]
+        day_start = at_hour(now, d, 0, 0, 0)
+        if accepted_target and accepted_target[2] <= day_start:
+            target_word = accepted_target[1]  # usulan terapis yang diterima menggantikan urutan bawaan
+        mission_id = f"misi-w{week_index}-{target_word}"
         session = str(uuid.uuid4())
         start = at_hour(now, d, ROUTINE_HOUR[routine], rng.randint(0, 25), rng.randint(0, 59)) - timedelta(minutes=30)
         t = start

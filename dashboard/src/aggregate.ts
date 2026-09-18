@@ -1,6 +1,18 @@
 // Agregator browser untuk mode demo. Cermin kontrak §5 dan server/app/services/summary.py baris demi baris;
 // angka harus identik dengan server untuk data dan `now` yang sama. Definisi beku di J6.
-import type { ChildRow, ChildrenOverview, DemoChild, DemoEvent, DemoFile, DemoTarget, SessionNote, Summary, TargetOut, Trend } from './types'
+import type {
+  ChildRow,
+  ChildrenOverview,
+  DemoChild,
+  DemoEvent,
+  DemoFile,
+  DemoTarget,
+  MissionDay,
+  SessionNote,
+  Summary,
+  TargetOut,
+  Trend,
+} from './types'
 
 // Kontrak §5 "ketukan"
 const TAP_METHODS = new Set(['SEL', 'KAT', 'PRS'])
@@ -147,6 +159,45 @@ export class DemoAggregator {
       this.file.targets.filter((t) => t.child_id === childId),
       this.evs(childId),
     )
+  }
+
+  // Cermin server summary.mission_rows: misi per (tanggal lokal, mission_id), terbaru dulu.
+  missions(childId: string, days = 14, at = this.now()): MissionDay[] {
+    const evs = this.evs(childId)
+    const start = utcIso(at - days * DAY_MS)
+    const accepted = this.targets(childId)
+      .filter((t) => t.status === 'diterima')
+      .map((t) => [t.answered_at, new Set(t.words)] as const)
+    const groups = new Map<string, Ev[]>()
+    for (const e of evs) {
+      if (!e.context?.startsWith('misi-') || e.ts_utc < start) continue
+      const key = `${e.date_local}|${e.context}`
+      groups.set(key, [...(groups.get(key) ?? []), e])
+    }
+    const out: MissionDay[] = []
+    for (const [key, group] of groups) {
+      const [date, missionId] = key.split('|')
+      const m = /^misi-w(\d+)(?:-(.+))?$/.exec(missionId)
+      const parent = group.filter((e) => TAP_METHODS.has(e.method) && e.actor === 'pendamping')
+      let word = m?.[2] ?? null
+      if (word === null && parent.length > 0) {
+        const counts = new Map<string, number>()
+        for (const e of parent) counts.set(e.content, (counts.get(e.content) ?? 0) + 1)
+        word = [...counts].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))[0][0]
+      }
+      const mis = group.filter((e) => e.method === 'MIS')
+      out.push({
+        date,
+        mission_id: missionId,
+        week: m ? Number(m[1]) : null,
+        word,
+        source: word && accepted.some(([a, ws]) => a && a.slice(0, 10) <= date && ws.has(word!)) ? 'terapis' : 'bawaan',
+        status: (mis.at(-1)?.content as MissionDay['status']) ?? null,
+        parent_taps: parent.filter((e) => e.content === word).length,
+        child_taps: group.filter((e) => TAP_METHODS.has(e.method) && e.actor === 'anak').length,
+      })
+    }
+    return out.sort((a, b) => (a.date === b.date ? (a.mission_id < b.mission_id ? 1 : -1) : a.date < b.date ? 1 : -1))
   }
 
   // D4: catatan sesi ilustratif, terbaru dulu (server session_rows)

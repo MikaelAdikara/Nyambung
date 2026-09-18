@@ -226,6 +226,11 @@ def create_app(
             raise HTTPException(404, "anak tidak ditemukan")
         return agg.target_rows(conn, child_id)
 
+    @app.get("/v1/children/{child_id}/missions")
+    async def missions(child_id: str, request: Request, days: int = Query(14, ge=1, le=90)) -> list[dict]:
+        _therapist_child(request, child_id)
+        return agg.mission_rows(conn, child_id, days)
+
     # ---------- catatan sesi (D4) ----------
 
     def _own_note(child_id: str, note_id: str, therapist: str) -> sqlite3.Row:

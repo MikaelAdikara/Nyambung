@@ -36,11 +36,15 @@ const pageIcons = <int, IconData>{
 /// - **Mode misi** (`allowTurnToggle: true`): dua tombol besar "Giliran pendamping" / "Giliran anak";
 ///   `context` peristiwa = [missionContext]. Buka dengan `MaterialPageRoute` biasa.
 class BoardScreen extends StatefulWidget {
-  const BoardScreen({super.key, this.missionContext, this.allowTurnToggle = false});
+  const BoardScreen({super.key, this.missionContext, this.allowTurnToggle = false, this.highlightWord});
 
   /// `mission_id` bila papan dibuka dari misi; `null` = rutinitas anak.
   final String? missionContext;
   final bool allowTurnToggle;
+
+  /// Mode misi: kata target diberi bingkai toska tetap (tanpa animasi) dan papan dibuka di halamannya, supaya
+  /// pendamping langsung tahu simbol mana yang ditekan. Tidak pernah dipakai di mode anak.
+  final String? highlightWord;
 
   bool get childMode => !allowTurnToggle;
 
@@ -82,6 +86,8 @@ class _BoardScreenState extends State<BoardScreen> {
       _started = true;
       _app.boardOpen = true;
       _app.startBoardSession();
+      final target = widget.allowTurnToggle && widget.highlightWord != null ? _app.symbolById(widget.highlightWord!) : null;
+      if (target != null) _page = target.page;
       if (widget.childMode && _app.childLock) LockTask.start();
       WidgetsBinding.instance.addPostFrameCallback((_) => _precacheBoard());
     }
@@ -211,6 +217,7 @@ class _BoardScreenState extends State<BoardScreen> {
                       isCorePage: _page == 0,
                       holdMs: _app.holdMs,
                       onSelect: _onSelect,
+                      highlight: widget.allowTurnToggle ? widget.highlightWord : null,
                     ),
                   ),
                 ),
@@ -424,8 +431,10 @@ class _BoardGrid extends StatelessWidget {
     required this.isCorePage,
     required this.holdMs,
     required this.onSelect,
+    this.highlight,
   });
 
+  final String? highlight;
   final List<WordSymbol?> cells;
   final int gridCols;
   final bool isCorePage;
@@ -473,7 +482,37 @@ class _BoardGrid extends StatelessWidget {
     // kategori diberi garis putus-putus: tempat kartu baru berikutnya (B5). Keduanya tidak bisa diketuk.
     if (s != null && s.isHidden) return SizedBox(width: w, height: h);
     if (s == null) return isCorePage ? SizedBox(width: w, height: h) : EmptySlot(width: w, height: h);
-    return SymbolCell(key: ValueKey(s.wordId), symbol: s, width: w, height: h, holdMs: holdMs, onSelect: onSelect);
+    final cell = SymbolCell(key: ValueKey(s.wordId), symbol: s, width: w, height: h, holdMs: holdMs, onSelect: onSelect);
+    if (s.wordId != highlight) return cell;
+    // Bingkai misi di luar sel (ukuran sel tidak berubah), plus tanda jari kecil di pojok kiri atas.
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        cell,
+        Positioned.fill(
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.tealDeep, width: 4),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          left: -6,
+          top: -6,
+          child: IgnorePointer(
+            child: Container(
+              width: 30,
+              height: 30,
+              decoration: const BoxDecoration(color: AppColors.tealDeep, shape: BoxShape.circle),
+              child: const Icon(Icons.touch_app_rounded, size: 18, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 

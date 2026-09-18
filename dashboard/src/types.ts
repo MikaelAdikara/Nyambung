@@ -191,3 +191,16 @@ export interface VoiceStatus {
   clone_consent_by: string | null
   clone_consent_at: string | null
 }
+
+// Misi harian per (tanggal lokal, mission_id). Dihitung dari peristiwa mentah (server summary.mission_rows).
+export interface MissionDay {
+  date: string
+  mission_id: string
+  week: number | null
+  word: string | null
+  // terapis = kata dari usulan yang sudah diterima keluarga; bawaan = urutan kata inti per rutinitas di aplikasi
+  source: 'terapis' | 'bawaan'
+  status: 'selesai' | 'belum_sempat' | null
+  parent_taps: number
+  child_taps: number
+}

@@ -36,6 +36,7 @@ Semua angka ini adalah pola pemakaian, bukan ukuran kemampuan anak.
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from collections import Counter
 from dataclasses import dataclass
@@ -142,6 +143,50 @@ def target_rows(conn: sqlite3.Connection, child_id: str, evs: Optional[list[Ev]]
             }
         )
     return out
+
+
+_MISSION_ID = re.compile(r"^misi-w(\d+)(?:-(.+))?$")
+
+
+def mission_rows(conn: sqlite3.Connection, child_id: str, days: int = 14, now: Optional[datetime] = None) -> list[dict]:
+    """Misi harian per (tanggal lokal, mission_id), terbaru dulu, hanya dari peristiwa mentah.
+
+    `mission_id` = `misi-w{pekan}-{kata}` (aplikasi baru) atau `misi-w{pekan}` (lama: kata diambil dari ketukan
+    pendamping terbanyak di konteks itu). `status` = MIS terakhir hari itu; `parent_taps` = ketukan pendamping pada
+    kata misi; `child_taps` = ketukan anak di papan misi. `source` = `terapis` bila kata itu ada di usulan yang sudah
+    diterima keluarga sebelum hari itu, selain itu `bawaan` (urutan kata inti per rutinitas di aplikasi).
+    """
+    now = now or now_utc()
+    evs = _events(conn, child_id)
+    start = utc_iso(now - timedelta(days=days))
+    accepted = [(t["answered_at"], set(t["words"])) for t in target_rows(conn, child_id, evs) if t["status"] == "diterima"]
+    groups: dict[tuple[str, str], list[Ev]] = {}
+    for e in evs:
+        if e.context and e.context.startswith("misi-") and e.ts_utc >= start:
+            groups.setdefault((e.date_local, e.context), []).append(e)
+    out = []
+    for (date, mission_id), group in groups.items():
+        m = _MISSION_ID.match(mission_id)
+        week = int(m.group(1)) if m else None
+        word = m.group(2) if m and m.group(2) else None
+        parent = [e for e in group if e.method in TAP_METHODS and e.actor == "pendamping"]
+        if word is None:
+            counts = Counter(e.content for e in parent)
+            word = min(counts, key=lambda w: (-counts[w], w)) if counts else None
+        mis = [e for e in group if e.method == "MIS"]
+        out.append(
+            {
+                "date": date,
+                "mission_id": mission_id,
+                "week": week,
+                "word": word,
+                "source": "terapis" if word and any(a and a[:10] <= date and word in ws for a, ws in accepted) else "bawaan",
+                "status": mis[-1].content if mis else None,
+                "parent_taps": sum(1 for e in parent if e.content == word),
+                "child_taps": sum(1 for e in group if e.method in TAP_METHODS and e.actor == "anak"),
+            }
+        )
+    return sorted(out, key=lambda r: (r["date"], r["mission_id"]), reverse=True)
 
 
 def phrase_rows(conn: sqlite3.Connection, child_id: str, evs: Optional[list[Ev]] = None) -> list[dict]:

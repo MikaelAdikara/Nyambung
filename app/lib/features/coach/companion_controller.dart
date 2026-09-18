@@ -41,6 +41,9 @@ class CompanionController extends ChangeNotifier {
   final LinkService links;
 
   CompanionMission? _mission;
+
+  /// Asal kata misi hari ini (urutan bawaan atau usulan terapis), untuk "Kenapa kata ini?".
+  MissionPlan? plan;
   CompanionMission get mission => _mission!;
   bool get hasMission => _mission != null;
 
@@ -103,6 +106,11 @@ class CompanionController extends ChangeNotifier {
   /// Label kata misi pekan ini.
   String get targetLabel => wordLabel(mission.targetWord);
 
+  /// "Kenapa kata ini?": asal kata misi, sama dengan yang dilihat terapis di dasbor.
+  String get missionReason => plan?.source == MissionSource.terapis
+      ? 'Usulan ${therapistName ?? 'terapis'} yang kamu terima'
+      : 'Pekan ke-$currentWeek · urutan kata inti untuk $routineLabel';
+
   String get weeklySummary {
     final name = child?.nickname ?? 'anak';
     final word = weeklyTopWord;
@@ -126,15 +134,12 @@ class CompanionController extends ChangeNotifier {
     targets = await app.targetDao.all();
     summaries = await app.summaryDao.all();
     phrases = await app.phraseDao.all();
-    final accepted = targets.where((target) {
-      final eligibleWeek = target.weekIndex == null || target.weekIndex! >= week;
-      return target.status == TargetStatus.diterima && target.words.isNotEmpty && eligibleWeek;
-    }).firstOrNull;
-    final targetWord = accepted?.words.first ?? defaultTargetForWeek(week);
+    final plan = planMission(week: week, routine: currentChild.routine, targets: targets, now: now);
+    this.plan = plan;
     final model = Mission(
-      missionId: missionIdForWeek(week),
+      missionId: plan.missionId,
       weekIndex: week,
-      targetWord: targetWord,
+      targetWord: plan.word,
       routine: currentChild.routine,
       lessonKey: lessonForWeek(week),
     );

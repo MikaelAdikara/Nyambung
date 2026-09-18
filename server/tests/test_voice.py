@@ -159,3 +159,29 @@ def test_missing_provider_key_reports_503(tmp_path):
     assert client.post(f"/v1/children/{child}/phrases", headers=bearer(dev), json={"text": "Halo", "voice": "cowo"}).status_code == 503
     assert client.post(f"/v1/children/{child}/voice/clone", headers=bearer(dev), json=clone_body()).status_code == 503
     assert client.get(f"/v1/children/{child}/phrases", headers=bearer(dev)).json() == []
+
+
+def test_missions_track_word_source_and_status(vclient):
+    child, dev, _ = link_child(vclient)
+    tgt = vclient.post(f"/v1/children/{child}/targets", headers=bearer(TOK_A), json={"words": ["berhenti"]}).json()
+    push(
+        vclient,
+        child,
+        dev,
+        [
+            ev("mau", actor="pendamping", prompt="terpancing", context="misi-w1-mau"),
+            ev("mau", actor="pendamping", prompt="terpancing", context="misi-w1-mau"),
+            ev("air", actor="anak", context="misi-w1-mau"),
+            ev("selesai", method="MIS", actor="pendamping", prompt="terpancing", context="misi-w1-mau"),
+            ev("lagi", actor="pendamping", prompt="terpancing", context="misi-w1"),  # format lama tanpa kata
+            ev("diterima", method="TGT", actor="pendamping", prompt="terpancing", context=tgt["target_id"]),
+            ev("berhenti", actor="pendamping", prompt="terpancing", context="misi-w1-berhenti"),
+        ],
+    )
+    rows = {r["mission_id"]: r for r in vclient.get(f"/v1/children/{child}/missions", headers=bearer(TOK_A)).json()}
+    assert rows["misi-w1-mau"]["word"] == "mau" and rows["misi-w1-mau"]["week"] == 1
+    assert rows["misi-w1-mau"]["status"] == "selesai" and rows["misi-w1-mau"]["parent_taps"] == 2 and rows["misi-w1-mau"]["child_taps"] == 1
+    assert rows["misi-w1-mau"]["source"] == "bawaan"
+    assert rows["misi-w1"]["word"] == "lagi" and rows["misi-w1"]["status"] is None
+    assert rows["misi-w1-berhenti"]["source"] == "terapis"
+    assert vclient.get(f"/v1/children/{child}/missions", headers=bearer(dev)).status_code == 403

@@ -6,6 +6,8 @@ import { relTime } from '../format'
 import { reviewReasons } from '../attention'
 import { ErrorBox, Loading, StatCard, TrendBadge } from '../ui'
 
+const fmtMinutes = (m: number) => m.toLocaleString('id-ID', { maximumFractionDigits: 1 })
+
 // D1 Keluarga binaan (jalur 4 §4.3, teks 02 §7)
 export function D1() {
   const { source } = useApp()
@@ -25,7 +27,18 @@ export function D1() {
             <StatCard label="Keluarga aktif" value={res.data.active_families} />
             <StatCard label="Perlu ditinjau" value={res.data.needs_review} />
             <StatCard label="Belum sinkron > 7 hari" value={res.data.unsynced_over_7d} />
-            <StatCard label="Usulan menunggu" value={res.data.pending_targets} />
+            <StatCard label="Usulan menunggu" value={res.data.pending_targets} sub="Keluarga berhak menolak tanpa alasan." />
+            <StatCard
+              label="Waktu tinjauan rata-rata"
+              value={res.data.review_avg_minutes === null ? 'belum diukur' : `${fmtMinutes(res.data.review_avg_minutes)} menit`}
+              sub={
+                res.data.review_avg_minutes === null
+                  ? source.kind === 'demo'
+                    ? 'Mode demo tidak mengukur. Sasaran rancangan di bawah 5 menit per anak.'
+                    : 'Terukur sendiri saat halaman anak dibuka. Sasaran di bawah 5 menit per anak.'
+                  : `per anak, dari ${res.data.review_count_30d} tinjauan 30 hari terakhir. Sasaran di bawah 5 menit.`
+              }
+            />
           </div>
           {res.data.children.length === 0 ? (
             <div className="card muted">Belum ada keluarga yang tertaut. Buat kode undangan dan berikan ke keluarga.</div>
@@ -39,7 +52,7 @@ export function D1() {
                     <th>Rutinitas</th>
                     <th className="num">Kata berbeda (7 hari)</th>
                     <th>Arah 3 pekan</th>
-                    <th className="num">Misi</th>
+                    <th>Misi orang tua</th>
                     <th>Sinkron terakhir</th>
                   </tr>
                 </thead>
@@ -59,8 +72,8 @@ export function D1() {
                       <td>
                         <TrendBadge trend={c.trend_3w} />
                       </td>
-                      <td className="num">
-                        {c.missions_done}/{c.missions_total}
+                      <td>
+                        {c.missions_done} dari {c.missions_total} hari
                       </td>
                       <td title={c.last_sync ?? ''}>{relTime(c.last_sync)}</td>
                     </tr>

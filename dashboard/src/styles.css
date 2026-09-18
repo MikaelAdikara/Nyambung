@@ -521,6 +521,16 @@ select {
   background: var(--navy-soft);
 }
 
+.word-use {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.word-use.none {
+  color: var(--muted);
+}
+
 .word-cell:disabled {
   opacity: 0.4;
   cursor: not-allowed;

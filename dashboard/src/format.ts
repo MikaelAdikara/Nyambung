@@ -1,7 +1,16 @@
 import type { Summary, VocabWord } from './types'
 
+// Kartu personal dari foto (C3) punya word_id `prs-<label>-<6 hex>`, mis. prs-gelas_arka-3fa9c1 → GELAS ARKA.
+// Fotonya tidak pernah dikirim; dasbor hanya punya label ini.
+const PERSONAL = /^prs-(.+)-[0-9a-f]{6}$/
+
+export function personalLabel(id: string): string | null {
+  const m = PERSONAL.exec(id)
+  return m ? m[1].replace(/_/g, ' ').toUpperCase() : null
+}
+
 export function wordLabel(vocab: Map<string, VocabWord>, id: string): string {
-  return vocab.get(id)?.label_display ?? id.toUpperCase()
+  return vocab.get(id)?.label_display ?? personalLabel(id) ?? id.toUpperCase()
 }
 
 // ---------- waktu ----------

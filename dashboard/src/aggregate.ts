@@ -1,6 +1,6 @@
 // Agregator browser untuk mode demo. Cermin kontrak §5 dan server/app/services/summary.py baris demi baris;
 // angka harus identik dengan server untuk data dan `now` yang sama. Definisi beku di J6.
-import type { ChildRow, ChildrenOverview, DemoChild, DemoEvent, DemoFile, DemoTarget, Summary, TargetOut, Trend } from './types'
+import type { ChildRow, ChildrenOverview, DemoChild, DemoEvent, DemoFile, DemoTarget, SessionNote, Summary, TargetOut, Trend } from './types'
 
 // Kontrak §5 "ketukan"
 const TAP_METHODS = new Set(['SEL', 'KAT', 'PRS'])
@@ -149,6 +149,13 @@ export class DemoAggregator {
     )
   }
 
+  // D4: catatan sesi ilustratif, terbaru dulu (server session_rows)
+  sessions(childId: string): SessionNote[] {
+    return (this.file.sessions ?? [])
+      .filter((n) => n.child_id === childId)
+      .sort((a, b) => (a.session_date < b.session_date ? 1 : a.session_date > b.session_date ? -1 : 0))
+  }
+
   summary(childId: string, days = 7, at = this.now()): Summary | null {
     const child = this.child(childId)
     if (!child) return null
@@ -223,6 +230,9 @@ export class DemoAggregator {
     const name = (c: ChildRow) => (c.nickname ?? '').toLowerCase()
     children.sort((a, b) => Number(!a.needs_review) - Number(!b.needs_review) || (name(a) < name(b) ? -1 : name(a) > name(b) ? 1 : 0))
     return {
+      // Mode demo tidak mengukur waktu tinjauan
+      review_avg_minutes: null,
+      review_count_30d: 0,
       active_families: children.length,
       needs_review: children.filter((c) => c.needs_review).length,
       unsynced_over_7d: children.filter((c) => stale(c.last_sync, at)).length,

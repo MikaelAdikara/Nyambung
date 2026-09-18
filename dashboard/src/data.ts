@@ -2,7 +2,7 @@
 //  - api : server jalur 3 dengan Bearer token terapis (sessionStorage, tidak pernah localStorage)
 //  - demo: ?source=demo, atau otomatis bila server tidak terjangkau; dihitung di browser oleh aggregate.ts
 import { DemoAggregator } from './aggregate'
-import type { ChildrenOverview, DemoFile, InviteOut, Summary, TargetIn, TargetOut, VocabWord } from './types'
+import type { ChildrenOverview, DemoFile, InviteOut, SessionNote, SessionNoteIn, Summary, TargetIn, TargetOut, VocabWord } from './types'
 
 export const API_BASE: string = (import.meta.env.VITE_API_BASE as string | undefined) ?? 'http://127.0.0.1:8000'
 const TOKEN_KEY = 'nyambung.therapistToken'
@@ -22,6 +22,11 @@ export interface DataSource {
   targets(childId: string): Promise<TargetOut[]>
   createTarget(childId: string, body: TargetIn): Promise<TargetOut>
   createInvite(): Promise<InviteOut>
+  sessions(childId: string): Promise<SessionNote[]>
+  saveSession(childId: string, body: SessionNoteIn, noteId?: string): Promise<SessionNote>
+  shareSession(childId: string, noteId: string, familyText: string): Promise<SessionNote>
+  // Waktu tinjauan D1. Terbaik-usaha: gagal kirim tidak pernah mengganggu terapis.
+  recordReview(childId: string, seconds: number): void
 }
 
 export function readToken(): string | null {
@@ -104,6 +109,31 @@ export class ApiSource implements DataSource {
   createInvite() {
     return this.req<InviteOut>('POST', '/v1/link/invite')
   }
+  sessions(childId: string) {
+    return this.req<SessionNote[]>('GET', `/v1/children/${encodeURIComponent(childId)}/sessions`)
+  }
+  saveSession(childId: string, body: SessionNoteIn, noteId?: string) {
+    const base = `/v1/children/${encodeURIComponent(childId)}/sessions`
+    return noteId
+      ? this.req<SessionNote>('PUT', `${base}/${encodeURIComponent(noteId)}`, body)
+      : this.req<SessionNote>('POST', base, body)
+  }
+  shareSession(childId: string, noteId: string, familyText: string) {
+    return this.req<SessionNote>(
+      'POST',
+      `/v1/children/${encodeURIComponent(childId)}/sessions/${encodeURIComponent(noteId)}/share`,
+      { family_text: familyText },
+    )
+  }
+  recordReview(childId: string, seconds: number) {
+    // keepalive: tetap terkirim walau tab sedang ditutup
+    void fetch(`${API_BASE}/v1/review-time`, {
+      method: 'POST',
+      keepalive: true,
+      headers: { Authorization: `Bearer ${this.token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ child_id: childId, seconds: Math.min(3600, Math.round(seconds)) }),
+    }).catch(() => undefined)
+  }
   me() {
     return this.req<{ therapist: string; email: string | null }>('GET', '/v1/auth/me')
   }
@@ -141,6 +171,19 @@ export class DemoSource implements DataSource {
   }
   async createInvite(): Promise<InviteOut> {
     throw new ApiError(0, 'Mode demo tidak membuat kode undangan.')
+  }
+  async sessions(childId: string) {
+    if (!this.agg.child(childId)) throw new ApiError(404, 'anak tidak ditemukan')
+    return this.agg.sessions(childId)
+  }
+  async saveSession(): Promise<SessionNote> {
+    throw new ApiError(0, 'Mode demo tidak menyimpan catatan sesi.')
+  }
+  async shareSession(): Promise<SessionNote> {
+    throw new ApiError(0, 'Mode demo tidak mengirim ke keluarga.')
+  }
+  recordReview() {
+    // mode demo tidak mengukur waktu tinjauan
   }
 }
 

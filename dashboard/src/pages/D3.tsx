@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { href } from '../route'
 import type { Routine, TargetOut } from '../types'
 import { useApp, useAsync } from '../ctx'
@@ -6,8 +6,37 @@ import { fmtDate, wordLabel } from '../format'
 import { ErrorBox, Loading, WordIcon } from '../ui'
 
 const MAX_WORDS = 5
+// Saran rancangan: paling banyak tiga kata per pekan supaya keluarga tidak kewalahan
+const SUGGESTED_WORDS = 3
 const MAX_NOTE = 600
 const STATUS_TEXT: Record<TargetOut['status'], string> = { usulan: 'Menunggu', diterima: 'Diterima', ditolak: 'Ditolak' }
+
+// Draf usulan per anak, hanya di browser ini (localStorage bisa diblokir: gagal diam-diam)
+interface Draft {
+  picked: string[]
+  note: string
+  routine: Routine | ''
+}
+const draftKey = (childId: string) => `nyambung.draft.${childId}`
+
+function readDraft(childId: string): Draft | null {
+  try {
+    const raw = localStorage.getItem(draftKey(childId))
+    return raw ? (JSON.parse(raw) as Draft) : null
+  } catch {
+    return null
+  }
+}
+
+function writeDraft(childId: string, draft: Draft | null): boolean {
+  try {
+    if (draft) localStorage.setItem(draftKey(childId), JSON.stringify(draft))
+    else localStorage.removeItem(draftKey(childId))
+    return true
+  } catch {
+    return false
+  }
+}
 
 // D3 usulan target (jalur 4 §4.5, teks 02 §7)
 export function D3({ childId }: { childId: string }) {
@@ -24,6 +53,22 @@ export function D3({ childId }: { childId: string }) {
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
   const [sent, setSent] = useState<string | null>(null)
+  const [draftNote, setDraftNote] = useState<string | null>(null)
+
+  // Muat draf tersimpan untuk anak ini
+  useEffect(() => {
+    const d = readDraft(childId)
+    if (!d) return
+    setPicked(d.picked.slice(0, MAX_WORDS))
+    setNote(d.note)
+    setRoutine(d.routine)
+    setDraftNote('Draf tersimpan dimuat.')
+  }, [childId])
+
+  const saveDraft = () => {
+    const ok = writeDraft(childId, { picked, note, routine })
+    setDraftNote(ok ? 'Draf tersimpan di browser ini. Belum terkirim ke keluarga.' : 'Browser menolak menyimpan draf.')
+  }
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -59,6 +104,8 @@ export function D3({ childId }: { childId: string }) {
         ...(routine ? { routine } : {}),
       })
       setSent(t.words.map((w) => wordLabel(vocab, w)).join(', '))
+      writeDraft(childId, null)
+      setDraftNote(null)
       setPicked([])
       setNote('')
       setRoutine('')
@@ -92,6 +139,11 @@ export function D3({ childId }: { childId: string }) {
           )}
         </div>
 
+        {picked.length > SUGGESTED_WORDS && (
+          <p className="muted small">Disarankan paling banyak {SUGGESTED_WORDS} kata per pekan supaya keluarga tidak kewalahan.</p>
+        )}
+        <p className="muted small">Angka "dipakai" = ketukan anak 7 hari terakhir.</p>
+
         <label htmlFor="q">Cari kata</label>
         <input id="q" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="mis. berhenti" />
 
@@ -99,6 +151,7 @@ export function D3({ childId }: { childId: string }) {
           {shown.map((w) => {
             const on = picked.includes(w.word_id)
             const full = !on && picked.length >= MAX_WORDS
+            const used = s.word_counts[w.word_id] ?? 0
             return (
               <button
                 type="button"
@@ -110,6 +163,7 @@ export function D3({ childId }: { childId: string }) {
               >
                 <WordIcon id={w.word_id} size={48} />
                 <span>{w.label_display}</span>
+                <span className={`word-use${used ? '' : ' none'}`}>{used ? `dipakai ${used} kali` : 'belum dipakai'}</span>
               </button>
             )
           })}
@@ -134,6 +188,14 @@ export function D3({ childId }: { childId: string }) {
           <button className="button" type="submit" disabled={demo || sending || picked.length === 0}>
             Kirim sebagai usulan
           </button>
+          <button className="button secondary" type="button" onClick={saveDraft} disabled={picked.length === 0 && !note.trim()}>
+            Simpan draf
+          </button>
+          {draftNote && (
+            <span className="muted small" role="status">
+              {draftNote}
+            </span>
+          )}
         </div>
         {demo && <p className="muted small">Mode demo: usulan tidak dikirim ke server. Masuk dengan token terapis untuk mengirim.</p>}
         {sendError && <p className="form-error">{sendError}</p>}

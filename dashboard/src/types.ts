@@ -19,6 +19,9 @@ export interface ChildRow {
 }
 
 export interface ChildrenOverview {
+  // Rerata lama satu tinjauan (menit), 30 hari terakhir; null = belum diukur
+  review_avg_minutes: number | null
+  review_count_30d: number
   active_families: number
   needs_review: number
   unsynced_over_7d: number
@@ -83,6 +86,28 @@ export interface TargetOut {
   used_count_since_accept: number
 }
 
+// D4: catatan sesi milik terapis. Keluarga hanya menerima family_text setelah dikirim.
+export interface SessionNoteIn {
+  session_date: string
+  note: string
+  focus?: string
+  next_session?: string
+}
+
+export interface SessionNote {
+  note_id: string
+  child_id: string
+  therapist: string
+  session_date: string
+  note: string
+  focus: string | null
+  next_session: string | null
+  created_at: string
+  updated_at: string
+  family_text: string | null
+  shared_at: string | null
+}
+
 export interface InviteOut {
   invite_code: string
   therapist: string
@@ -127,6 +152,8 @@ export interface DemoFile {
   children: DemoChild[]
   events: DemoEvent[]
   targets: DemoTarget[]
+  // Catatan sesi ilustratif (D4); berkas lama tanpa medan ini tetap sah
+  sessions?: SessionNote[]
 }
 
 // Satu baris assets/vocab/core_vocab_id.csv (hanya kolom yang dipakai dasbor)

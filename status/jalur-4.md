@@ -1,5 +1,5 @@
 # Status jalur 4 — Dasbor
-Diperbarui: 11:20
+Diperbarui: 13:55
 
 **Mulai 11:20 semua jalur bekerja langsung di `main`** (tidak ada lagi kerja paralel; branch jalur sudah tergabung).
 
@@ -7,6 +7,10 @@ Diperbarui: 11:20
 Paruh kedua: PERUBAHAN.md (terus-menerus), lalu naskah demo, deck, video. Siap menyaksikan `int-1-hp-ke-d2`.
 
 ## Tonggak selesai (tag)
+- (13:55, tanpa tag) D1 kartu Usulan menunggu + Waktu tinjauan rata-rata + kolom Misi orang tua; D2 Total ketukan
+  pekan ini + "Catatan wajib dibaca"; D3 "dipakai N kali" per sel, saran maks 3 kata, Simpan draf (localStorage).
+  `review.ts` mengukur waktu tinjauan (tab terlihat + interaksi ≤ 2 menit) → `POST /v1/review-time`. Label kartu
+  personal `prs-gelas_arka-3fa9c1` → GELAS ARKA. Build bersih, dicek di mode demo
 - (11:20, tanpa tag) D1 alasan "Perlu ditinjau"; D2 kartu Perlu diperiksa + target diterima + label "tanpa contoh ≤ 60 dtk".
   `npm run build` + lint bersih, dicek di mode demo
 - 4.1 kerangka: Vite + React + TS tanpa pustaka UI/router/grafik, hash routing D1–D4, `prepare-public`
@@ -44,7 +48,8 @@ Naskah demo J12–J20, deck J14–
   sampai ada, dasbor juga menampilkan huruf pertama.
 
 ## Perubahan API/kontrak yang perlu diketahui
-- (kosong) Dasbor mengikuti kontrak §4/§5/§7 apa adanya.
+- (13:55) Dasbor memakai endpoint baru jalur 3: `review-time`, `sessions`, `sessions/{id}/share`. Seed demo boleh
+  berisi `sessions` (opsional).
 
 ## Perubahan terhadap proposal (untuk PERUBAHAN.md, dibaca jalur 4)
 - (kosong)

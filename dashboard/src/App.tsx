@@ -11,8 +11,9 @@ import {
   type DataSource,
 } from './data'
 import { href, useRoute } from './route'
+import { useReviewTimer } from './review'
 import type { VocabWord } from './types'
-import { Ctx } from './ctx'
+import { Ctx, useApp } from './ctx'
 import { Ribbon } from './ui'
 import { D1 } from './pages/D1'
 import { D2 } from './pages/D2'
@@ -147,6 +148,7 @@ export default function App() {
 
 function Routes() {
   const route = useRoute()
+  useReviewTimer(route, useApp().source)
   return (
     <main className="page">
       {route.page === 'D1' && <D1 />}

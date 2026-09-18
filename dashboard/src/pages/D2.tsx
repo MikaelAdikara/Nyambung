@@ -73,7 +73,11 @@ export function D2({ childId }: { childId: string }) {
           sub={`belum sempat ${s.missions_skipped} hari`}
           accent="coral"
         />
-        <StatCard label="Ketukan anak / pendamping" value={`${s.child_taps} / ${s.parent_taps}`} sub={`total ${s.total_taps} ketukan`} />
+        <StatCard
+          label="Total ketukan pekan ini"
+          value={s.total_taps}
+          sub={`${s.child_taps} ketukan anak, termasuk ${s.parent_taps} ketukan orang tua saat modeling`}
+        />
       </div>
       <p className="note">
         <strong>Angka ini pola pemakaian, bukan ukuran kemampuan anak.</strong> "Tanpa contoh" hanya berarti tidak ada
@@ -126,12 +130,21 @@ export function D2({ childId }: { childId: string }) {
         </div>
       )}
 
+      <div className="card must-read">
+        <h2>Catatan wajib dibaca</h2>
+        <p>
+          Seluruh angka di halaman ini lahir otomatis dari ketukan simbol di aplikasi keluarga, bukan dari ingatan atau isian
+          orang tua. Yang tidak ada di sini: audio ruangan, video, dan lokasi, karena ketiganya tidak pernah direkam. Foto
+          kartu personal juga tidak pernah dikirim; yang terlihat hanya labelnya, misalnya GELAS.
+        </p>
+      </div>
+
       <nav className="actions">
         <a className="button" href={href.d3(childId)}>
           Usulkan kata
         </a>
         <a className="button secondary" href={href.d4(childId)}>
-          Ringkasan sesi
+          Catatan sesi
         </a>
       </nav>
     </section>

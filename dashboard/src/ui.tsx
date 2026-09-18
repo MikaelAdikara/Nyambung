@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { useApp } from './ctx'
 import { ApiError } from './data'
+import { personalLabel } from './format'
 import type { Trend } from './types'
 
 export function Loading() {
@@ -132,7 +133,11 @@ export function WordIcon({ id, size = 40 }: { id: string; size?: number }) {
   const [failed, setFailed] = useState(false)
   const fill = POS_FILL[w?.pos ?? 'benda'] ?? POS_FILL.benda
   return (
-    <span className="word-icon" style={{ width: size, height: size, background: fill }}>
+    <span
+      className="word-icon"
+      style={{ width: size, height: size, background: fill }}
+      title={personalLabel(id) ? 'Kartu personal dari foto keluarga (fotonya tidak dikirim)' : undefined}
+    >
       {w && !failed ? (
         <img
           src={`${import.meta.env.BASE_URL}symbols/${w.symbol_file}`}
@@ -145,7 +150,7 @@ export function WordIcon({ id, size = 40 }: { id: string; size?: number }) {
       ) : (
         // Simbol gambar tim belum ada: huruf pertama, sama seperti papan di aplikasi
         <span className="word-icon-letter" aria-hidden="true">
-          {(w?.label_display ?? id).slice(0, 1).toUpperCase()}
+          {(w?.label_display ?? personalLabel(id) ?? id).slice(0, 1).toUpperCase()}
         </span>
       )}
     </span>

@@ -77,6 +77,22 @@ class RedeemOut(BaseModel):
     device_token: str
 
 
+class LoginIn(StrictModel):
+    email: str = Field(min_length=3, max_length=254)
+    password: str = Field(min_length=1, max_length=200)
+
+
+class LoginOut(BaseModel):
+    token: str
+    therapist: str
+    expires_at: str
+
+
+class MeOut(BaseModel):
+    therapist: str
+    email: Optional[str]
+
+
 class TargetIn(StrictModel):
     words: list[str] = Field(min_length=1, max_length=5)
     note: Optional[str] = Field(default=None, max_length=600)

@@ -11,7 +11,8 @@ Perintah:
   verify --child X            bandingkan event_id lokal dengan server → identical: true/false
   tap    --child X --n 10     tambah ketukan anak ke perangkat tiruan (untuk uji crash)
 
-Alamat bawaan http://127.0.0.1:8000. Token terapis: --token atau token pertama di NYAMBUNG_THERAPIST_TOKENS.
+Alamat bawaan http://127.0.0.1:8000. Terapis: --email + --password (login), --token, atau token pertama di
+NYAMBUNG_THERAPIST_TOKENS. --out mengganti tujuan berkas seed (bawaan seed/demo_events.json).
 Semua data yang dihasilkan ILUSTRATIF.
 """
 
@@ -241,7 +242,14 @@ def generate(dev: Device, fam: dict, days: int, now: datetime, rng: random.Rando
 def cmd_demo(args: argparse.Namespace) -> None:
     server = args.server.rstrip("/")
     check_health(server)
-    tok = therapist_token(args.token)
+    if args.email:
+        status, sess = http("POST", f"{server}/v1/auth/login", body={"email": args.email, "password": args.password or ""})
+        if status != 200:
+            sys.exit(f"Login {args.email} gagal {status}: {sess}")
+        tok = sess["token"]
+    else:
+        tok = therapist_token(args.token)
+    seed_out = Path(args.out) if args.out else SEED_OUT
     rng = random.Random(args.seed)
     now = datetime.now(timezone.utc)
     out = {"illustrative": True, "generated_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "children": [], "events": [], "targets": []}
@@ -289,9 +297,9 @@ def cmd_demo(args: argparse.Namespace) -> None:
         )
         for r in rows:
             out["events"].append({k: r[k] for k in ("child_id", "event_id", "ts_device", "content", "method", "actor", "prompt_level", "context", "session_id")})
-    SEED_OUT.parent.mkdir(parents=True, exist_ok=True)
-    SEED_OUT.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"Tulis {SEED_OUT.relative_to(ROOT)}: {len(out['children'])} anak, {len(out['events'])} peristiwa, {len(out['targets'])} target (ilustratif)")
+    seed_out.parent.mkdir(parents=True, exist_ok=True)
+    seed_out.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"Tulis {seed_out}: {len(out['children'])} anak, {len(out['events'])} peristiwa, {len(out['targets'])} target (ilustratif)")
 
 
 def cmd_tap(args: argparse.Namespace) -> None:
@@ -338,6 +346,9 @@ def main() -> None:
     d = sub.add_parser("demo")
     d.add_argument("--days", type=int, default=21)
     d.add_argument("--token")
+    d.add_argument("--email")
+    d.add_argument("--password")
+    d.add_argument("--out")
     d.add_argument("--seed", type=int, default=2026)
     s = sub.add_parser("sync")
     s.add_argument("--child", required=True)

@@ -60,6 +60,23 @@ CREATE TABLE IF NOT EXISTS therapist_account (
   created_at TEXT NOT NULL
 );
 
+-- Login email + kata sandi terapis. `therapist` = nama tampilan yang sama dengan therapist_account,
+-- jadi akun login dan token env menunjuk identitas terapis yang sama.
+CREATE TABLE IF NOT EXISTS therapist_login (
+  email         TEXT PRIMARY KEY,
+  therapist     TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  created_at    TEXT NOT NULL
+);
+
+-- Sesi dari login. Hanya SHA-256 token yang disimpan; baris dihapus saat keluar.
+CREATE TABLE IF NOT EXISTS therapist_session (
+  token_hash TEXT PRIMARY KEY,
+  therapist  TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS invite (
   invite_code TEXT PRIMARY KEY,
   therapist   TEXT NOT NULL,

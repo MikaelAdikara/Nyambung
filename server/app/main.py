@@ -18,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import auth
 from .db import connect, now_utc, parse_utc, transaction, utc_iso
-from .schemas import InviteOut, RedeemIn, RedeemOut, SyncIn, SyncOut, TargetIn, TargetOut, parse_device_ts
+from .schemas import InviteOut, LoginIn, LoginOut, MeOut, RedeemIn, RedeemOut, SyncIn, SyncOut, TargetIn, TargetOut, parse_device_ts
 from .services import summary as agg
 
 
@@ -37,6 +37,28 @@ def create_app(db_path: Optional[Path | str] = None, therapist_tokens: Optional[
     async def health() -> dict:
         n = conn.execute("SELECT COUNT(*) FROM event").fetchone()[0]
         return {"ok": True, "events": n, "time": utc_iso(now_utc())}
+
+    # ---------- login terapis ----------
+
+    @app.post("/v1/auth/login", response_model=LoginOut)
+    async def login(body: LoginIn) -> dict:
+        with transaction(conn):
+            session = auth.login(conn, body.email, body.password)
+        if not session:
+            raise HTTPException(401, "email atau kata sandi salah")
+        return session
+
+    @app.post("/v1/auth/logout", status_code=204)
+    async def logout(request: Request) -> Response:
+        auth.require_therapist(conn, request)
+        with transaction(conn):
+            auth.logout(conn, request)
+        return Response(status_code=204)
+
+    @app.get("/v1/auth/me", response_model=MeOut)
+    async def me(request: Request) -> dict:
+        p = auth.require_therapist(conn, request)
+        return {"therapist": p.therapist, "email": auth.therapist_email(conn, p.therapist)}
 
     # ---------- tautan ----------
 

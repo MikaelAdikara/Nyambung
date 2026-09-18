@@ -575,3 +575,25 @@ select {
   padding-left: 20px;
   line-height: 1.6;
 }
+
+.gate-note {
+  margin: 4px 0 0;
+  text-align: center;
+}
+
+.gate-links {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.account {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gate-card .gate-links {
+  align-self: stretch;
+}

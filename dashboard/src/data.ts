@@ -41,6 +41,23 @@ export function saveToken(token: string | null): void {
   }
 }
 
+// Login email + kata sandi → token sesi 30 hari (disimpan di tempat yang sama dengan token env).
+export async function loginWithPassword(email: string, password: string): Promise<string> {
+  let res: Response
+  try {
+    res = await fetch(`${API_BASE}/v1/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+  } catch {
+    throw new ApiError(0, `Server ${API_BASE} tidak terjangkau.`)
+  }
+  if (res.status === 401) throw new ApiError(401, 'Email atau kata sandi salah.')
+  if (!res.ok) throw new ApiError(res.status, `Server menjawab ${res.status}.`)
+  return ((await res.json()) as { token: string }).token
+}
+
 export class ApiSource implements DataSource {
   readonly kind = 'api'
   private readonly token: string
@@ -86,6 +103,17 @@ export class ApiSource implements DataSource {
   }
   createInvite() {
     return this.req<InviteOut>('POST', '/v1/link/invite')
+  }
+  me() {
+    return this.req<{ therapist: string; email: string | null }>('GET', '/v1/auth/me')
+  }
+  // Mencabut sesi di server. Token env tidak bisa dicabut dari sini (403), cukup dilupakan di browser.
+  async logout(): Promise<void> {
+    try {
+      await fetch(`${API_BASE}/v1/auth/logout`, { method: 'POST', headers: { Authorization: `Bearer ${this.token}` } })
+    } catch {
+      // luring: token tetap dilupakan di browser dan kedaluwarsa sendiri
+    }
   }
 }
 

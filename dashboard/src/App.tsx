@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { ApiError, ApiSource, loadDemoSource, loadVocab, readToken, saveToken, serverReachable, type DataSource } from './data'
+import {
+  ApiError,
+  ApiSource,
+  loadDemoSource,
+  loadVocab,
+  loginWithPassword,
+  readToken,
+  saveToken,
+  serverReachable,
+  type DataSource,
+} from './data'
 import { href, useRoute } from './route'
 import type { VocabWord } from './types'
 import { Ctx } from './ctx'
@@ -48,15 +58,34 @@ export default function App() {
     })()
   }, [startDemo])
 
-  const signIn = async (token: string) => {
-    const source = new ApiSource(token)
+  // Nama terapis di bilah atas, terikat ke sumber yang memintanya supaya tidak tertinggal setelah keluar.
+  const [named, setNamed] = useState<{ source: DataSource; name: string } | null>(null)
+  const apiSource = boot.state === 'ready' && boot.source instanceof ApiSource ? boot.source : null
+  useEffect(() => {
+    if (!apiSource) return
+    let live = true
+    apiSource.me().then(
+      (m) => live && setNamed({ source: apiSource, name: m.therapist }),
+      () => {},
+    )
+    return () => {
+      live = false
+    }
+  }, [apiSource])
+  const therapist = named && apiSource && named.source === apiSource ? named.name : null
+
+  const signIn = async (cred: Credentials) => {
     try {
+      const token = 'token' in cred ? cred.token : await loginWithPassword(cred.email, cred.password)
+      const source = new ApiSource(token)
       await source.children()
       saveToken(token)
       setBoot({ state: 'ready', source, reason: null })
     } catch (e) {
       const msg =
-        e instanceof ApiError && e.status === 401 ? 'Token tidak dikenal. Periksa lagi atau minta ke pengelola server.' : (e as Error).message
+        e instanceof ApiError && e.status === 401 && 'token' in cred
+          ? 'Token tidak dikenal. Periksa lagi atau minta ke pengelola server.'
+          : (e as Error).message
       setBoot({ state: 'gate', error: msg })
     }
   }
@@ -81,7 +110,7 @@ export default function App() {
         <div className="card error">{boot.error}</div>
       </main>
     )
-  if (boot.state === 'gate') return <TokenGate error={boot.error} onSubmit={signIn} />
+  if (boot.state === 'gate') return <LoginGate error={boot.error} onSubmit={signIn} />
 
   const demo = boot.source.kind === 'demo'
   return (
@@ -94,17 +123,21 @@ export default function App() {
           Nyambung <span className="muted">· papan pantau terapis</span>
         </a>
         {demo ? (
-          <a href={withSource(false)}>Masuk dengan token</a>
+          <a href={withSource(false)}>Masuk sebagai terapis</a>
         ) : (
-          <button
-            className="link"
-            onClick={() => {
-              saveToken(null)
-              setBoot({ state: 'gate' })
-            }}
-          >
-            Keluar
-          </button>
+          <span className="account">
+            {therapist && <span className="muted">{therapist}</span>}
+            <button
+              className="link"
+              onClick={() => {
+                if (boot.source instanceof ApiSource) void boot.source.logout()
+                saveToken(null)
+                setBoot({ state: 'gate' })
+              }}
+            >
+              Keluar
+            </button>
+          </span>
         )}
       </header>
       <Routes />
@@ -130,41 +163,70 @@ function Routes() {
   )
 }
 
-// Gerbang token (02 §7). Token hanya di sessionStorage.
-function TokenGate({ error, onSubmit }: { error?: string; onSubmit: (token: string) => Promise<void> }) {
+type Credentials = { email: string; password: string } | { token: string }
+
+// Gerbang masuk (02 §7, diubah: email + kata sandi; token server tetap bisa dipakai untuk simulator/pengelola).
+// Token sesi hanya di sessionStorage.
+function LoginGate({ error, onSubmit }: { error?: string; onSubmit: (cred: Credentials) => Promise<void> }) {
+  const [useToken, setUseToken] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [token, setToken] = useState('')
   const [busy, setBusy] = useState(false)
+  const ready = useToken ? token.trim() !== '' : email.trim() !== '' && password !== ''
   const submit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!token.trim()) return
+    if (!ready) return
     setBusy(true)
-    await onSubmit(token.trim())
+    await onSubmit(useToken ? { token: token.trim() } : { email: email.trim(), password })
     setBusy(false)
   }
   return (
     <main className="page gate">
       <form className="card gate-card" onSubmit={submit}>
         <h1>Masuk sebagai terapis</h1>
-        <label htmlFor="token">Token terapis</label>
-        <input
-          id="token"
-          type="password"
-          autoComplete="off"
-          value={token}
-          onChange={(e) => setToken(e.target.value)}
-          autoFocus
-        />
+        {useToken ? (
+          <>
+            <label htmlFor="token">Token server</label>
+            <input id="token" type="password" autoComplete="off" value={token} onChange={(e) => setToken(e.target.value)} autoFocus />
+          </>
+        ) : (
+          <>
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              autoComplete="username"
+              inputMode="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoFocus
+            />
+            <label htmlFor="password">Kata sandi</label>
+            <input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </>
+        )}
         {error && (
           <p className="form-error" role="alert">
             {error}
           </p>
         )}
-        <button className="button" type="submit" disabled={busy || !token.trim()}>
-          Masuk
+        <button className="button" type="submit" disabled={busy || !ready}>
+          {busy ? 'Memeriksa…' : 'Masuk'}
         </button>
-        <a className="small" href={withSource(true)}>
-          Lihat data ilustratif
-        </a>
+        <p className="small muted gate-note">Akun terapis dibuat oleh pengelola klinik. Belum punya akun? Hubungi pengelola.</p>
+        <div className="gate-links small">
+          <a href={withSource(true)}>Lihat data ilustratif</a>
+          <button type="button" className="link" onClick={() => setUseToken(!useToken)}>
+            {useToken ? 'Masuk dengan email' : 'Pakai token server'}
+          </button>
+        </div>
       </form>
     </main>
   )

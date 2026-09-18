@@ -143,6 +143,13 @@ minta ke jalur 1 lewat status dan lisan.
 ## Aturan kerja
 
 - Alamat server selalu `127.0.0.1` atau IP eksplisit, **tidak pernah `localhost`** (di Windows mencoba IPv6 dulu).
+- **APK untuk HP selalu dibangun dengan IP laptop server**, bukan build polos (tanpa itu APK mengarah ke
+  `127.0.0.1`, yaitu HP itu sendiri):
+  `flutter build apk --release --split-per-abi --dart-define=NYAMBUNG_SERVER=http://<IP-laptop-server>:8000`
+  (IP demo saat ini `10.128.112.129`; cek ulang tiap ganti jaringan). Pasang `app-arm64-v8a-release.apk`.
+- **Aplikasi harus tetap diterima server versi lama.** Model masukan server menolak medan tak dikenal (422), dan
+  server di laptop demo sering tertinggal dari APK. Jangan menambah medan baru di request app tanpa server yang sudah
+  berjalan menerimanya; lebih baik server melengkapi data sendiri. Setelah menarik perubahan `server/`, restart uvicorn.
 - Data demo selalu berlabel **ilustratif**, di berkas dan di antarmuka.
 - Setiap perubahan terhadap proposal dicatat di `PERUBAHAN.md` saat itu juga.
 - Jujur terhadap batasan sistem: yang belum ada, sebut belum ada.

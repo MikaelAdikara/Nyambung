@@ -10,6 +10,7 @@ import '../settings/settings_screen.dart';
 import '../settings/therapist_screen.dart';
 import 'companion_controller.dart';
 import 'companion_widgets.dart';
+import 'home_cards.dart';
 import 'lesson_screen.dart';
 import 'mission_rules.dart';
 import 'mission_screen.dart';
@@ -59,7 +60,32 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _controller?.dispose();
     final controller = CompanionController(app);
     _controller = controller;
-    controller.load().then((_) => controller.autoSync());
+    controller.load().then((_) {
+      _openAfterOnboarding(controller);
+      return controller.autoSync();
+    });
+  }
+
+  /// Pilihan di A6 ("Buka misi hari ini" / "Lihat papan dulu") dijalankan sekali setelah beranda siap.
+  void _openAfterOnboarding(CompanionController controller) {
+    final app = _app;
+    final next = app?.afterOnboarding;
+    if (app == null || next == null || !mounted || !controller.hasMission) return;
+    app.afterOnboarding = null;
+    switch (next) {
+      case AfterOnboarding.mission:
+        Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => MissionScreen(state: controller)));
+      case AfterOnboarding.board:
+        _openBoard(controller);
+    }
+  }
+
+  Future<void> _openBoard(CompanionController controller) async {
+    final open = widget.openChildBoard;
+    if (open != null) return open();
+    await Navigator.of(context).push(BoardScreen.childRoute());
+    await controller.load();
+    await controller.autoSync();
   }
 
   @override
@@ -129,26 +155,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [
-            PrimaryButton(
-              label: 'Buka Papan Bicara untuk anak',
-              icon: Icons.grid_view_rounded,
-              onPressed:
-                  widget.openChildBoard ??
-                  () async {
-                    await Navigator.of(context).push(BoardScreen.childRoute());
-                    await controller.load();
-                    await controller.autoSync();
-                  },
-            ),
-            const SizedBox(height: 8),
-            PressScale(
-              child: OutlinedButton.icon(
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NowNextScreen())),
-                icon: const Icon(Icons.view_column_outlined),
-                label: const Text('Sekarang → Nanti'),
-              ),
-            ),
-            const SizedBox(height: 16),
             _MissionCard(state: controller),
             SmoothReveal(
               child: controller.pendingTargets.isEmpty
@@ -159,18 +165,21 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     ),
             ),
             const SizedBox(height: 16),
-            CompanionCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Pekan ini', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 8),
-                  Text(controller.weeklySummary, style: companionBodyStyle),
-                  const SizedBox(height: 8),
-                  const Text('Angka ini lahir dari ketukan papan, bukan dari isian.', style: companionMutedStyle),
-                ],
+            BoardPreviewCard(state: controller, onOpen: () => _openBoard(controller)),
+            const SizedBox(height: 8),
+            PressScale(
+              child: OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NowNextScreen())),
+                icon: const Icon(Icons.view_column_outlined),
+                label: const Text('Sekarang → Nanti'),
               ),
             ),
+            const SizedBox(height: 20),
+            const _SectionLabel('SEPEKAN INI'),
+            const SizedBox(height: 8),
+            WeekCard(state: controller),
+            const SizedBox(height: 8),
+            Text(controller.weeklySummary, style: companionMutedStyle),
             const SizedBox(height: 16),
             _SyncCard(state: controller),
           ],
@@ -178,6 +187,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ),
     );
   }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    text,
+    style: const TextStyle(fontSize: 13, letterSpacing: 1.4, fontWeight: FontWeight.w800, color: CompanionColors.muted),
+  );
 }
 
 class _MissionCard extends StatelessWidget {

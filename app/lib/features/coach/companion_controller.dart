@@ -8,6 +8,7 @@ import '../../core/time.dart';
 import '../../data/models.dart';
 import '../../data/sync/link_service.dart';
 import '../../data/sync/sync_service.dart';
+import '../progress/usage_stats.dart';
 import 'mission_rules.dart';
 
 @immutable
@@ -46,6 +47,9 @@ class CompanionController extends ChangeNotifier {
   int outboxCount = 0;
   TherapistLink? activeLink;
   List<VocabTarget> targets = const [];
+
+  /// Ringkasan sesi dari terapis (C5), terbaru dulu.
+  List<TherapistSummary> summaries = const [];
   MissionLog? todayLog;
   int parentMissionTaps = 0;
   int childMissionTaps = 0;
@@ -54,6 +58,15 @@ class CompanionController extends ChangeNotifier {
   int weeklyOtherWords = 0;
   int currentWeek = 1;
   List<String> weeklyWords = const [];
+
+  /// B1: kata berbeda per 7 hari untuk 7 pekan terakhir (terlama dulu). Elemen terakhir = pekan ini.
+  List<int> weekBars = const [];
+
+  /// B1: status misi 7 hari terakhir (lihat [missionDays]).
+  List<bool?> missionDots = const [];
+
+  int get uniqueThisWeek => weekBars.isEmpty ? 0 : weekBars.last;
+  int get uniquePrevWeek => weekBars.length < 2 ? 0 : weekBars[weekBars.length - 2];
   bool loading = false;
   bool syncing = false;
   SyncReport? lastSyncReport;
@@ -104,6 +117,7 @@ class CompanionController extends ChangeNotifier {
     final week = missionWeek(DateTime.parse(currentChild.createdAt).toLocal(), now);
     currentWeek = week;
     targets = await app.targetDao.all();
+    summaries = await app.summaryDao.all();
     final accepted = targets.where((target) {
       final eligibleWeek = target.weekIndex == null || target.weekIndex! >= week;
       return target.status == TargetStatus.diterima && target.words.isNotEmpty && eligibleWeek;
@@ -137,19 +151,15 @@ class CompanionController extends ChangeNotifier {
     outboxCount = await app.eventDao.outboxCount();
     activeLink = await app.linkDao.active();
     lastSyncedAt = await app.eventDao.lastSyncedAt();
-    final weekStart = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
-    final weeklyEvents = await app.eventDao.since(currentChild.childId, isoWithOffset(weekStart));
-    final counts = <String, int>{};
-    for (final event in weeklyEvents) {
-      if (event.actor == Actor.anak && Method.taps.contains(event.method)) {
-        counts.update(event.content, (count) => count + 1, ifAbsent: () => 1);
-      }
-    }
-    final ranked = counts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-    weeklyTopWord = ranked.firstOrNull?.key;
-    weeklyTopCount = ranked.firstOrNull?.value ?? 0;
-    weeklyOtherWords = counts.isEmpty ? 0 : counts.length - 1;
-    weeklyWords = ranked.map((entry) => entry.key).toList(growable: false);
+    final today0 = DateTime(now.year, now.month, now.day);
+    final recent = await app.eventDao.since(currentChild.childId, isoWithOffset(today0.subtract(const Duration(days: 48))));
+    final week7 = usageBetween(recent, from: today0.subtract(const Duration(days: 6)), to: today0.add(const Duration(days: 1)), top: 1000);
+    weeklyTopWord = week7.topWords.firstOrNull?.word;
+    weeklyTopCount = week7.topWords.firstOrNull?.count ?? 0;
+    weeklyOtherWords = week7.uniqueWords == 0 ? 0 : week7.uniqueWords - 1;
+    weeklyWords = [for (final w in week7.topWords) w.word];
+    weekBars = weeklyUniqueBars(recent, now);
+    missionDots = missionDays(await app.missionDao.logs(), now);
     _mission = CompanionMission(
       id: model.missionId,
       targetWord: model.targetWord,

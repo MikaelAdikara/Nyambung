@@ -7,6 +7,7 @@ import '../../core/brand.dart';
 import '../../core/motion.dart';
 import '../../core/theme.dart';
 import '../board/board_screen.dart';
+import '../board/symbol_cell.dart';
 import '../progress/progress_screen.dart';
 import '../settings/settings_screen.dart';
 import '../settings/therapist_screen.dart';
@@ -20,9 +21,12 @@ import 'mission_screen.dart';
 import 'now_next_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, this.openChildBoard});
+  const HomeScreen({super.key, this.openChildBoard, this.onLock});
 
   final VoidCallback? openChildBoard;
+
+  /// Kembali ke layar pilihan (Aku {nama} / Aku orang tua). Null = tanpa tombol kunci (tes).
+  final VoidCallback? onLock;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -203,6 +207,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   const BrandMark(size: 40),
                   const SizedBox(width: 12),
                   Expanded(child: Text('Halo, keluarga ${child?.nickname ?? ''}', style: AppText.h2)),
+                  if (widget.onLock != null)
+                    RoundIconButton(icon: Icons.lock_outline_rounded, tooltip: 'Kunci layar orang tua', onPressed: widget.onLock),
                 ],
               ),
               const SizedBox(height: 18),
@@ -232,11 +238,38 @@ class _MissionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Eyebrow('Misi hari ini', color: CompanionColors.tealTint),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Misi hari ini', style: AppText.bodyStrong.copyWith(color: CompanionColors.tealTint, fontSize: 14)),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Tekan ${state.targetLabel} lima kali saat ${state.routineLabel}',
+                      style: AppText.h2.copyWith(color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              if (state.app.symbolById(mission.targetWord) case final s?) SymbolFace(symbol: s, width: 76, height: 76, compact: true),
+            ],
+          ),
           const SizedBox(height: 8),
-          Text('Tekan ${state.targetLabel} lima kali saat ${state.routineLabel}', style: AppText.h2.copyWith(color: Colors.white)),
-          const SizedBox(height: 6),
           Text('Ibu atau Ayah yang menekan sambil bicara.', style: AppText.body.copyWith(color: Colors.white, fontSize: 15)),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const Icon(Icons.info_outline_rounded, size: 16, color: CompanionColors.tealTint),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(state.missionReason, style: AppText.cap.copyWith(color: CompanionColors.tealTint)),
+              ),
+            ],
+          ),
           SmoothReveal(
             child: log == null
                 ? null
@@ -393,14 +426,16 @@ class _SyncCard extends StatelessWidget {
             '${state.outboxCount} catatan menunggu jaringan',
           );
     return CompanionCard(
-      padding: const EdgeInsets.fromLTRB(16, 10, 10, 10),
+      padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
       child: Row(
         children: [
-          Icon(icon, color: color),
+          IconBadge(icon: icon, tint: CompanionColors.sand, color: color),
           const SizedBox(width: 12),
           Expanded(
             child: AnimatedSwitcher(
               duration: Motion.of(context, Motion.fade),
+              // Rata kiri: bawaan AnimatedSwitcher menaruh teks di tengah, jauh dari ikonnya.
+              layoutBuilder: (current, previous) => Stack(alignment: Alignment.centerLeft, children: [...previous, ?current]),
               child: Text(text, key: ValueKey(text), style: AppText.body.copyWith(fontSize: 15)),
             ),
           ),

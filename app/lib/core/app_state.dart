@@ -226,6 +226,29 @@ class AppState extends ChangeNotifier {
     );
   }
 
+  /// Pindahkan kata di halaman kategori [page] dari posisi [from] ke [to] (bertukar bila terisi). Halaman inti dan
+  /// enam sel cermin tidak bisa dipindah: tangan anak menghafal letaknya (invarian 8, 03 §4).
+  Future<void> moveSymbol(int page, int from, int to) async {
+    if (page == 0 || from < mirrorSlots || to < mirrorSlots) throw ArgumentError('halaman inti dan sel cermin terkunci');
+    await symbolDao.moveWithinPage(page, from, to);
+    await reloadSymbols();
+  }
+
+  /// Hapus kartu foto atau kartu frasa beserta fotonya. Rekaman keluarga untuk kartu itu ikut dihapus.
+  Future<void> deleteCard(WordSymbol s) async {
+    if (!s.isCustom) throw ArgumentError('kata bawaan hanya bisa disembunyikan');
+    await symbolDao.deleteCustom(s.wordId);
+    for (final path in [if (s.symbolPath.startsWith('/')) s.symbolPath, ?s.familyAudio]) {
+      try {
+        final f = File(path);
+        if (f.existsSync()) await f.delete();
+      } catch (e, st) {
+        ErrorLog.record('hapusKartu', e, st);
+      }
+    }
+    await reloadSymbols();
+  }
+
   /// Tujuan yang dipilih di A6; beranda membukanya sekali setelah pemasangan, lalu mengosongkannya.
   AfterOnboarding? afterOnboarding;
 

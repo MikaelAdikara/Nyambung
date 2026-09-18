@@ -8,6 +8,7 @@ import '../../core/theme.dart';
 import '../board/symbol_cell.dart';
 import '../coach/companion_widgets.dart';
 import '../coach/mission_rules.dart';
+import '../start/parent_pin.dart';
 import 'family_voice_recorder.dart';
 import 'therapist_entry.dart';
 
@@ -22,7 +23,7 @@ class OnboardingFlow extends StatefulWidget {
 }
 
 class _OnboardingFlowState extends State<OnboardingFlow> {
-  static const _count = 6;
+  static const _count = 7;
   static const _slide = Duration(milliseconds: 420);
 
   final _pages = PageController();
@@ -30,6 +31,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   int _page = 0;
   int? _ageYears;
   String _routine = 'makan';
+  String? _pin;
   AppState? _app;
 
   @override
@@ -56,6 +58,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 
   Future<void> _finish(AfterOnboarding next) async {
     _app!.afterOnboarding = next;
+    final pin = _pin;
+    if (pin != null) await ParentPin.set(_app!.prefs, pin);
     await _app!.createChild(nickname: _name.text.trim(), ageYears: _ageYears, routine: _routine);
     widget.onFinished?.call();
   }
@@ -79,6 +83,15 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         _RoutinePage(routine: _routine, onChanged: (value) => setState(() => _routine = value), onNext: _next, onBack: _back),
         _BoardPreviewPage(onNext: _next, onBack: _back),
         _FamilyVoicePage(onNext: _next, onBack: _back),
+        _PinPage(
+          name: _name.text.trim(),
+          done: _pin != null,
+          onPin: (pin) {
+            setState(() => _pin = pin);
+            _next();
+          },
+          onBack: _back,
+        ),
         _FinishPage(name: _name.text.trim(), routine: _routine, onFinish: _finish, onBack: _back),
       ],
     ),
@@ -165,12 +178,12 @@ class _StepDots extends StatelessWidget {
     final on = dark ? Colors.white : AppColors.teal;
     final off = dark ? Colors.white.withValues(alpha: 0.35) : AppColors.sandDeep;
     return Semantics(
-      label: 'Langkah ${step + 1} dari 6',
+      label: 'Langkah ${step + 1} dari 7',
       excludeSemantics: true,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          for (var i = 0; i < 6; i++)
+          for (var i = 0; i < 7; i++)
             AnimatedContainer(
               duration: Motion.of(context, Motion.resize),
               curve: Curves.easeOutCubic,
@@ -375,10 +388,12 @@ class _RoutinePage extends StatelessWidget {
   final VoidCallback onNext;
   final VoidCallback onBack;
 
+  // Tiga kegiatan yang terjadi setiap hari pada hampir semua anak dan punya giliran berulang (suapan, siraman,
+  // giliran main): tempat alami untuk lima contoh sehari (03 §5). Tanpa jam: jam berapa pun kegiatannya, misinya sama.
   static const _options = [
-    ('makan', 'Makan sore', Icons.restaurant_rounded, AppColors.coralDeep, AppColors.coralTint),
-    ('mandi', 'Mandi sore', Icons.bathtub_rounded, AppColors.skyText, AppColors.skyTint),
-    ('main', 'Main pagi', Icons.toys_rounded, AppColors.sunText, AppColors.sunTint),
+    ('makan', 'Waktu makan', 'Setiap suapan jadi kesempatan', Icons.restaurant_rounded, AppColors.coralDeep, AppColors.coralTint),
+    ('mandi', 'Waktu mandi', 'Setiap siraman air jadi kesempatan', Icons.bathtub_rounded, AppColors.skyText, AppColors.skyTint),
+    ('main', 'Waktu main', 'Setiap giliran main jadi kesempatan', Icons.toys_rounded, AppColors.sunText, AppColors.sunTint),
   ];
 
   @override
@@ -390,15 +405,21 @@ class _RoutinePage extends StatelessWidget {
       child: PrimaryButton(label: 'Lanjut', onPressed: onNext),
     ),
     children: [
-      Text('Kegiatan mana yang paling teratur waktunya?', style: _title(false)),
+      Text('Kegiatan harian mana yang paling pasti terjadi?', style: _title(false)),
       const SizedBox(height: 8),
-      Text('Misi harian menempel pada kegiatan ini.', style: _lead(false)),
+      Text(
+        'Misi lima contoh sehari menempel pada kegiatan ini, jadi tidak menambah pekerjaan baru. Jam berapa pun boleh. '
+        'Bisa diganti kapan saja.',
+        style: _lead(false),
+      ),
       const SizedBox(height: 20),
-      for (final (value, label, icon, color, tint) in _options)
+      for (final (value, label, hint, icon, color, tint) in _options)
         Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: _RoutineCard(
             label: label,
+            hint: hint,
+            words: routineTurnWords[value] ?? const [],
             icon: icon,
             color: color,
             tint: tint,
@@ -413,6 +434,8 @@ class _RoutinePage extends StatelessWidget {
 class _RoutineCard extends StatelessWidget {
   const _RoutineCard({
     required this.label,
+    required this.hint,
+    required this.words,
     required this.icon,
     required this.color,
     required this.tint,
@@ -421,6 +444,8 @@ class _RoutineCard extends StatelessWidget {
   });
 
   final String label;
+  final String hint;
+  final List<String> words;
   final IconData icon;
   final Color color;
   final Color tint;
@@ -430,6 +455,7 @@ class _RoutineCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final d = Motion.of(context, Motion.fade);
+    final app = AppScope.of(context);
     return Semantics(
       button: true,
       selected: selected,
@@ -457,7 +483,27 @@ class _RoutineCard extends StatelessWidget {
                   child: Icon(icon, color: selected ? Colors.white : color, size: 26),
                 ),
                 const SizedBox(width: 14),
-                Expanded(child: Text(label, style: AppText.h3)),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(label, style: AppText.h3),
+                      Text(hint, style: AppText.cap),
+                      const SizedBox(height: 8),
+                      // Contoh kata yang punya giliran alami di kegiatan ini: gambar simbol sungguhan, bukan teks saja.
+                      Row(
+                        children: [
+                          for (final w in words)
+                            if (app.symbolById(w) case final s?)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: SymbolFace(symbol: s, width: 54, height: 54, compact: true),
+                              ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
                 AnimatedScale(
                   scale: selected ? 1 : 0.4,
                   duration: d,
@@ -540,19 +586,31 @@ class _FamilyVoicePageState extends State<_FamilyVoicePage> {
   static const _words = ['mau', 'tidak', 'lagi', 'makan', 'minum', 'bantu'];
   String _selected = _words.first;
 
+  late AppState _app;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _app = AppScope.of(context);
+  }
+
+  /// Simpan rekaman satu kata. Pindah ke kata berikutnya yang belum direkam hanya bila orang tua masih di kata ini
+  /// (rekaman yang tersimpan karena orang tua sudah pindah kata tidak menggeser pilihannya).
   Future<void> _saved(String wordId, String? path) async {
     if (path == null) return;
-    final app = AppScope.of(context);
-    await app.symbolDao.setFamilyAudio(wordId, path);
-    await app.reloadSymbols();
+    await _app.symbolDao.setFamilyAudio(wordId, path);
+    await _app.reloadSymbols();
     if (!mounted) return;
-    final next = _words.where((w) => app.symbolById(w)?.familyAudio == null).firstOrNull;
-    setState(() => _selected = next ?? wordId);
+    final next = _words.where((w) => _app.symbolById(w)?.familyAudio == null).firstOrNull;
+    setState(() {
+      if (_selected == wordId) _selected = next ?? wordId;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
+    final word = _selected;
     final recorded = _words.where((w) => app.symbolById(w)?.familyAudio != null).length;
     return _OnboardingPage(
       step: 4,
@@ -571,7 +629,12 @@ class _FamilyVoicePageState extends State<_FamilyVoicePage> {
         const SizedBox(height: 8),
         Text('Enam kata saja. Bisa juga nanti.', style: _lead(false)),
         const SizedBox(height: 18),
-        FamilyVoiceRecorder(key: ValueKey(_selected), wordId: _selected, onRecorded: (path) => _saved(_selected, path)),
+        FamilyVoiceRecorder(
+          key: ValueKey(word),
+          wordId: word,
+          initialPath: app.symbolById(word)?.familyAudio,
+          onRecorded: (path) => _saved(word, path),
+        ),
         const SizedBox(height: 14),
         Wrap(
           spacing: 8,
@@ -645,7 +708,7 @@ class _FinishPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _OnboardingPage(
-    step: 5,
+    step: 6,
     dark: true,
     onBack: onBack,
     footerHeight: 190,
@@ -665,7 +728,8 @@ class _FinishPage extends StatelessWidget {
       const SizedBox(height: 16),
       _MintCard(
         child: Text(
-          'Saat ${routineDisplayLabel(routine)} nanti: tekan MAU sambil berkata "mau", lima kali. '
+          'Saat ${routineDisplayLabel(routine)} nanti: tekan ${defaultTargetForWeek(1, routine: routine).toUpperCase()} sambil berkata '
+          '"${defaultTargetForWeek(1, routine: routine)}", lima kali. '
           '${name.isEmpty ? 'Anak' : name} tidak perlu menekan apa pun. Itu saja untuk hari ini.',
         ),
       ),
@@ -678,6 +742,45 @@ class _FinishPage extends StatelessWidget {
           Expanded(child: Text('Tidak ada skor. Kalau belum sempat, besok ada lagi.', style: _lead(true))),
         ],
       ),
+    ],
+  );
+}
+
+/// A5b PIN orang tua: menjaga layar orang tua dari ketukan anak. Anak tetap membuka papannya tanpa PIN.
+class _PinPage extends StatelessWidget {
+  const _PinPage({required this.name, required this.done, required this.onPin, required this.onBack});
+
+  final String name;
+  final bool done;
+  final ValueChanged<String> onPin;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) => _OnboardingPage(
+    step: 5,
+    onBack: onBack,
+    footerHeight: 60,
+    footer: const SizedBox.shrink(),
+    children: [
+      Text('Buat PIN orang tua', style: _title(false)),
+      const SizedBox(height: 8),
+      Text(
+        'Setiap aplikasi dibuka, ${name.isEmpty ? 'anak' : name} bisa langsung ke papannya. Layar orang tua memakai PIN ini.',
+        style: _lead(false),
+      ),
+      const SizedBox(height: 20),
+      if (done)
+        const Padding(
+          padding: EdgeInsets.only(bottom: 12),
+          child: Row(
+            children: [
+              Icon(Icons.check_circle_rounded, color: AppColors.tealDeep),
+              SizedBox(width: 8),
+              Expanded(child: Text('PIN tersimpan. Ketik lagi untuk mengganti.', style: AppText.bodyStrong)),
+            ],
+          ),
+        ),
+      Center(child: PinSetup(onDone: onPin)),
     ],
   );
 }

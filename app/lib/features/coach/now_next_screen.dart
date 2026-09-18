@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/app_state.dart';
+import '../../core/brand.dart';
 import '../../core/motion.dart';
 import '../../core/theme.dart';
 import '../../data/models.dart';
@@ -145,7 +146,8 @@ class _NowNextScreenState extends State<NowNextScreen> {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: active ? CompanionColors.tealTint : CompanionColors.panel,
-            border: Border.all(color: active ? CompanionColors.teal : CompanionColors.line, width: active ? 3 : 1),
+            // Tebal garis sama di kedua keadaan supaya isi slot tidak bergeser saat dipilih.
+            border: Border.all(color: active ? CompanionColors.teal : CompanionColors.line, width: 3),
             borderRadius: BorderRadius.circular(18),
           ),
           child: Column(
@@ -215,8 +217,8 @@ class NowNextView extends StatelessWidget {
           onTap: () => say(time, word),
           child: Column(
             children: [
-              Text(title, style: AppText.h1),
-              const SizedBox(height: 12),
+              Text(title, style: AppText.h1, textAlign: TextAlign.center),
+              const SizedBox(height: 8),
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, box) {
@@ -239,9 +241,16 @@ class NowNextView extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(tooltip: 'Kembali', icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.of(context).maybePop()),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: RoundIconButton(
+                  icon: Icons.arrow_back_rounded,
+                  tooltip: 'Kembali',
+                  onPressed: () => Navigator.of(context).maybePop(),
+                ),
+              ),
             ),
             Expanded(
               child: Padding(
@@ -252,7 +261,7 @@ class NowNextView extends StatelessWidget {
                       card('SEKARANG', sekarang, now),
                       const Padding(
                         padding: EdgeInsets.all(12),
-                        child: Icon(Icons.arrow_forward, size: 48, color: CompanionColors.muted),
+                        child: Icon(Icons.arrow_forward_rounded, size: 48, color: CompanionColors.teal),
                       ),
                       card('NANTI', nanti, next),
                     ];
@@ -272,8 +281,8 @@ class NowNextView extends StatelessWidget {
     children: [
       children[0],
       const Padding(
-        padding: EdgeInsets.all(8),
-        child: Icon(Icons.arrow_downward, size: 48, color: CompanionColors.muted),
+        padding: EdgeInsets.symmetric(vertical: 6),
+        child: Icon(Icons.arrow_downward_rounded, size: 40, color: CompanionColors.teal),
       ),
       children[2],
     ],

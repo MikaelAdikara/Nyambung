@@ -1,10 +1,12 @@
 # Status jalur 3 — Server
-Diperbarui: 14:45
+Diperbarui: 15:30
 
 ## Sedang dikerjakan
 3.7 APK rilis: tanda tangan siap (keystore baru 18 Sep, jalur 1 menambah signingConfig). Tag j3-apk menunggu int-1-hp-ke-d2 (HP fisik)
 
 ## Tonggak selesai (tag)
+- (15:30, tanpa tag) `GET /v1/children/{id}/missions` (misi harian dari peristiwa mentah), simulator memakai
+  id misi berkata. PROVENANCE: 245 hash OK. 55 tes pytest lulus.
 - (14:45, tanpa tag) Frasa bersuara: tabel `phrase` + `voice_clone`, `GET/POST /v1/children/{id}/phrases`,
   `GET .../phrases/{pid}/audio`, `GET .../voice`, `POST/DELETE .../voice/clone`. OpenAI TTS + ElevenLabs lewat urllib,
   kunci dari env/.env. 54 tes pytest lulus (penyedia suara tiruan).

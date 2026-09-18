@@ -1,5 +1,5 @@
 # Status jalur 2 — Pendamping
-Diperbarui: 14:45
+Diperbarui: 15:30
 
 **Mulai 11:20 semua jalur bekerja langsung di `main`** (tidak ada lagi kerja paralel; branch jalur sudah tergabung).
 
@@ -7,6 +7,8 @@ Diperbarui: 14:45
 Layar mockup A–C lengkap (18 Sep siang). Belum dibuka di emulator: C3, C5 baru, C6 baru, kartu B1, A5/A6 baru.
 
 ## Tonggak selesai (tag)
+- (15:30, tanpa tag) Layar pilihan Aku {nama}/orang tua + PIN, generator misi per rutinitas (`misi-w{pekan}-{kata}`),
+  pelajaran & misi bergambar, Kelola kosakata (cari, geser, hapus), perbaikan rekam ulang di pemasangan. Dicek di emulator.
 - (14:45, tanpa tag) Frasa bersuara: layar Pengaturan → Frasa bersuara (buat frasa, taruh di papan, jawab usulan
   terapis), layar Suara keluarga (persetujuan 4 butir, rekam 3 kalimat, aktifkan/cabut klon ElevenLabs), kartu usulan
   frasa di beranda, tarik frasa + unduh klip saat sinkron. Belum dibuka di emulator.

@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'core/app_state.dart';
 import 'core/brand.dart';
 import 'core/error_log.dart';
-import 'features/coach/home_screen.dart';
+import 'features/start/role_gate.dart';
 import 'features/onboarding/onboarding_flow.dart';
 import 'core/theme.dart';
 
@@ -81,8 +81,8 @@ class _BootGateState extends State<BootGate> {
         }
         if (snap.connectionState != ConnectionState.done) return const _Preparing();
         final app = _app!;
-        // Belum ada anak → pemasangan A1–A6; sudah ada → beranda B1 (keduanya milik jalur 2).
-        return ListenableBuilder(listenable: app, builder: (context, _) => app.child == null ? const OnboardingFlow() : const HomeScreen());
+        // Belum ada anak → pemasangan A1–A6; sudah ada → layar pilihan "Aku {nama}" / "Aku orang tua".
+        return ListenableBuilder(listenable: app, builder: (context, _) => app.child == null ? const OnboardingFlow() : const RoleGate());
       },
     );
   }

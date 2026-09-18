@@ -39,7 +39,11 @@ void main() {
       symbolPath: '',
       isCustom: true,
     );
-    await tester.pumpWidget(const MaterialApp(home: Center(child: SymbolFace(symbol: card, width: 120, height: 110))));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Center(child: SymbolFace(symbol: card, width: 120, height: 110)),
+      ),
+    );
     expect(find.text('JANGAN NYONTEK'), findsOneWidget);
     expect(find.byIcon(Icons.chat_bubble_rounded), findsOneWidget);
     expect(tester.takeException(), isNull);

@@ -1,5 +1,5 @@
 # Status jalur 4 — Dasbor
-Diperbarui: 15:08
+Diperbarui: 15:30
 
 **Mulai 11:20 semua jalur bekerja langsung di `main`** (tidak ada lagi kerja paralel; branch jalur sudah tergabung).
 
@@ -8,6 +8,7 @@ Deck + naskah pitch draf siap di `deck/`. Menunggu: nama + kutipan asli Ketum FO
 cek fitur kompetitor, status uji HP fisik. Lalu latihan dengan stopwatch dan video (J22).
 
 ## Tonggak selesai (tag)
+- (15:30, tanpa tag) D2 panel "Misi harian" (API + agregator demo), label kartu frasa `frs-`. Build bersih.
 - (15:08, tanpa tag) `deck/Nyambung-Pitch-Deck.pptx` + `.pdf`: 13 slide pitch (4 pilar wajib) + 3 lampiran Q&A,
   palet mint-tosca aplikasi, tangkapan layar dasbor asli (mode demo, berlabel ilustratif). `deck/naskah-pitch.md`:
   naskah 5 menit per slide + Q&A + asal angka. `deck/riset-pendukung.md`: riset misi harian dan asal aset,

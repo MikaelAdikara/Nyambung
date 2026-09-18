@@ -15,9 +15,12 @@ import '../coach/companion_widgets.dart';
 /// folder aplikasi, dan tidak pernah disinkronkan (invarian 17 dan 18). Dipakai `SpeechService` saat
 /// ketukan pendamping.
 class FamilyVoiceRecorder extends StatefulWidget {
-  const FamilyVoiceRecorder({super.key, this.wordId = 'mau', required this.onRecorded});
+  const FamilyVoiceRecorder({super.key, this.wordId = 'mau', this.initialPath, required this.onRecorded});
 
   final String wordId;
+
+  /// Rekaman yang sudah ada untuk kata ini. Saat orang tua berpindah kata lalu kembali, tombol Dengarkan tetap ada.
+  final String? initialPath;
 
   /// Dipanggil dengan jalur berkas setelah rekaman selesai (belum disimpan ke simbol).
   final ValueChanged<String?> onRecorded;
@@ -33,9 +36,25 @@ class _FamilyVoiceRecorderState extends State<FamilyVoiceRecorder> {
   final _player = AudioPlayer();
   _RecState _state = _RecState.idle;
   String? _path;
+  bool _recordingNow = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final existing = widget.initialPath;
+    if (existing != null && File(existing).existsSync()) {
+      _path = existing;
+      _state = _RecState.recorded;
+    }
+  }
 
   @override
   void dispose() {
+    // Berpindah kata saat masih merekam: simpan yang sudah terekam, jangan dibuang.
+    if (_recordingNow) {
+      final onRecorded = widget.onRecorded;
+      _recorder.stop().then(onRecorded, onError: (Object e, StackTrace st) => ErrorLog.record('rekam:stop', e, st));
+    }
     _recorder.dispose();
     _player.dispose();
     super.dispose();
@@ -50,7 +69,9 @@ class _FamilyVoiceRecorderState extends State<FamilyVoiceRecorder> {
       final dir = Directory('${(await getApplicationDocumentsDirectory()).path}${Platform.pathSeparator}family');
       await dir.create(recursive: true);
       final path = '${dir.path}${Platform.pathSeparator}${widget.wordId}.m4a';
+      await _player.stop();
       await _recorder.start(const RecordConfig(encoder: AudioEncoder.aacLc, numChannels: 1), path: path);
+      _recordingNow = true;
       setState(() => _state = _RecState.recording);
     } catch (e, st) {
       ErrorLog.record('rekam:start', e, st);
@@ -64,6 +85,8 @@ class _FamilyVoiceRecorderState extends State<FamilyVoiceRecorder> {
     } catch (e, st) {
       ErrorLog.record('rekam:stop', e, st);
     }
+    _recordingNow = false;
+    if (!mounted) return;
     setState(() => _state = _path == null ? _RecState.idle : _RecState.recorded);
     widget.onRecorded(_path);
   }

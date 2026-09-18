@@ -15,6 +15,7 @@ import '../coach/companion_widgets.dart';
 import '../coach/mission_rules.dart';
 import '../vocab/family_voice_screen.dart';
 import '../vocab/manage_vocab_screen.dart';
+import '../start/parent_pin.dart';
 import '../vocab/phrase_screen.dart';
 import 'export_service.dart';
 
@@ -236,6 +237,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             options: [for (final r in Routine.all) (r, _capitalize(routineDisplayLabel(r)))],
             value: app?.child?.routine,
             onChanged: _changeRoutine,
+          ),
+          const SizedBox(height: 10),
+          NavRow(
+            icon: Icons.pin_outlined,
+            title: 'Ganti PIN orang tua',
+            subtitle: 'PIN menjaga layar orang tua dari ketukan anak',
+            onTap: () => _open(ChangePinScreen(prefs: app!.prefs)),
           ),
           const SizedBox(height: 10),
           NavRow(

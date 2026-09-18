@@ -48,7 +48,8 @@ Aliran balik: usulan terapis → perangkat menarik target → keluarga terima/to
 7. Sasaran Android 8 (minSdk 26), RAM 2 GB, layar 7 inci.
 
 **Papan mode anak**
-8. Posisi simbol tidak pernah berpindah; simbol tersembunyi tetap memegang posisinya.
+8. Posisi simbol tidak pernah berpindah sendiri; simbol tersembunyi tetap memegang posisinya. Orang tua boleh menggeser
+   kata di halaman kategori lewat Kelola kosakata; halaman inti dan sel cermin terkunci (PERUBAHAN #21).
 9. *Presume competence*: tanpa penguncian tingkat.
 10. Warna tidak pernah satu-satunya pembawa makna: warna latar + penanda bentuk di sudut.
 11. Tanpa animasi, suara latar, hadiah, gamifikasi. Pengecualian: menggeser urutan kata di bilah ujaran (gerak hanya

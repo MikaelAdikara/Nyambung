@@ -245,3 +245,44 @@ Format entri:
   mengaktifkan tiruan suara**". Rekaman per kata (C4) tetap tidak pernah dikirim. Risiko yang kami akui: suara
   tiruan disimpan penyedia pihak ketiga selama belum dicabut, dan kemiripannya belum diuji dengan anak. Butuh
   `ELEVENLABS_API_KEY` (paket berbayar ElevenLabs); tanpa kunci, fitur tampil "belum aktif".
+
+## 18. Simbol berwarna penuh dan 35 simbol yang hilang terisi (15:30)
+- **Kondisi sebelumnya:** 85 PNG Mulberry tampil sebagai siluet hitam karena perasteran sebelum acara mengabaikan
+  `<style>` di SVG. 35 kata "gambar tim" belum punya gambar dan tampil sebagai huruf pertama (SAKIT = "S").
+- **Yang diubah:** Semua simbol dirasterkan ulang dengan warna. 14 kata ternyata punya padanan Mulberry yang jelas
+  (mis. SAKIT = orang sakit kepala, TIDAK = silang, ITU = menunjuk); 21 sisanya digambar tim mengikuti gaya `05` §6.
+  Kata bawaan tidak lagi bertanda `is_custom`: sebelumnya ketukan AKU, TIDAK, BERHENTI, YA, ITU tercatat `PRS`
+  (kartu personal) dan tidak terhitung di penghitung misi. HP lama diperbarui saat aplikasi dibuka.
+- **Alasan:** Anak autis nonverbal butuh isyarat visual yang bermakna; huruf pertama tidak membawa makna.
+- **Dampak:** Simbol tim belum diuji pada anak (batasan `03` §8). Rincian sumber di `assets/PROVENANCE.md`.
+
+## 19. Rutinitas tanpa jam dan generator misi yang bisa dilacak (15:30)
+- **Kondisi sebelumnya:** Pilihan "Makan sore / Mandi sore / Main pagi" memakai jam tanpa dasar. Kata misi
+  bergilir dari satu daftar tetap yang sama untuk semua rutinitas, dan terapis tidak bisa melihat kata misi harian.
+- **Yang diubah:** Pilihan menjadi "Waktu makan / mandi / main" beserta contoh simbol yang punya giliran alami di
+  kegiatan itu (jam berapa pun boleh). Aturan misi tertulis di `mission_rules.dart`: pekan ke-N sejak pemasangan;
+  usulan terapis yang diterima menggantikan urutan bawaan; tanpa usulan, satu kata per pekan dari 12 kata inti
+  dengan urutan per rutinitas, mulai dari fungsi meminta (MAU/LAGI; Bondy & Frost 1994). `mission_id` kini
+  `misi-w{pekan}-{kata}`, sehingga dasbor D2 menampilkan panel "Misi harian" (kata, asal, 14 hari terakhir) dari
+  peristiwa mentah saja. Beranda dan layar misi menampilkan "Kenapa kata ini?".
+- **Alasan:** Setiap pilihan harus punya dasar yang bisa dijelaskan, dan terapis harus bisa melacak misi keluarga.
+- **Dampak:** Urutan per rutinitas dan dosis lima contoh tetap asumsi tim (tingkat D). Pelajaran 60 detik dan layar
+  misi kini bergambar; tombol misi langsung membuka papan dengan kata target disorot (hanya mode misi, bukan mode anak).
+
+## 20. Layar pilihan "Aku {nama}" / "Aku orang tua" dengan PIN (15:30)
+- **Kondisi sebelumnya:** Aplikasi selalu terbuka di beranda orang tua; anak yang membuka sendiri masuk ke pengaturan.
+- **Yang diubah:** Layar pertama berisi dua pilihan. "Aku {nama}" langsung ke papan anak. "Aku orang tua" meminta PIN
+  4 angka yang dibuat saat pemasangan (SHA-256 bergaram, hanya di HP). Tiga kali salah → dua tombol setara "Coba
+  lagi" dan "Aku {nama}"; putaran salah berikutnya menambah jeda 30 detik. Lupa PIN: ketik nama panggilan anak.
+  Beranda terkunci lagi setelah 5 menit di latar belakang, dan ada tombol kunci di beranda.
+- **Alasan:** permintaan tim.
+- **Dampak:** PIN adalah pagar, bukan pengaman data. Anak yang bisa mengetik namanya sendiri bisa membuat PIN baru.
+
+## 21. Orang tua boleh mengatur posisi kata di halaman kategori (15:30)
+- **Kondisi di proposal:** Invarian 8, posisi simbol tidak pernah berpindah.
+- **Yang diubah:** Di Kelola kosakata (layar orang tua), kata di halaman kategori bisa ditahan lalu digeser; bila slot
+  terisi, keduanya bertukar. Halaman inti dan enam sel cermin tetap terkunci. Kartu foto dan kartu frasa bisa
+  dihapus; kata bawaan hanya bisa disembunyikan. Ada pencarian kata lintas halaman.
+- **Alasan:** permintaan tim, supaya kosakata bisa disesuaikan keluarga.
+- **Dampak:** Invarian 8 kini berarti "papan tidak pernah memindahkan simbol sendiri". Layar menjelaskan bahwa anak
+  belajar dari letak tetap (Thistle dkk. 2018) dan menyarankan pindahkan seperlunya.

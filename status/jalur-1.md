@@ -1,5 +1,5 @@
 # Status jalur 1 — Papan
-Diperbarui: 14:25
+Diperbarui: 15:30
 
 **Mulai 11:20 semua jalur bekerja langsung di `main`** (tidak ada lagi kerja paralel; branch jalur sudah tergabung).
 
@@ -28,6 +28,8 @@ konfirmasi, papan anak + misi, Kembang, Terapis, Atur. 33 tes lulus, analyzer be
   lonjakan 40 ms saat papan dibuka. Raster 44–58 ms di emulator = SwiftShader, bukan angka GPU
 
 ## Tonggak selesai (tag)
+- (15:30, tanpa tag) Simbol berwarna (99 Mulberry + 21 gambar tim, 0 huruf cadangan), migrasi `refreshBuiltIn`
+  (kata bawaan bukan `is_custom`), sorotan kata target di papan misi, pindah/hapus kartu di DAO. Dicek di emulator.
 - j1-kerangka: app terbuka, AppScope di atas MaterialApp, AppState + DAO nyata, DB terbuka, 120 kata termuat
 - j1-skema: skema = kontrak, pemuat CSV sekali, 10 tes lulus. 1 tes dilewati: 6 simbol gambar tim halaman 0 belum ada
 - j1-papan: B4 + B5 di emulator (HP) dan 320 dp; ketuk menambah bilah + bunyi; KEGIATAN: enam sel teratas identik posisinya

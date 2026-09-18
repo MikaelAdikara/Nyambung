@@ -24,3 +24,6 @@ CLAUDE.local.md
 
 # Perangkat tiruan simulator
 tools/.sim/
+
+# Keluaran pembuat audio (wav mentah, sampel); hanya klip terpilih yang disalin ke app/assets
+tools/audio_out/

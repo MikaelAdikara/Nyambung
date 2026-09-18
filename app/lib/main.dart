@@ -5,7 +5,8 @@ import 'package:flutter/services.dart';
 
 import 'core/app_state.dart';
 import 'core/error_log.dart';
-import 'core/placeholder_home.dart';
+import 'features/coach/home_screen.dart';
+import 'features/onboarding/onboarding_flow.dart';
 import 'core/theme.dart';
 
 void main() {
@@ -77,11 +78,8 @@ class _BootGateState extends State<BootGate> {
         }
         if (snap.connectionState != ConnectionState.done) return const _Preparing();
         final app = _app!;
-        // Jalur 2 mengganti dua tujuan ini lewat permintaan di status: A1 (onboarding) dan B1 (beranda).
-        return ListenableBuilder(
-          listenable: app,
-          builder: (context, _) => app.child == null ? const PlaceholderOnboarding() : const PlaceholderHome(),
-        );
+        // Belum ada anak → pemasangan A1–A6; sudah ada → beranda B1 (keduanya milik jalur 2).
+        return ListenableBuilder(listenable: app, builder: (context, _) => app.child == null ? const OnboardingFlow() : const HomeScreen());
       },
     );
   }

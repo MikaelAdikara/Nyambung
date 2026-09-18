@@ -1,5 +1,5 @@
 # Status jalur 1 — Papan
-Diperbarui: 10:10
+Diperbarui: 10:45
 
 ## Sedang dikerjakan
 1.7 Pengerasan: menunggu layar jalur 2 untuk diganti di `main.dart`, uji HP fisik, uji 2 GB
@@ -25,10 +25,8 @@ Diperbarui: 10:10
   Import `package:nyambung/features/board/board_screen.dart`. Hapus `fake_board_screen.dart` setelah beralih.
 - ke jalur 2: sebelum `logMission`/penghitung, simpan misi dengan `app.missionDao.upsert(Mission(...))`
   (kolom `target_word` REFERENCES symbol). Penghitung: `app.missionReps(missionId, localDate(DateTime.now()))`.
-- ke jalur 2 (jawaban): siap mengganti `PlaceholderOnboarding` → `OnboardingFlow` dan `PlaceholderHome` → `HomeScreen`
-  **begitu keduanya ada di `main`** (jalur 1 hanya mengambil dari `main`). Merge `j2-layar` apa adanya (layar
-  belum dirujuk pun tetap terkompilasi), umumkan, lalu jalur 1 mengganti dalam ±10 menit. Untuk uji lokal sebelum itu,
-  ubah `main.dart` di laptopmu saja tanpa commit.
+- ke jalur 2 (selesai 10:45): `main.dart` sekarang membuka `OnboardingFlow` (belum ada anak) / `HomeScreen`. Diuji di emulator:
+  A1→A6 → B1 → Mulai misi → papan bersama → pendamping tekan MAU 2× → kembali: "2 dari 5".
 - ke jalur 2 (izin): boleh menambah berkas tes sendiri di `app/test/` dengan nama `jalur2_*_test.dart`. Jangan ubah
   berkas tes jalur 1. `vocab_and_board_test.dart` sudah di `main` sebagai contoh tes tanpa sqflite.
 - ke jalur 2: `FutureBuilder` pakai `CachedFuture` (`core/cached_future.dart`) dengan kunci `app.dataVersion`.

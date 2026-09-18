@@ -1,9 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import '../../core/app_state.dart';
 import '../../core/constants.dart';
 import '../../core/error_log.dart';
 import '../coach/companion_widgets.dart';
+import '../coach/mission_rules.dart';
 import 'export_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -35,14 +39,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.dispose();
   }
 
+  bool _testing = false;
+
+  /// Simpan alamat lalu uji `GET /v1/health` (harus `{"ok": true}`; port yang dijawab proses lain tidak dihitung).
   Future<void> _saveServer() async {
-    await _app!.prefs.setString(PrefKeys.serverUrl, _server.text.trim());
-    if (mounted) setState(() => _connectionResult = 'Tidak tersambung. Periksa Wi-Fi dan alamat.');
+    var url = _server.text.trim().replaceFirst('://localhost', '://127.0.0.1');
+    if (url.endsWith('/')) url = url.substring(0, url.length - 1);
+    if (url.isNotEmpty && !url.startsWith('http')) url = 'http://$url';
+    _server.text = url;
+    await _app!.prefs.setString(PrefKeys.serverUrl, url);
+    setState(() => _testing = true);
+    var ok = false;
+    try {
+      final r = await http.get(Uri.parse('$url/v1/health')).timeout(const Duration(seconds: 3));
+      final body = jsonDecode(r.body);
+      ok = r.statusCode == 200 && body is Map && body['ok'] == true;
+    } catch (_) {}
+    if (mounted) {
+      setState(() {
+        _testing = false;
+        _connectionResult = ok ? 'Tersambung.' : 'Tidak tersambung. Periksa Wi-Fi dan alamat.';
+      });
+    }
   }
 
+  /// "mau" dua kali: nada anak lalu nada pendamping, dengan jeda supaya yang pertama tidak terpotong.
   Future<void> _testVoice() async {
     await _app!.speech.speakText('mau', byParent: false);
+    await Future<void>.delayed(const Duration(milliseconds: 1400));
     await _app!.speech.speakText('mau', byParent: true);
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _changeRoutine(String routine) async {
+    await _app!.updateRoutine(routine);
     if (mounted) setState(() {});
   }
 
@@ -74,7 +105,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Ketik HAPUS'),
-        content: TextField(controller: input, textCapitalization: TextCapitalization.characters),
+        content: TextField(controller: input, autofocus: true, textCapitalization: TextCapitalization.characters),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
           TextButton(onPressed: () => Navigator.pop(context, input.text.trim().toUpperCase() == 'HAPUS'), child: const Text('Hapus')),
@@ -82,7 +113,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
     input.dispose();
-    if (confirmed == true) await _app!.deleteAllData();
+    if (confirmed != true) return;
+    await _app!.deleteAllData();
+    // Kembali ke akar: tanpa anak, BootGate menampilkan pemasangan A1.
+    if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override
@@ -105,7 +139,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerLeft,
-                child: OutlinedButton(onPressed: _saveServer, child: const Text('Uji')),
+                child: OutlinedButton(onPressed: _testing ? null : _saveServer, child: Text(_testing ? 'Menguji…' : 'Uji')),
               ),
               if (_connectionResult != null) Text(_connectionResult!, style: companionMutedStyle),
             ],
@@ -154,6 +188,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         const SizedBox(height: 12),
+        CompanionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Rutinitas misi', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              const Text('Misi harian menempel pada kegiatan ini.', style: companionMutedStyle),
+              RadioGroup<String>(
+                groupValue: _app?.child?.routine,
+                onChanged: (value) => value == null ? null : _changeRoutine(value),
+                child: Column(
+                  children: [
+                    for (final routine in const ['makan', 'mandi', 'main'])
+                      RadioListTile<String>(
+                        contentPadding: EdgeInsets.zero,
+                        value: routine,
+                        title: Text(_capitalize(routineDisplayLabel(routine))),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
         ListTile(title: const Text('Ekspor catatan'), trailing: const Icon(Icons.chevron_right), onTap: _export),
         ListTile(title: const Text('Diagnosa'), trailing: const Icon(Icons.chevron_right), onTap: _showDiagnostics),
         ListTile(title: const Text('Hapus semua data'), trailing: const Icon(Icons.chevron_right), onTap: _deleteAllData),
@@ -165,3 +223,5 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ),
   );
 }
+
+String _capitalize(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);

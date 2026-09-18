@@ -1,17 +1,17 @@
 # Status jalur 2 — Pendamping
-Diperbarui: 10:00
+Diperbarui: 10:06
 
 ## Sedang dikerjakan
-2.3 B1/B2/B3/B6 — menunggu pemasangan titik masuk jalur 1 dan smoke test penghitung di emulator
+2.5/2.6 Sinkron + terapis — redeem/cabut tertunda/push/pull target selesai ditulis; menunggu uji nyata terhadap server
 
 ## Tonggak selesai (tag)
 - j2-layar (10:00): seluruh layar terhubung AppState/DAO; analyzer bersih, 15 tes lulus (1 skip simbol), APK debug terbangun
 
 ## Perkiraan tonggak berikutnya
-j2-misi sekitar 10:30 setelah smoke test penghitung
+j2-misi setelah jalur 1 memasang titik masuk; j2-sinkron setelah uji HP → server
 
 ## Terblokir oleh
-- Uji sinkron nyata menunggu j3-auth; klien sudah ditulis terhadap EventDao nyata
+- j3-auth sudah terbuka; perlu kode undangan/token dan alamat server hidup untuk uji nyata
 
 ## Permintaan ke jalur lain
 - ke jalur 1: ganti PlaceholderOnboarding dengan `const OnboardingFlow()` dari `features/onboarding/onboarding_flow.dart`

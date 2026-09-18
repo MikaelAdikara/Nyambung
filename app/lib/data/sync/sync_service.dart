@@ -6,6 +6,7 @@ import '../../core/app_state.dart';
 import '../../core/constants.dart';
 import '../../core/time.dart';
 import '../../data/models.dart';
+import 'link_service.dart';
 
 enum SyncState { notLinked, offline, linkedRevoked, complete }
 
@@ -34,6 +35,10 @@ class SyncService {
   }
 
   Future<SyncReport> push(String childId) async {
+    if (app.prefs.getString(LinkService.pendingRevokeLinkKey) != null) {
+      final revoked = await LinkService(app, client: _client).retryPendingRevocation();
+      if (!revoked) return const SyncReport(SyncState.offline);
+    }
     final link = await app.linkDao.active();
     final token = app.prefs.getString(PrefKeys.deviceToken);
     if (link == null || token == null || token.isEmpty) return const SyncReport(SyncState.notLinked);

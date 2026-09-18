@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants.dart';
+import '../../data/sync/link_service.dart';
 import '../coach/companion_controller.dart';
 import '../coach/companion_widgets.dart';
 
@@ -27,11 +28,17 @@ class _TherapistScreenState extends State<TherapistScreen> {
   Future<void> _connect() async {
     if (_code.text.trim().length != 8) return;
     setState(() => _busy = true);
-    await Future<void>.delayed(const Duration(milliseconds: 250));
+    final result = await widget.state.connectTherapist(_code.text.trim().toUpperCase());
     if (mounted) {
       setState(() {
         _busy = false;
-        _connectionMessage = 'Belum ada jaringan. Coba lagi saat tersambung.';
+        _connectionMessage = switch (result) {
+          LinkResult.connected => 'Terhubung dengan ${widget.state.therapistName}.',
+          LinkResult.unknownCode => 'Kode tidak dikenal. Periksa lagi hurufnya.',
+          LinkResult.expiredCode => 'Kode sudah dipakai atau kedaluwarsa. Minta kode baru ke terapis.',
+          LinkResult.offline => 'Belum ada jaringan. Coba lagi saat tersambung.',
+          LinkResult.invalidResponse => 'Belum ada jaringan. Coba lagi saat tersambung.',
+        };
       });
     }
   }
@@ -48,7 +55,14 @@ class _TherapistScreenState extends State<TherapistScreen> {
         ],
       ),
     );
-    if (confirmed == true) await widget.state.revokeLocally();
+    if (confirmed == true) {
+      await widget.state.revokeTherapist();
+      if (mounted) {
+        setState(() {
+          _connectionMessage = 'Akses dicabut. Kalau sedang tidak ada jaringan, pencabutan sampai ke server saat berikutnya terhubung.';
+        });
+      }
+    }
   }
 
   @override

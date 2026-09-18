@@ -4,6 +4,7 @@ import '../../core/app_state.dart';
 import '../../core/constants.dart';
 import '../../core/time.dart';
 import '../../data/models.dart';
+import '../../data/sync/link_service.dart';
 import '../../data/sync/sync_service.dart';
 import 'mission_rules.dart';
 
@@ -29,10 +30,11 @@ class CompanionMission {
 /// Read model for the companion screens, backed entirely by lane 1's AppState
 /// and DAOs. It owns no duplicate source of truth.
 class CompanionController extends ChangeNotifier {
-  CompanionController(this.app) : sync = SyncService(app);
+  CompanionController(this.app) : sync = SyncService(app), links = LinkService(app);
 
   final AppState app;
   final SyncService sync;
+  final LinkService links;
 
   CompanionMission? _mission;
   CompanionMission get mission => _mission!;
@@ -150,11 +152,16 @@ class CompanionController extends ChangeNotifier {
     await load();
   }
 
-  Future<void> revokeLocally() async {
+  Future<LinkResult> connectTherapist(String inviteCode) async {
+    final result = await links.redeem(inviteCode);
+    await load();
+    return result;
+  }
+
+  Future<void> revokeTherapist() async {
     final link = activeLink;
     if (link == null) return;
-    await app.linkDao.markRevoked(link.linkId, nowIso());
-    app.markDataChanged();
+    await links.revoke(link);
     await load();
   }
 
@@ -168,6 +175,7 @@ class CompanionController extends ChangeNotifier {
   @override
   void dispose() {
     sync.close();
+    links.close();
     super.dispose();
   }
 }

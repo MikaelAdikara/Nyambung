@@ -16,7 +16,7 @@ class MissionScreen extends StatelessWidget {
     if (!context.mounted) return;
     await Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
-        builder: (_) => ConfirmScreen(state: state, status: status, parentTaps: state.mission.repsCounted, childTaps: 0),
+        builder: (_) => ConfirmScreen(state: state, status: status, parentTaps: state.parentMissionTaps, childTaps: state.childMissionTaps),
       ),
     );
   }

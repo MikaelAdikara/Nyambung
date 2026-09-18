@@ -1,17 +1,17 @@
 # Status jalur 2 — Pendamping
-Diperbarui: 09:53
+Diperbarui: 10:00
 
 ## Sedang dikerjakan
-2.2 Integrasi j1-papan — B1/B2 membuka BoardScreen nyata dan memuat ulang penghitung saat kembali; analyzer bersih, 10 tes lulus (1 skip simbol)
+2.2 Integrasi j1-papan — B1/B2 membuka BoardScreen nyata; sinkron/outbox dan ekspor JSON sudah ditulis; analyzer bersih, 15 tes lulus (1 skip simbol)
 
 ## Tonggak selesai (tag)
 - (kosong)
 
 ## Perkiraan tonggak berikutnya
-j2-layar sekitar 10:05 setelah titik masuk main.dart dan smoke test
+j2-layar siap merge ke main; jalur 1 memasang titik masuk sesudahnya
 
 ## Terblokir oleh
-- Titik masuk main.dart masih PlaceholderOnboarding/PlaceholderHome; menunggu perubahan kecil jalur 1
+- Uji sinkron nyata menunggu j3-auth; klien sudah ditulis terhadap EventDao nyata
 
 ## Permintaan ke jalur lain
 - ke jalur 1: ganti PlaceholderOnboarding dengan `const OnboardingFlow()` dari `features/onboarding/onboarding_flow.dart`

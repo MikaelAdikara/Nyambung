@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../core/app_state.dart';
 import '../board/board_screen.dart';
+import '../progress/progress_screen.dart';
+import '../settings/settings_screen.dart';
+import '../settings/therapist_screen.dart';
 import 'companion_controller.dart';
 import 'companion_widgets.dart';
 import 'lesson_screen.dart';
@@ -92,10 +95,54 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
+          bottomNavigationBar: _CompanionNavigation(state: controller),
         );
       },
     );
   }
+}
+
+class _CompanionNavigation extends StatelessWidget {
+  const _CompanionNavigation({required this.state});
+
+  final CompanionController state;
+
+  @override
+  Widget build(BuildContext context) => BottomAppBar(
+    color: CompanionColors.panel,
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _destination(
+          context,
+          icon: Icons.bar_chart,
+          label: 'Perkembangan',
+          screen: ProgressScreen(state: state),
+        ),
+        _destination(
+          context,
+          icon: Icons.people_outline,
+          label: 'Terapis',
+          screen: TherapistScreen(state: state),
+        ),
+        _destination(context, icon: Icons.settings_outlined, label: 'Pengaturan', screen: const SettingsScreen()),
+      ],
+    ),
+  );
+
+  Widget _destination(BuildContext context, {required IconData icon, required String label, required Widget screen}) => Expanded(
+    child: InkWell(
+      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen)),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon),
+          const SizedBox(height: 2),
+          Text(label, style: const TextStyle(fontSize: 12)),
+        ],
+      ),
+    ),
+  );
 }
 
 class _MissionCard extends StatelessWidget {
@@ -117,6 +164,15 @@ class _MissionCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text('Ibu atau Ayah yang menekan sambil bicara. Anak tidak perlu menekan apa pun.', style: companionBodyStyle),
+          if (state.todayLog != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              state.todayLog!.status == 'selesai'
+                  ? 'Misi hari ini sudah selesai. Terima kasih.'
+                  : 'Hari ini belum sempat. Tidak apa-apa, besok ada lagi.',
+              style: companionMutedStyle,
+            ),
+          ],
           const SizedBox(height: 16),
           Row(
             children: [
@@ -157,15 +213,17 @@ class _SyncCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          state.outboxCount == 0
+          !state.linkedToTherapist
+              ? 'Belum terhubung ke terapis. Catatan tetap tersimpan di perangkat.'
+              : state.outboxCount == 0
               ? 'Semua catatan sudah sampai ke terapis.'
               : 'Tidak ada jaringan saat ini. ${state.outboxCount} catatan tersimpan di perangkat dan akan terkirim nanti.',
           style: companionBodyStyle,
         ),
         const SizedBox(height: 12),
-        const Align(
+        Align(
           alignment: Alignment.centerLeft,
-          child: TextButton(onPressed: null, child: Text('Kirim sekarang')),
+          child: TextButton(onPressed: state.linkedToTherapist ? state.syncNow : null, child: const Text('Kirim sekarang')),
         ),
       ],
     ),

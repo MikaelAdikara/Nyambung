@@ -1,8 +1,132 @@
-/// Network wiring is intentionally deferred until the `j1-outbox` and
-/// `j3-auth` gates open. Keeping this type in lane 2 lets screens depend on a
-/// stable local abstraction while the real DAO and server are built.
-abstract interface class SyncService {
-  Future<void> push(String childId);
+import 'dart:convert';
 
-  Future<void> pullTargets(String childId);
+import 'package:http/http.dart' as http;
+
+import '../../core/app_state.dart';
+import '../../core/constants.dart';
+import '../../core/time.dart';
+import '../../data/models.dart';
+
+enum SyncState { notLinked, offline, linkedRevoked, complete }
+
+class SyncReport {
+  const SyncReport(this.state, {this.accepted = 0, this.duplicates = 0});
+
+  final SyncState state;
+  final int accepted;
+  final int duplicates;
+}
+
+class SyncService {
+  SyncService(this.app, {http.Client? client}) : _client = client ?? http.Client();
+
+  static const _healthTimeout = Duration(seconds: 3);
+  static const _requestTimeout = Duration(seconds: 10);
+
+  final AppState app;
+  final http.Client _client;
+
+  String get _baseUrl {
+    final saved = app.prefs.getString(PrefKeys.serverUrl)?.trim();
+    final value = saved == null || saved.isEmpty ? 'http://127.0.0.1:8000' : saved;
+    final normalized = value.replaceFirst('://localhost', '://127.0.0.1');
+    return normalized.endsWith('/') ? normalized.substring(0, normalized.length - 1) : normalized;
+  }
+
+  Future<SyncReport> push(String childId) async {
+    final link = await app.linkDao.active();
+    final token = app.prefs.getString(PrefKeys.deviceToken);
+    if (link == null || token == null || token.isEmpty) return const SyncReport(SyncState.notLinked);
+
+    try {
+      final health = await _client.get(Uri.parse('$_baseUrl/v1/health')).timeout(_healthTimeout);
+      if (health.statusCode != 200) return const SyncReport(SyncState.offline);
+      final healthBody = jsonDecode(health.body);
+      if (healthBody is! Map<String, dynamic> || healthBody['ok'] != true) return const SyncReport(SyncState.offline);
+    } catch (_) {
+      return const SyncReport(SyncState.offline);
+    }
+
+    var accepted = 0;
+    var duplicates = 0;
+    while (true) {
+      final batch = await app.eventDao.pendingBatch(limit: Limits.syncBatch);
+      if (batch.isEmpty) break;
+      final ids = batch.map((event) => event.eventId).toList(growable: false);
+      http.Response response;
+      try {
+        response = await _client
+            .post(
+              Uri.parse('$_baseUrl/v1/sync/events'),
+              headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json; charset=utf-8'},
+              body: jsonEncode({'child_id': childId, 'events': batch.map((event) => event.toSyncJson()).toList()}),
+            )
+            .timeout(_requestTimeout);
+      } catch (_) {
+        await app.eventDao.defer(ids);
+        return SyncReport(SyncState.offline, accepted: accepted, duplicates: duplicates);
+      }
+      if (response.statusCode == 401) {
+        await _markRevoked(link.linkId);
+        return SyncReport(SyncState.linkedRevoked, accepted: accepted, duplicates: duplicates);
+      }
+      if (response.statusCode != 200) {
+        await app.eventDao.defer(ids);
+        return SyncReport(SyncState.offline, accepted: accepted, duplicates: duplicates);
+      }
+      try {
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        accepted += body['accepted'] as int? ?? 0;
+        duplicates += body['duplicates'] as int? ?? 0;
+      } catch (_) {
+        await app.eventDao.defer(ids);
+        return SyncReport(SyncState.offline, accepted: accepted, duplicates: duplicates);
+      }
+      await app.eventDao.markSynced(ids, nowIso());
+    }
+    await pullTargets(childId, token: token);
+    app.markDataChanged();
+    return SyncReport(SyncState.complete, accepted: accepted, duplicates: duplicates);
+  }
+
+  Future<void> pullTargets(String childId, {String? token}) async {
+    final deviceToken = token ?? app.prefs.getString(PrefKeys.deviceToken);
+    if (deviceToken == null || deviceToken.isEmpty || await app.linkDao.active() == null) return;
+    try {
+      final response = await _client
+          .get(Uri.parse('$_baseUrl/v1/children/$childId/targets'), headers: {'Authorization': 'Bearer $deviceToken'})
+          .timeout(_requestTimeout);
+      if (response.statusCode == 401) {
+        final link = await app.linkDao.active();
+        if (link != null) await _markRevoked(link.linkId);
+        return;
+      }
+      if (response.statusCode != 200) return;
+      final rows = jsonDecode(response.body) as List<dynamic>;
+      for (final raw in rows) {
+        final row = raw as Map<String, dynamic>;
+        await app.targetDao.upsertFromServer(
+          VocabTarget(
+            targetId: row['target_id']! as String,
+            words: (row['words']! as List<dynamic>).cast<String>(),
+            note: row['note'] as String?,
+            weekIndex: row['week_index'] as int?,
+            status: row['status']! as String,
+            receivedAt: row['created_at'] as String?,
+          ),
+        );
+      }
+      app.markDataChanged();
+    } catch (_) {
+      // Pull is best-effort. Local data remains the source of truth.
+    }
+  }
+
+  Future<void> _markRevoked(String linkId) async {
+    await app.linkDao.markRevoked(linkId, nowIso());
+    await app.prefs.remove(PrefKeys.deviceToken);
+    app.markDataChanged();
+  }
+
+  void close() => _client.close();
 }

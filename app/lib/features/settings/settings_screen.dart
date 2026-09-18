@@ -4,6 +4,7 @@ import '../../core/app_state.dart';
 import '../../core/constants.dart';
 import '../../core/error_log.dart';
 import '../coach/companion_widgets.dart';
+import 'export_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -53,6 +54,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Tutup'))],
     ),
   );
+
+  Future<void> _export() => ExportService(_app!).share();
 
   Future<void> _deleteAllData() async {
     final first = await showDialog<bool>(
@@ -151,7 +154,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        const ListTile(title: Text('Ekspor catatan'), trailing: Icon(Icons.chevron_right)),
+        ListTile(title: const Text('Ekspor catatan'), trailing: const Icon(Icons.chevron_right), onTap: _export),
         ListTile(title: const Text('Diagnosa'), trailing: const Icon(Icons.chevron_right), onTap: _showDiagnostics),
         ListTile(title: const Text('Hapus semua data'), trailing: const Icon(Icons.chevron_right), onTap: _deleteAllData),
         const Divider(),

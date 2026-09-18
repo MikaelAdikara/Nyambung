@@ -4,6 +4,7 @@ import '../../core/app_state.dart';
 import '../../core/constants.dart';
 import '../../core/time.dart';
 import '../../data/models.dart';
+import '../../data/sync/sync_service.dart';
 import 'mission_rules.dart';
 
 @immutable
@@ -28,9 +29,10 @@ class CompanionMission {
 /// Read model for the companion screens, backed entirely by lane 1's AppState
 /// and DAOs. It owns no duplicate source of truth.
 class CompanionController extends ChangeNotifier {
-  CompanionController(this.app);
+  CompanionController(this.app) : sync = SyncService(app);
 
   final AppState app;
+  final SyncService sync;
 
   CompanionMission? _mission;
   CompanionMission get mission => _mission!;
@@ -41,12 +43,15 @@ class CompanionController extends ChangeNotifier {
   TherapistLink? activeLink;
   List<VocabTarget> targets = const [];
   MissionLog? todayLog;
+  int parentMissionTaps = 0;
+  int childMissionTaps = 0;
   String? weeklyTopWord;
   int weeklyTopCount = 0;
   int weeklyOtherWords = 0;
   int currentWeek = 1;
   List<String> weeklyWords = const [];
   bool loading = false;
+  SyncReport? lastSyncReport;
 
   bool get linkedToTherapist => activeLink != null;
   String? get therapistName => activeLink?.therapist;
@@ -89,6 +94,20 @@ class CompanionController extends ChangeNotifier {
     final today = localDate(now);
     final reps = await app.missionReps(model.missionId, today);
     todayLog = await app.missionDao.logFor(model.missionId, today);
+    parentMissionTaps = await app.eventDao.countOnDate(
+      currentChild.childId,
+      today,
+      actor: Actor.pendamping,
+      methods: Method.taps,
+      context: model.missionId,
+    );
+    childMissionTaps = await app.eventDao.countOnDate(
+      currentChild.childId,
+      today,
+      actor: Actor.anak,
+      methods: Method.taps,
+      context: model.missionId,
+    );
     outboxCount = await app.eventDao.outboxCount();
     activeLink = await app.linkDao.active();
     final weekStart = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
@@ -137,5 +156,18 @@ class CompanionController extends ChangeNotifier {
     await app.linkDao.markRevoked(link.linkId, nowIso());
     app.markDataChanged();
     await load();
+  }
+
+  Future<void> syncNow() async {
+    final currentChild = child;
+    if (currentChild == null) return;
+    lastSyncReport = await sync.push(currentChild.childId);
+    await load();
+  }
+
+  @override
+  void dispose() {
+    sync.close();
+    super.dispose();
   }
 }

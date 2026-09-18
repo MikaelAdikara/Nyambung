@@ -35,3 +35,24 @@ Format entri:
 - **Dampak terhadap masalah inti:** Saat memberi contoh (M2), anak mendengar suara orang tuanya hanya untuk MAU;
   kata lain terdengar dengan suara HP. Suara papan saat anak sendiri yang mengetuk tidak berubah, karena memang
   dirancang memakai suara papan, bukan suara ibu.
+
+## 3. Suara papan memakai klip sintetis yang dibundel, bukan TTS perangkat (10:40, jalur 1 & 3)
+- **Kondisi di proposal:** Papan bicara memakai suara TTS bawaan perangkat (id-ID) secara luring. Ketukan anak dengan
+  nada 1,3 dan ketukan pendamping dengan nada 1,0 supaya terdengar berbeda. Folder audio bundel disiapkan kosong.
+- **Yang diubah:** Setiap kata dari 120 kata sekarang punya klip suara yang dibundel di dalam APK
+  (`app/assets/audio/core/`). Ada dua set: suara remaja cowok (`cowo`, bawaan) dan cewek (`cewe`). Klip dibuat sekali
+  di laptop dengan OpenAI TTS (`gpt-4o-mini-tts`, suara fable dan marin), bukan saat aplikasi berjalan. Ketukan satu
+  kata dan tombol UCAPKAN sama-sama memutar klip ini secara berurutan. TTS perangkat tetap jadi cadangan kalau ada kata
+  tanpa klip. Asal-usul lengkap ada di `assets/PROVENANCE.md` bagian Audio.
+- **Alasan:** Banyak HP Android murah di Indonesia tidak punya mesin TTS Bahasa Indonesia, atau suaranya terdengar
+  robotik. Suara papan adalah suara anak, jadi harus sama di setiap perangkat dan tidak bergantung pada ROM. Klip statis
+  tetap luring penuh dan tidak butuh model ML saat aplikasi berjalan (invarian 1 dan 5). Biaya pembuatan kurang dari
+  $0,20, dan APK hanya bertambah ± 1 MB.
+- **Dampak terhadap masalah inti:** M1 menguat, karena suara papan konsisten dan jelas tanpa internet di perangkat apa
+  pun. Batasan yang perlu disebut jujur:
+  - suaranya **sintetis buatan AI, bukan rekaman manusia**;
+  - lafal belum ditinjau satu per satu, dan beberapa kata mungkin masih beraksen Inggris;
+  - bila tidak ada rekaman keluarga, ketukan pendamping memakai klip yang sama dengan ketukan anak, sehingga beda nada
+    1,0 / 1,3 hilang;
+  - pilihan cowok/cewek belum punya tombol di Pengaturan, jadi semua perangkat memakai suara cowok.
+  Entri 2 ("kata selain MAU memakai suara HP") perlu disesuaikan: kata selain MAU sekarang memakai klip bundel ini.

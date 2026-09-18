@@ -1,0 +1,141 @@
+// Bentuk JSON persis kontrak §4 (API) dan §7 (berkas data demo).
+
+export type Routine = 'makan' | 'mandi' | 'main'
+export type Trend = 'naik' | 'tetap' | 'turun' | 'baru'
+export type TargetStatus = 'usulan' | 'diterima' | 'ditolak'
+
+export interface ChildRow {
+  child_id: string
+  nickname: string | null
+  age_years: number | null
+  routine: string | null
+  unique_words: number
+  trend_3w: Trend
+  missions_done: number
+  missions_total: number
+  last_sync: string | null
+  pending_targets: number
+  needs_review: boolean
+}
+
+export interface ChildrenOverview {
+  active_families: number
+  needs_review: number
+  unsynced_over_7d: number
+  pending_targets: number
+  children: ChildRow[]
+}
+
+export interface WordCount {
+  word: string
+  count: number
+}
+
+export interface Summary {
+  child_id: string
+  nickname: string | null
+  age_years: number | null
+  routine: string | null
+  days: number
+  window_start_utc: string
+  window_end_utc: string
+  unique_words: number
+  unique_words_prev: number
+  spontaneous_ratio: number | null
+  missions_done: number
+  missions_total: number
+  top_words: WordCount[]
+  hour_histogram: number[]
+  last_sync: string | null
+  trend_3w: Trend
+  total_taps: number
+  parent_taps: number
+  child_taps: number
+  prompted_taps: number
+  spontaneous_taps: number
+  missions_skipped: number
+  weekly_unique_6w: number[]
+  missions_done_6w: number
+  missions_total_6w: number
+  word_counts: Record<string, number>
+  linked_weeks: number | null
+  pending_targets: number
+}
+
+export interface TargetIn {
+  words: string[]
+  note?: string
+  week_index?: number
+  routine?: Routine
+}
+
+export interface TargetOut {
+  target_id: string
+  child_id: string
+  words: string[]
+  note: string | null
+  week_index: number | null
+  routine: string | null
+  therapist: string
+  created_at: string
+  status: TargetStatus
+  answered_at: string | null
+  used_count_since_accept: number
+}
+
+export interface InviteOut {
+  invite_code: string
+  therapist: string
+}
+
+// Kontrak §7
+export interface DemoEvent {
+  child_id: string
+  event_id: string
+  ts_device: string
+  content: string
+  method: string
+  actor: string
+  prompt_level: string
+  context: string | null
+  session_id: string
+}
+
+export interface DemoChild {
+  child_id: string
+  nickname: string
+  age_years: number | null
+  routine: string
+  linked_at: string | null
+  last_sync: string | null
+}
+
+export interface DemoTarget {
+  target_id: string
+  child_id: string
+  words: string[]
+  note: string | null
+  week_index: number | null
+  routine: string | null
+  therapist: string
+  created_at: string
+}
+
+export interface DemoFile {
+  illustrative: boolean
+  generated_at: string
+  children: DemoChild[]
+  events: DemoEvent[]
+  targets: DemoTarget[]
+}
+
+// Satu baris assets/vocab/core_vocab_id.csv (hanya kolom yang dipakai dasbor)
+export interface VocabWord {
+  word_id: string
+  label_display: string
+  pos: string
+  category: string
+  page: number
+  position_index: number
+  symbol_file: string
+}

@@ -9,6 +9,7 @@
     "dev": "vite --host 127.0.0.1 --port 5173",
     "prebuild": "npm run prepare-public",
     "build": "tsc -b && vite build",
+    "test": "vitest",
     "lint": "oxlint",
     "preview": "vite preview --host 127.0.0.1 --port 4173"
   },
@@ -23,6 +24,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "oxlint": "^1.81.0",
     "typescript": "~6.0.2",
-    "vite": "^8.3.0"
+    "vite": "^8.3.0",
+    "vitest": "^3.2.4"
   }
 }

@@ -117,7 +117,12 @@ export function D3({ childId }: { childId: string }) {
 
   return (
     <section>
-      <ChildHeader childId={childId} page="D3" name={s.nickname} meta="Usulkan kata untuk pekan ini. Keluarga dapat menerima atau menolak tanpa alasan." />
+      <ChildHeader
+        childId={childId}
+        page="D3"
+        name={s.nickname}
+        meta="Pilih kata yang akan bergilir sebagai misi harian setelah diterima keluarga. Keluarga boleh tidak memakainya tanpa alasan."
+      />
 
       <form className="card" onSubmit={submit}>
         <div className="picked" aria-live="polite">
@@ -182,7 +187,7 @@ export function D3({ childId }: { childId: string }) {
 
         <div className="actions">
           <button className="button" type="submit" disabled={demo || sending || picked.length === 0}>
-            Kirim sebagai usulan
+            Kirim target kata
           </button>
           <button className="button secondary" type="button" onClick={saveDraft} disabled={picked.length === 0 && !note.trim()}>
             Simpan draf
@@ -193,45 +198,47 @@ export function D3({ childId }: { childId: string }) {
             </span>
           )}
         </div>
-        {demo && <p className="muted small">Mode demo: usulan tidak dikirim ke server. Masuk dengan token terapis untuk mengirim.</p>}
+        {demo && <p className="muted small">Mode demo: target kata tidak dikirim ke server. Masuk sebagai terapis untuk mengirim.</p>}
         {sendError && <p className="form-error">{sendError}</p>}
         {sent && (
           <p className="ok" role="status">
-            Usulan {sent} terkirim. Keluarga akan menerimanya saat perangkat tersambung.
+            Target {sent} terkirim. Keluarga dapat memilih “Terima sebagai misi” atau “Tidak dipakai” saat perangkat tersambung.
           </p>
         )}
       </form>
 
       <div className="card">
-        <h2>Riwayat usulan</h2>
+        <h2>Riwayat target kata</h2>
         {res.data.targets.length === 0 ? (
-          <p className="muted">Belum ada usulan untuk anak ini.</p>
+          <p className="muted">Belum ada target kata untuk anak ini.</p>
         ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Kata</th>
-                <th>Status</th>
-                <th>Tanggal</th>
-                <th>Pemakaian</th>
-              </tr>
-            </thead>
-            <tbody>
-              {res.data.targets.map((t) => (
-                <tr key={t.target_id}>
-                  <td>
-                    {t.words.map((w) => wordLabel(vocab, w)).join(', ')}
-                    {t.note && <div className="muted small">{t.note}</div>}
-                  </td>
-                  <td>
-                    <StatusPill status={t.status} />
-                  </td>
-                  <td>{fmtDate(t.answered_at ?? t.created_at)}</td>
-                  <td>{t.status === 'diterima' ? `dipakai ${t.used_count_since_accept} kali sejak diterima` : '–'}</td>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Kata</th>
+                  <th>Status</th>
+                  <th>Tanggal</th>
+                  <th>Pemakaian</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {res.data.targets.map((t) => (
+                  <tr key={t.target_id}>
+                    <td>
+                      {t.words.map((w) => wordLabel(vocab, w)).join(', ')}
+                      {t.note && <div className="muted small">{t.note}</div>}
+                    </td>
+                    <td>
+                      <StatusPill status={t.status} />
+                    </td>
+                    <td>{fmtDate(t.answered_at ?? t.created_at)}</td>
+                    <td>{t.status === 'diterima' ? `dipakai ${t.used_count_since_accept} kali sejak diterima` : '–'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </section>

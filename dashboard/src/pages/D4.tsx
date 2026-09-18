@@ -258,38 +258,40 @@ export function D4({ childId }: { childId: string }) {
         {res.data.sessions.length === 0 ? (
           <p className="muted">Belum ada catatan sesi untuk {name}.</p>
         ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Tanggal</th>
-                <th>Catatan</th>
-                <th>Fokus</th>
-                <th>Keluarga</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {res.data.sessions.map((n) => (
-                <tr key={n.note_id} className={n.note_id === editing ? 'row-editing' : undefined}>
-                  <td>
-                    <strong>{fmtLocal(n.session_date)}</strong>
-                  </td>
-                  <td>
-                    <div className="clamp">{n.note}</div>
-                  </td>
-                  <td>{n.focus ?? '–'}</td>
-                  <td>{n.shared_at ? `ringkasan dikirim ${fmtDate(n.shared_at)}` : <span className="muted">hanya terapis</span>}</td>
-                  <td>
-                    {!demo && (
-                      <button className="link" type="button" onClick={() => load(n)}>
-                        Ubah
-                      </button>
-                    )}
-                  </td>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Tanggal</th>
+                  <th>Catatan</th>
+                  <th>Fokus</th>
+                  <th>Keluarga</th>
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {res.data.sessions.map((n) => (
+                  <tr key={n.note_id} className={n.note_id === editing ? 'row-editing' : undefined}>
+                    <td>
+                      <strong>{fmtLocal(n.session_date)}</strong>
+                    </td>
+                    <td>
+                      <div className="clamp">{n.note}</div>
+                    </td>
+                    <td>{n.focus ?? '–'}</td>
+                    <td>{n.shared_at ? `ringkasan dikirim ${fmtDate(n.shared_at)}` : <span className="muted">hanya terapis</span>}</td>
+                    <td>
+                      {!demo && (
+                        <button className="link" type="button" onClick={() => load(n)}>
+                          Ubah
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </section>

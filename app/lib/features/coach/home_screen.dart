@@ -17,6 +17,7 @@ import '../vocab/phrase_screen.dart';
 import '../vocab/voice_clone_screen.dart';
 import 'companion_controller.dart';
 import 'companion_widgets.dart';
+import 'proposal_copy.dart';
 import 'home_cards.dart';
 import 'lesson_screen.dart';
 import 'mission_rules.dart';
@@ -375,10 +376,7 @@ class _ProposalCard extends StatelessWidget {
         const IconBadge(icon: Icons.lightbulb_outline_rounded, tint: Colors.white, color: CompanionColors.sunText),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            '${state.pendingTargets.length} usulan kata dari terapis menunggu jawaban',
-            style: AppText.bodyStrong.copyWith(color: CompanionColors.sunText),
-          ),
+          child: Text(ProposalCopy.targetWaiting(state.pendingTargets.length), style: AppText.bodyStrong.copyWith(color: CompanionColors.sunText)),
         ),
         const Icon(Icons.chevron_right_rounded, color: CompanionColors.sunText),
       ],
@@ -386,7 +384,7 @@ class _ProposalCard extends StatelessWidget {
   );
 }
 
-/// Frasa bersuara dari terapis/guru yang menunggu jawaban keluarga.
+/// Frasa audio dari terapis/guru yang menunggu keputusan keluarga.
 class _PhraseProposalCard extends StatelessWidget {
   const _PhraseProposalCard({required this.count, required this.from, required this.onOpen});
 
@@ -404,10 +402,7 @@ class _PhraseProposalCard extends StatelessWidget {
         const IconBadge(icon: Icons.graphic_eq_rounded, tint: Colors.white, color: CompanionColors.lavenderDeep),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            count == 1 ? 'Frasa bersuara dari $from menunggu jawaban' : '$count frasa bersuara menunggu jawaban',
-            style: AppText.bodyStrong.copyWith(color: CompanionColors.lavenderDeep),
-          ),
+          child: Text(ProposalCopy.phraseWaiting(count, from), style: AppText.bodyStrong.copyWith(color: CompanionColors.lavenderDeep)),
         ),
         const Icon(Icons.chevron_right_rounded, color: CompanionColors.lavenderDeep),
       ],
@@ -497,7 +492,7 @@ class _FeaturedSection extends StatelessWidget {
       _FeatureCard(
         icon: Icons.graphic_eq_rounded,
         badge: 'Suara',
-        title: 'Frasa bersuara',
+        title: ProposalCopy.phraseTitle,
         subtitle: 'Ketik kalimat pendek, jadi satu kartu bersuara di papan anak.',
         tint: CompanionColors.lavenderTint,
         iconColor: CompanionColors.lavenderDeep,

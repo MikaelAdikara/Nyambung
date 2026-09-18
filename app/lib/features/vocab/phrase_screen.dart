@@ -11,9 +11,10 @@ import '../../core/theme.dart';
 import '../../data/phrase.dart';
 import '../../data/sync/phrase_service.dart';
 import '../coach/companion_widgets.dart';
+import '../coach/proposal_copy.dart';
 import 'voice_clone_screen.dart';
 
-/// Frasa bersuara: kalimat pendek (mis. "Jangan nyontek") dengan suara papan atau suara keluarga, dibuat sekali lewat
+/// Frasa audio: kalimat pendek dengan suara papan atau suara keluarga, dibuat sekali lewat
 /// server lalu disimpan di HP. Frasa dari terapis/guru muncul sebagai usulan yang boleh ditolak tanpa alasan.
 class PhraseScreen extends StatefulWidget {
   const PhraseScreen({super.key});
@@ -78,7 +79,7 @@ class _PhraseScreenState extends State<PhraseScreen> {
       }
     } on PhraseException catch (e) {
       if (mounted) setState(() => _statusError = e.message);
-      if (e.needsLink && mounted) unawaited(showLinkRequiredDialog(context, feature: 'Frasa bersuara'));
+      if (e.needsLink && mounted) unawaited(showLinkRequiredDialog(context, feature: ProposalCopy.phraseTitle));
     }
   }
 
@@ -108,7 +109,7 @@ class _PhraseScreenState extends State<PhraseScreen> {
       unawaited(_play(p));
     } on PhraseException catch (e) {
       if (mounted) setState(() => _error = e.message);
-      if (e.needsLink && mounted) unawaited(showLinkRequiredDialog(context, feature: 'Frasa bersuara'));
+      if (e.needsLink && mounted) unawaited(showLinkRequiredDialog(context, feature: ProposalCopy.phraseTitle));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -144,7 +145,7 @@ class _PhraseScreenState extends State<PhraseScreen> {
     final pending = _phrases.where((p) => p.status == PhraseStatus.usulan).toList();
     final mine = _phrases.where((p) => p.status == PhraseStatus.diterima).toList();
     return CompanionPage(
-      title: 'Frasa bersuara',
+      title: ProposalCopy.phraseTitle,
       body: RefreshIndicator(
         onRefresh: () async {
           await _loadStatus();
@@ -160,7 +161,7 @@ class _PhraseScreenState extends State<PhraseScreen> {
             ),
             if (pending.isNotEmpty) ...[
               const SizedBox(height: 20),
-              const Eyebrow('Usulan dari terapis'),
+              const Eyebrow('Frasa audio dari terapis'),
               const SizedBox(height: 8),
               for (final p in pending) ...[
                 _ProposalTile(phrase: p, onPlay: () => _play(p), onAnswer: (a) => _answer(p, a)),
@@ -196,7 +197,7 @@ class _PhraseScreenState extends State<PhraseScreen> {
             ),
             if (mine.isNotEmpty) ...[
               const SizedBox(height: 20),
-              const Eyebrow('Frasa tersimpan'),
+              const Eyebrow('Frasa audio tersimpan'),
               const SizedBox(height: 8),
               for (final p in mine) ...[
                 _PhraseTile(
@@ -228,7 +229,7 @@ class _PhraseScreenState extends State<PhraseScreen> {
             maxLength: phraseTextMax,
             textCapitalization: TextCapitalization.sentences,
             style: AppText.bodyStrong,
-            decoration: const InputDecoration(hintText: 'mis. Jangan nyontek', border: OutlineInputBorder()),
+            decoration: const InputDecoration(hintText: 'mis. Aku mau istirahat', border: OutlineInputBorder()),
             onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 8),
@@ -333,11 +334,11 @@ class _ProposalTile extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: EqualOutlineButton(label: 'Tambah ke papan', onPressed: () => onAnswer(true)),
+              child: EqualOutlineButton(label: ProposalCopy.phraseAccept, onPressed: () => onAnswer(true)),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: EqualOutlineButton(label: 'Tidak dipakai', onPressed: () => onAnswer(false)),
+              child: EqualOutlineButton(label: ProposalCopy.reject, onPressed: () => onAnswer(false)),
             ),
           ],
         ),

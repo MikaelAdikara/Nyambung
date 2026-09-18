@@ -13,8 +13,13 @@ const WEEKS = ['5 pk lalu', '4 pk lalu', '3 pk lalu', '2 pk lalu', 'pekan lalu',
 export function D2({ childId }: { childId: string }) {
   const { source, vocab } = useApp()
   const [res] = useAsync(async () => {
-    const [summary, targets, missions] = await Promise.all([source.summary(childId, 7), source.targets(childId), source.missions(childId, 14)])
-    return { summary, targets, missions }
+    const [summary, targets, missions, phrases] = await Promise.all([
+      source.summary(childId, 7),
+      source.targets(childId),
+      source.missions(childId, 14),
+      source.phrases(childId),
+    ])
+    return { summary, targets, missions, phrases }
   }, [source, childId])
 
   if (res.state === 'loading') return <Loading />
@@ -31,6 +36,13 @@ export function D2({ childId }: { childId: string }) {
   const diff = s.unique_words - s.unique_words_prev
   const signals = attentionSignals(s, res.data.targets, vocab)
   const acceptedTargets = res.data.targets.filter((t) => t.status === 'diterima')
+  const pendingPhrases = res.data.phrases.filter((p) => p.status === 'usulan' && p.created_by !== 'keluarga').length
+  const pendingLabel = [
+    s.pending_targets > 0 ? `${s.pending_targets} target kata` : null,
+    pendingPhrases > 0 ? `${pendingPhrases} frasa audio` : null,
+  ]
+    .filter(Boolean)
+    .join(' dan ')
 
   return (
     <section>
@@ -42,7 +54,7 @@ export function D2({ childId }: { childId: string }) {
           <>
             {s.age_years ?? '–'} tahun · rutinitas {s.routine ?? '–'} · arah 3 pekan <TrendBadge trend={s.trend_3w} /> · sinkron{' '}
             {relTime(s.last_sync)} · {s.linked_weeks === null ? 'belum tertaut' : `tertaut ${s.linked_weeks} pekan`}
-            {s.pending_targets > 0 && ` · ${s.pending_targets} usulan menunggu jawaban keluarga`}
+            {pendingLabel && ` · ${pendingLabel} menunggu keputusan keluarga`}
           </>
         }
       />
@@ -154,10 +166,10 @@ export function D2({ childId }: { childId: string }) {
 
       <nav className="actions">
         <a className="button" href={href.d3(childId)}>
-          Usulkan kata
+          Atur target kata
         </a>
         <a className="button secondary" href={href.d5(childId)}>
-          Kirim frasa bersuara
+          Buat frasa audio
         </a>
         <a className="button secondary" href={href.d4(childId)}>
           Catatan sesi

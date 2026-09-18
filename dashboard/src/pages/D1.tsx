@@ -5,6 +5,7 @@ import { useApp, useAsync } from '../ctx'
 import { relTime } from '../format'
 import { reviewReasons } from '../attention'
 import { Icon } from '../icons'
+import { proposalCounts, type ProposalCounts } from '../proposals'
 import { Avatar, ErrorBox, Loading, Panel, StatCard, StatusPill, TrendBadge, toneFor } from '../ui'
 
 const fmtMinutes = (m: number) => m.toLocaleString('id-ID', { maximumFractionDigits: 1 })
@@ -66,6 +67,7 @@ export function D1() {
     [source, res.state],
   )
   const tableRef = useRef<HTMLDivElement>(null)
+  const pendingRef = useRef<HTMLDivElement>(null)
   const [onlyReview, setOnlyReview] = useState(false)
 
   const shown = useMemo(() => {
@@ -81,6 +83,8 @@ export function D1() {
 
   const name = greetName(therapist)
   const today = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })
+  const phraseRows = extras.state === 'ok' && extras.data ? extras.data.phrases : []
+  const proposalSummary = proposalCounts(res.state === 'ok' ? res.data.children : [], phraseRows)
 
   return (
     <section className="d1">
@@ -115,9 +119,14 @@ export function D1() {
             <StatCard
               icon="clock"
               accent="lavender"
-              label="Usulan menunggu keluarga"
-              value={res.data.pending_targets}
-              sub="Keluarga berhak menolak tanpa alasan."
+              label="Menunggu keputusan keluarga"
+              value={extras.state === 'loading' ? '…' : proposalSummary.total}
+              sub={
+                extras.state === 'loading'
+                  ? 'Menghitung target kata dan frasa audio…'
+                  : `${proposalSummary.targets} target kata · ${proposalSummary.phrases} frasa audio`
+              }
+              onClick={extras.state === 'loading' ? undefined : () => pendingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
             />
           </div>
           <p className="facts">
@@ -138,30 +147,33 @@ export function D1() {
           <div className="d1-grid">
             <div className="d1-col">
               <Schedule upcoming={extras.state === 'ok' && extras.data ? extras.data.upcoming : null} />
+              <div ref={pendingRef} className="d1-pending">
+                <PendingDecisions rows={res.data.children} counts={proposalSummary} loading={extras.state === 'loading'} />
+              </div>
               <ReviewList rows={res.data.children.filter((c) => c.needs_review)} />
             </div>
 
             <div className="d1-col">
-            <div ref={tableRef} className="d1-table">
-              <Panel
-                title="Keluarga binaan"
-                icon="users"
-                actions={
-                  <div className="segmented" role="group" aria-label="Saring">
-                    <button type="button" aria-pressed={!onlyReview} onClick={() => setOnlyReview(false)}>
-                      Semua
-                    </button>
-                    <button type="button" aria-pressed={onlyReview} onClick={() => setOnlyReview(true)}>
-                      Perlu ditinjau
-                    </button>
-                  </div>
-                }
-              >
-                <FamilyTable rows={shown} empty={res.data.children.length === 0} filtered={!!query.trim() || onlyReview} />
-              </Panel>
-            </div>
+              <div ref={tableRef} className="d1-table">
+                <Panel
+                  title="Keluarga binaan"
+                  icon="users"
+                  actions={
+                    <div className="segmented" role="group" aria-label="Saring">
+                      <button type="button" aria-pressed={!onlyReview} onClick={() => setOnlyReview(false)}>
+                        Semua
+                      </button>
+                      <button type="button" aria-pressed={onlyReview} onClick={() => setOnlyReview(true)}>
+                        Perlu ditinjau
+                      </button>
+                    </div>
+                  }
+                >
+                  <FamilyTable rows={shown} empty={res.data.children.length === 0} filtered={!!query.trim() || onlyReview} />
+                </Panel>
+              </div>
 
-            <RecentPhrases rows={extras.state === 'ok' && extras.data ? extras.data.phrases : null} />
+              <RecentPhrases rows={extras.state === 'ok' && extras.data ? extras.data.phrases : null} />
             </div>
           </div>
         </>
@@ -316,11 +328,11 @@ function Schedule({ upcoming }: { upcoming: Upcoming[] | null }) {
 function RecentPhrases({ rows }: { rows: (PhraseOut & { nickname: string | null })[] | null }) {
   const voice = { cowo: 'Suara papan (cowok)', cewe: 'Suara papan (cewek)', keluarga: 'Suara keluarga' }
   return (
-    <Panel title="Frasa bersuara terbaru" icon="wave" tone="lavender" className="d1-phrases">
+    <Panel title="Frasa audio terbaru" icon="wave" tone="lavender" className="d1-phrases">
       {rows === null ? (
         <Loading />
       ) : rows.length === 0 ? (
-        <p className="panel-empty">Belum ada frasa. Buka halaman anak → Frasa bersuara untuk mengirim yang pertama.</p>
+        <p className="panel-empty">Belum ada frasa audio. Buka halaman anak → Frasa audio untuk membuat yang pertama.</p>
       ) : (
         <div className="table-wrap">
           <table className="table">
@@ -356,6 +368,38 @@ function RecentPhrases({ rows }: { rows: (PhraseOut & { nickname: string | null 
   )
 }
 
+function PendingDecisions({ rows, counts, loading }: { rows: ChildRow[]; counts: ProposalCounts; loading: boolean }) {
+  const pending = rows.filter((child) => (counts.byChild.get(child.child_id)?.total ?? 0) > 0)
+  return (
+    <Panel title="Menunggu keputusan keluarga" icon="clock" tone="lavender">
+      {loading ? (
+        <Loading />
+      ) : pending.length === 0 ? (
+        <p className="panel-empty">Tidak ada target kata atau frasa audio yang menunggu keputusan.</p>
+      ) : (
+        <ul className="pending-list">
+          {pending.map((child) => {
+            const count = counts.byChild.get(child.child_id)!
+            return (
+              <li key={child.child_id}>
+                <span className="pending-who">
+                  <Avatar name={child.nickname ?? '?'} size={36} tone={toneFor(child.child_id)} />
+                  <strong>{child.nickname ?? '(tanpa nama)'}</strong>
+                </span>
+                <span className="pending-links">
+                  {count.targets > 0 && <a href={href.d3(child.child_id)}>{count.targets} target kata</a>}
+                  {count.phrases > 0 && <a href={href.d5(child.child_id)}>{count.phrases} frasa audio</a>}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      <p className="panel-foot">Keluarga boleh memilih “Tidak dipakai” tanpa memberikan alasan.</p>
+    </Panel>
+  )
+}
+
 function ReviewList({ rows }: { rows: ChildRow[] }) {
   return (
     <Panel title="Perlu ditinjau" icon="alert" tone="coral" className="d1-review">
@@ -387,6 +431,7 @@ function InviteButton() {
   const [invite, setInvite] = useState<InviteOut | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [copied, setCopied] = useState(false)
   const demo = source.kind === 'demo'
 
   const create = async () => {
@@ -401,9 +446,23 @@ function InviteButton() {
     }
   }
 
+  const copy = async () => {
+    if (!invite) return
+    try {
+      await navigator.clipboard.writeText(invite.invite_code)
+      setCopied(true)
+      setError(null)
+      window.setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
+      setError('Kode belum tersalin. Pilih kodenya lalu salin secara manual.')
+    }
+  }
+
   return (
     <div className="invite">
       <button
+        type="button"
         className="button ghost"
         onClick={create}
         disabled={busy || demo}
@@ -412,9 +471,12 @@ function InviteButton() {
         <Icon name="plus" size={18} /> {busy ? 'Membuat…' : 'Buat kode undangan'}
       </button>
       {invite && (
-        <div className="invite-card" role="status">
+        <div className="invite-card" aria-live="polite">
           <span className="invite-code">{invite.invite_code}</span>
           <span>Berlaku 7 hari, sekali pakai.</span>
+          <button type="button" className="link" onClick={copy}>
+            {copied ? 'Tersalin' : 'Salin kode'}
+          </button>
         </div>
       )}
       {error && <p className="hero-error">{error}</p>}
@@ -422,7 +484,7 @@ function InviteButton() {
   )
 }
 
-// "Kirim frasa": pilih anak, lalu ke halaman frasa bersuara anak itu.
+// "Buat frasa audio": pilih anak, lalu ke halaman frasa audio anak itu.
 function PhraseLauncher({ kids }: { kids: ChildRow[] }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -440,8 +502,8 @@ function PhraseLauncher({ kids }: { kids: ChildRow[] }) {
   }, [open])
   return (
     <div className="launcher" ref={ref}>
-      <button className="button cta" aria-expanded={open} aria-haspopup="menu" onClick={() => setOpen(!open)} disabled={kids.length === 0}>
-        Kirim frasa bersuara <Icon name="wave" size={18} />
+      <button type="button" className="button cta" aria-expanded={open} aria-haspopup="menu" onClick={() => setOpen(!open)} disabled={kids.length === 0}>
+        Buat frasa audio <Icon name="wave" size={18} />
       </button>
       {open && (
         <div className="menu" role="menu">

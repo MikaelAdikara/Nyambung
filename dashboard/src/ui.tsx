@@ -1,8 +1,9 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useApp } from './ctx'
 import { ApiError } from './data'
 import { personalLabel, phraseLabel } from './format'
 import { Icon, type IconName } from './icons'
+import { centeredScrollLeft } from './layout'
 import { href, type Route } from './route'
 import type { Trend } from './types'
 
@@ -47,8 +48,8 @@ export function Avatar({ name, size = 36, tone }: { name: string; size?: number;
 
 const CHILD_TABS: { page: Route['page']; label: string; icon: IconName; to: (id: string) => string }[] = [
   { page: 'D2', label: 'Ringkasan', icon: 'chart', to: href.d2 },
-  { page: 'D3', label: 'Usulkan kata', icon: 'target', to: href.d3 },
-  { page: 'D5', label: 'Frasa bersuara', icon: 'wave', to: href.d5 },
+  { page: 'D3', label: 'Target kata', icon: 'target', to: href.d3 },
+  { page: 'D5', label: 'Frasa audio', icon: 'wave', to: href.d5 },
   { page: 'D4', label: 'Catatan sesi', icon: 'note', to: href.d4 },
 ]
 
@@ -63,6 +64,16 @@ export function ChildHeader({
   name: string | null
   meta?: ReactNode
 }) {
+  const tabsRef = useRef<HTMLElement>(null)
+  const activeRef = useRef<HTMLAnchorElement>(null)
+
+  useEffect(() => {
+    const tabs = tabsRef.current
+    const active = activeRef.current
+    if (!tabs || !active) return
+    tabs.scrollLeft = centeredScrollLeft(tabs.clientWidth, active.offsetLeft, active.clientWidth)
+  }, [page])
+
   return (
     <header className="child-head">
       <a className="back" href={href.d1()}>
@@ -75,9 +86,15 @@ export function ChildHeader({
           {meta && <div className="child-meta">{meta}</div>}
         </div>
       </div>
-      <nav className="tabs" aria-label="Bagian">
+      <nav ref={tabsRef} className="tabs" aria-label="Bagian">
         {CHILD_TABS.map((t) => (
-          <a key={t.page} href={t.to(childId)} className={`tab${t.page === page ? ' active' : ''}`} aria-current={t.page === page ? 'page' : undefined}>
+          <a
+            key={t.page}
+            ref={t.page === page ? activeRef : undefined}
+            href={t.to(childId)}
+            className={`tab${t.page === page ? ' active' : ''}`}
+            aria-current={t.page === page ? 'page' : undefined}
+          >
             <Icon name={t.icon} size={17} />
             {t.label}
           </a>
@@ -301,7 +318,7 @@ export function WordIcon({ id, size = 40 }: { id: string; size?: number }) {
       className="word-icon"
       style={{ width: size, height: size, background: fill }}
       title={
-        personalLabel(id) ? 'Kartu personal dari foto keluarga (fotonya tidak dikirim)' : phrase ? 'Kartu frasa bersuara' : undefined
+        personalLabel(id) ? 'Kartu personal dari foto keluarga (fotonya tidak dikirim)' : phrase ? 'Kartu frasa audio' : undefined
       }
     >
       {phrase ? (

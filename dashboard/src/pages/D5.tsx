@@ -4,6 +4,7 @@ import { fmtDate } from '../format'
 import { Icon } from '../icons'
 import type { PhraseOut, PhraseVoice } from '../types'
 import { ChildHeader, ErrorBox, Loading, Panel, StatusPill } from '../ui'
+import { audioPreviewError } from '../audio'
 
 const MAX_TEXT = 60
 const VOICES: { id: PhraseVoice; label: string; hint: string }[] = [
@@ -13,8 +14,8 @@ const VOICES: { id: PhraseVoice; label: string; hint: string }[] = [
 ]
 const VOICE_LABEL: Record<PhraseVoice, string> = { cowo: 'Suara papan (cowok)', cewe: 'Suara papan (cewek)', keluarga: 'Suara keluarga' }
 
-// D5 Frasa bersuara: terapis/guru menulis kalimat pendek, server membuat suaranya sekali, keluarga menerimanya
-// sebagai usulan. Setelah diterima, kartu frasa diputar luring di papan anak.
+// D5 Frasa audio: terapis/guru menulis kalimat pendek, server membuat MP3 sekali, keluarga menerimanya
+// sebagai usulan. Setelah diterima, kartu teks + audio diputar luring di papan anak.
 export function D5({ childId }: { childId: string }) {
   const { source } = useApp()
   const [res, reload] = useAsync(async () => {
@@ -73,13 +74,13 @@ export function D5({ childId }: { childId: string }) {
         name={name}
         meta={
           <>
-            {phrases.length} frasa · {pending} menunggu jawaban keluarga
+            {phrases.length} frasa audio · {pending} menunggu keputusan keluarga
           </>
         }
       />
 
       <div className="grid-main">
-        <Panel title="Kirim frasa baru" icon="wave" tone="lavender">
+        <Panel title="Buat frasa audio" icon="wave" tone="lavender">
           <form className="phrase-form" onSubmit={submit}>
             <label htmlFor="phrase">Kalimat pendek untuk {name ?? 'anak'}</label>
             <input
@@ -88,7 +89,7 @@ export function D5({ childId }: { childId: string }) {
               maxLength={MAX_TEXT}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="mis. Jangan nyontek"
+              placeholder="mis. Aku mau istirahat"
               disabled={demo}
               autoComplete="off"
             />
@@ -115,18 +116,18 @@ export function D5({ childId }: { childId: string }) {
 
             <div className="actions">
               <button className="button" type="submit" disabled={demo || busy || !clean || !voiceReady}>
-                {busy ? 'Membuat suara…' : 'Buat suara dan kirim sebagai usulan'}
+                {busy ? 'Membuat MP3…' : 'Buat frasa audio'}
               </button>
             </div>
             <p className="muted small">
-              Suara dibuat sekali di server, lalu tersimpan di HP keluarga dan diputar tanpa internet. Keluarga boleh menolak tanpa
-              alasan.
+              Server membuat satu MP3. Visual kartunya tetap teks dengan ikon audio—bukan gambar AI. Setelah keluarga memilih
+              “Tambah ke papan”, MP3 tersimpan di HP dan dapat diputar tanpa internet.
             </p>
             {demo && <p className="muted small">Mode demo: frasa tidak dibuat. Masuk sebagai terapis untuk mengirim.</p>}
             {error && <p className="form-error">{error}</p>}
             {sent && (
               <p className="ok" role="status">
-                “{sent.text}” terkirim. Keluarga menerimanya sebagai usulan saat HP tersambung.
+                “{sent.text}” terkirim. Keluarga dapat memilih “Tambah ke papan” atau “Tidak dipakai” saat HP tersambung.
               </p>
             )}
           </form>
@@ -145,7 +146,7 @@ export function D5({ childId }: { childId: string }) {
             <div className="clone">
               <Icon name="mic" size={22} />
               <p>
-                Belum aktif. Hanya orang tua yang bisa mengaktifkannya dari aplikasi (Atur → Frasa bersuara → Suara keluarga), dengan
+                Belum aktif. Hanya orang tua yang bisa mengaktifkannya dari aplikasi (Atur → Frasa audio → Suara keluarga), dengan
                 persetujuan dan rekaman suaranya sendiri.
               </p>
             </div>
@@ -165,7 +166,7 @@ export function D5({ childId }: { childId: string }) {
         </Panel>
       </div>
 
-      <Panel title="Riwayat frasa" icon="note">
+      <Panel title="Riwayat frasa audio" icon="note">
         {phrases.length === 0 ? (
           <p className="panel-empty">Belum ada frasa untuk {name ?? 'anak ini'}.</p>
         ) : (
@@ -216,6 +217,11 @@ export function D5({ childId }: { childId: string }) {
           </div>
         )}
         <p className="panel-foot">“Dipakai” = ketukan kartu frasa di papan (anak dan pendamping) yang sudah tersinkron.</p>
+        {player.error && (
+          <p className="form-error" role="alert">
+            {player.error}
+          </p>
+        )}
       </Panel>
     </section>
   )
@@ -227,6 +233,7 @@ function usePlayer() {
   const audio = useRef<HTMLAudioElement | null>(null)
   const urls = useRef(new Map<string, string>())
   const [playing, setPlaying] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const cache = urls.current
@@ -238,6 +245,7 @@ function usePlayer() {
   }, [])
 
   const play = async (childId: string, phraseId: string) => {
+    setError(null)
     if (playing === phraseId) {
       audio.current?.pause()
       setPlaying(null)
@@ -246,7 +254,10 @@ function usePlayer() {
     let url = urls.current.get(phraseId)
     if (!url) {
       const fetched = await source.phraseAudio(childId, phraseId)
-      if (!fetched) return
+      if (!fetched) {
+        setError(audioPreviewError(source.kind))
+        return
+      }
       url = fetched
       urls.current.set(phraseId, url)
     }
@@ -254,12 +265,17 @@ function usePlayer() {
     const a = new Audio(url)
     audio.current = a
     a.onended = () => setPlaying(null)
+    a.onerror = () => {
+      setPlaying(null)
+      setError(audioPreviewError(source.kind))
+    }
     setPlaying(phraseId)
     try {
       await a.play()
     } catch {
       setPlaying(null)
+      setError(audioPreviewError(source.kind))
     }
   }
-  return { play, playing }
+  return { play, playing, error }
 }

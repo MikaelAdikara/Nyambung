@@ -14,6 +14,7 @@ import '../../core/motion.dart';
 import '../../core/theme.dart';
 import '../../data/db/app_database.dart';
 import '../coach/companion_widgets.dart';
+import '../coach/proposal_copy.dart';
 import '../coach/mission_rules.dart';
 import '../scenes/scene_library_screen.dart';
 import '../vocab/family_voice_screen.dart';
@@ -283,7 +284,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 10),
           NavRow(
             icon: Icons.graphic_eq_rounded,
-            title: 'Frasa bersuara',
+            title: ProposalCopy.phraseTitle,
             subtitle: 'Kalimat pendek jadi kartu, suara papan atau suara keluarga',
             tint: CompanionColors.lavenderTint,
             iconColor: CompanionColors.lavenderDeep,

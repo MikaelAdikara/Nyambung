@@ -10,6 +10,7 @@ import '../board/symbol_cell.dart';
 import '../coach/companion_controller.dart';
 import '../coach/companion_widgets.dart';
 import '../coach/mission_rules.dart';
+import '../coach/proposal_copy.dart';
 
 class TherapistScreen extends StatefulWidget {
   const TherapistScreen({super.key, required this.state});
@@ -56,8 +57,8 @@ class _TherapistScreenState extends State<TherapistScreen> {
     if (mounted) {
       setState(() {
         _connectionMessage = accepted
-            ? 'Diterima. Misi berganti ke ${widget.state.wordLabel(target.words.first)}.'
-            : 'Ditolak. Terapis akan melihat jawaban ini.';
+            ? 'Diterima sebagai misi. Jika ada beberapa kata, target akan bergilir setiap hari.'
+            : 'Tidak dipakai. Terapis akan melihat keputusan ini.';
       });
     }
     // Jawaban (peristiwa TGT) langsung dicoba kirim; bila luring, tetap di outbox.
@@ -202,7 +203,7 @@ class _TherapistScreenState extends State<TherapistScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Eyebrow('Usulan kata', color: CompanionColors.lavenderDeep),
+                const Eyebrow(ProposalCopy.targetTitle, color: CompanionColors.lavenderDeep),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -215,12 +216,12 @@ class _TherapistScreenState extends State<TherapistScreen> {
                 ),
                 if (pending.note != null) ...[const SizedBox(height: 10), Text('"${pending.note!}"', style: companionBodyStyle)],
                 const SizedBox(height: 6),
-                const Text('Boleh ditolak tanpa alasan.', style: AppText.cap),
+                const Text('Kata yang diterima menjadi misi harian dan bergilir jika jumlahnya lebih dari satu.', style: AppText.cap),
                 const SizedBox(height: 14),
                 Row(
                   children: [
                     Expanded(
-                      child: EqualOutlineButton(label: 'Tolak', onPressed: () => _answer(pending, false)),
+                      child: EqualOutlineButton(label: ProposalCopy.reject, onPressed: () => _answer(pending, false)),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -230,7 +231,7 @@ class _TherapistScreenState extends State<TherapistScreen> {
                           child: FilledButton(
                             onPressed: () => _answer(pending, true),
                             style: FilledButton.styleFrom(backgroundColor: CompanionColors.coralDeep),
-                            child: const Text('Terima'),
+                            child: const FittedBox(fit: BoxFit.scaleDown, child: Text(ProposalCopy.targetAccept)),
                           ),
                         ),
                       ),

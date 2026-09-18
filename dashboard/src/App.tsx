@@ -175,23 +175,16 @@ function Shell({
         </a>
         <nav className="sidebar-nav">
           <NavItem icon="home" label="Keluarga binaan" to={href.d1()} active={route.page === 'D1'} />
-          {childId && (
-            <>
-              <span className="sidebar-sep" aria-hidden="true" />
-              <NavItem icon="chart" label="Ringkasan anak" to={href.d2(childId)} active={route.page === 'D2'} />
-              <NavItem icon="target" label="Usulkan kata" to={href.d3(childId)} active={route.page === 'D3'} />
-              <NavItem icon="wave" label="Frasa bersuara" to={href.d5(childId)} active={route.page === 'D5'} />
-              <NavItem icon="note" label="Catatan sesi" to={href.d4(childId)} active={route.page === 'D4'} />
-            </>
-          )}
         </nav>
         {demo ? (
           <a className="nav-item" href={withSource(false)} title="Masuk sebagai terapis" aria-label="Masuk sebagai terapis">
             <Icon name="link" />
+            <span className="nav-label">Masuk</span>
           </a>
         ) : (
           <button className="nav-item" onClick={onSignOut} title="Keluar" aria-label="Keluar">
             <Icon name="logout" />
+            <span className="nav-label">Keluar</span>
           </button>
         )}
       </aside>
@@ -230,8 +223,15 @@ function Shell({
 
 function NavItem({ icon, label, to, active }: { icon: IconName; label: string; to: string; active: boolean }) {
   return (
-    <a className={`nav-item${active ? ' active' : ''}`} href={to} aria-current={active ? 'page' : undefined} title={label} aria-label={label}>
+    <a
+      className={`nav-item${active ? ' active' : ''}`}
+      href={to}
+      aria-current={active ? 'page' : undefined}
+      title={label}
+      aria-label={label}
+    >
       <Icon name={icon} />
+      <span className="nav-label">{label}</span>
     </a>
   )
 }
@@ -281,7 +281,7 @@ function LoginGate({ error, onSubmit }: { error?: string; onSubmit: (cred: Crede
       <div className="gate-hero" aria-hidden="true">
         <img src={LOGO} alt="" width={64} height={64} />
         <p className="gate-hero-title">Nyambung</p>
-        <p>Papan pantau terapis: pola pemakaian dari rumah, usulan kata, frasa bersuara, dan catatan sesi.</p>
+        <p>Papan pantau terapis: pola pemakaian dari rumah, target kata, frasa audio, dan catatan sesi.</p>
       </div>
       <form className="card gate-card" onSubmit={submit}>
         <h1>Masuk sebagai terapis</h1>

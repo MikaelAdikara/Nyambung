@@ -2,184 +2,172 @@
 
 Hackathon IFEST 2026 · *Tech for Human Connections* · Tim Teen Tensors
 
-Pasangan berkas: `deck/Nyambung-Pitch-Deck.pptx` (dan `.pdf`). Naskah per slide juga ada di *speaker notes*. Sumber
-riset tambahan beserta batasnya: `deck/riset-pendukung.md`.
+Pasangan berkas: `deck/Nyambung-Pitch-Deck.pptx` (dan `.pdf`). Naskah per slide juga ada di *speaker notes*.
+Sumber riset: `docs/hackday/03-basis-ilmiah.md` dan `deck/riset-pendukung.md`. Model bisnis: `deck/model-bisnis.md`.
 
-**Cara pakai.** Hafalkan maksud tiap bagian, bukan kata per kata. Kalimat bercetak tebal adalah kalimat kunci yang
-harus keluar. `[DEMO]` adalah aksi di HP atau laptop. Angka hanya dari `docs/hackday/03-basis-ilmiah.md`,
-`deck/riset-pendukung.md`, atau hasil uji tim sendiri (lihat "Asal angka").
+**Arah naskah ini.** Demo alur lengkap sudah ada di **video demo** (deliverable terpisah). Pitch langsung **tidak
+memperagakan aplikasi**; waktunya dipakai untuk empat aspek penilaian: **(1) masalah, solusi, dan realisasi,
+(2) fungsionalitas dan ketepatan teknologi, (3) kelayakan dan dampak, (4) penyampaian.** Slide solusi menjelaskan
+*apa yang kami ciptakan* dan *kenapa teknologinya tepat*, dengan tangkapan layar asli sebagai bukti.
 
-**Nada.** Empati di pembuka dan penutup, klinis di tengah: sebut sumber, sebut batas, jangan melebih-lebihkan.
+**Cara pakai.** Hafalkan maksud tiap bagian, bukan kata per kata. Kalimat bercetak tebal harus keluar. Nada: empati di
+pembuka dan penutup, klinis di tengah. Sebut sumber, sebut batas, jangan melebih-lebihkan.
 
 ---
 
 ## Peta waktu
 
-| Waktu | Slide | Bagian | Pilar juri |
+| Waktu | Slide | Bagian | Aspek juri |
 |---|---|---|---|
-| 0:00–0:10 | Judul *(manual)* | Perkenalan | — |
-| 0:10–0:30 | Hook *(manual)* | Tiga kalimat | Masalah |
-| 0:30–0:55 | 1 | Data masalah | **Masalah** |
-| 0:55–1:12 | 2 | Celah di antara fitur | Masalah |
-| 1:12–1:22 | 3 | Nyambung: satu loop | **Solusi** |
-| 1:22–1:47 | 4 | [DEMO] Papan luring + suara | Solusi |
-| 1:47–1:59 | 5 | Aset dan sumbernya | Solusi |
-| 1:59–2:19 | 6 | [DEMO] Pendamping harian | Solusi |
-| 2:19–2:37 | 7 | Kenapa misinya dirancang begini (riset) | Solusi |
-| 2:37–2:57 | 8 | [DEMO] Sinkron otomatis + arsitektur | Solusi / Kelayakan teknis |
-| 2:57–3:24 | 9 | [DEMO] Dasbor terapis + usulan kata | Solusi |
-| 3:24–3:39 | 10 | Basis ilmiah + opini FORMAPI UB | Solusi (validasi) |
-| 3:39–4:06 | 11 | Kelayakan: sudah jalan, biaya, penerapan | **Kelayakan** |
-| 4:06–4:34 | 12 | Dampak + metrik terukur | **Dampak** |
-| 4:34–4:48 | 13 | Penutup | — |
-| 4:48–5:00 | | **Cadangan 12 detik** (demo lambat, jeda sinkron) | |
+| 0:00–0:10 | Judul *(manual)* | Perkenalan tim | 4 |
+| 0:10–0:20 | 1 | Hook: pertanyaan | 1 |
+| 0:20–0:45 | 2 | Hook: Ethan | 1 |
+| 0:45–1:08 | 3 | Masalah dan data | **1** |
+| 1:08–1:22 | 4 | Celah di antara fitur | 1 |
+| 1:22–1:42 | 5 | Nyambung: satu loop, bukan sekadar AAC | **1** |
+| 1:42–2:10 | 6 | Yang kami ciptakan untuk anak dan keluarga | 1, 2 |
+| 2:10–2:25 | 7 | Kenapa misinya dirancang begini (riset) | 1 |
+| 2:25–2:47 | 8 | Yang kami ciptakan untuk terapis | 1, 2 |
+| 2:47–3:17 | 9 | Ketepatan teknologi dan arsitektur | **2** |
+| 3:17–3:32 | 10 | Basis ilmiah dan opini FORMAPI UB | 1, 2 |
+| 3:32–3:42 | 11 | Asal aset | 2 |
+| 3:42–4:10 | 12 | Kelayakan: teknis, biaya, model bisnis, penerapan | **3** |
+| 4:10–4:35 | 13 | Dampak dan metrik | **3** |
+| 4:35–4:48 | 14 | Penutup | 4 |
+| 4:48–5:00 | | Cadangan 12 detik | |
 
-Slide 14–16 adalah **lampiran untuk Q&A** (12 kata inti, batasan dan roadmap, ringkasan `PERUBAHAN.md`). Jangan
-ditampilkan saat pitch; buka hanya bila juri bertanya.
-
-Latar belakang dipangkas dari ±1 menit 40 detik (naskah lama 0:30–2:10) menjadi 42 detik (slide 1–2).
+Slide 15–17 adalah **lampiran Q&A** (12 kata inti, batasan dan roadmap, ringkasan `PERUBAHAN.md`). Jangan ditampilkan
+saat pitch.
 
 ---
 
-## 0:00–0:10 · Judul dan perkenalan *(slide manual)*
+## 0:00–0:10 · Judul *(slide manual)*
 
 > "Selamat pagi, Bapak dan Ibu juri. Kami Teen Tensors: saya Mikael, bersama [nama], [nama], dan [nama]."
 
-Catatan: jangan menyebut nama produk dulu kalau slide judul juga belum memperlihatkan logo. Nama Nyambung baru
-muncul di slide 3.
+## 0:10–0:20 · Slide 1 — Pertanyaan
 
-## 0:10–0:30 · Hook *(slide manual)*
+> "**Bagaimana jika hambatan terbesar hubungan antarmanusia bukan jarak, bukan internet, melainkan dua manusia yang
+> tidak bisa saling memahami?**"
 
-> "Bayangkan mulai hari ini Anda tidak bisa lagi mengucapkan tiga kalimat ini:
-> **Aku sakit. Aku mau minum. Tolong berhenti.**
-> Sakitnya tetap terasa. Hausnya tetap ada. Yang berubah hanya satu: orang lain harus menebak.
-> Bagi sebagian anak autis nonverbal, ini bukan bayangan satu hari. Ini keseharian mereka:
-> dua orang di ruangan yang sama, tapi tidak tersambung."
+`[Diam 2 detik sebelum pindah slide.]`
 
-## 0:30–0:55 · Slide 1 — Masalah
+## 0:20–0:45 · Slide 2 — Ethan
 
-> "Datanya jelas. **25 sampai 30 persen anak autis tetap minimally verbal setelah usia lima tahun.**
-> Teknologinya sebenarnya sudah ada: AAC, papan simbol yang bisa bersuara. Tapi **29,3 persen alat bantu ditinggalkan
-> sepenuhnya**, paling banyak di tahun pertama. Dan menurut survei 275 terapis wicara, penyebabnya
-> **kurang pelatihan dan kurang dukungan**, bukan anaknya.
-> Jadi masalahnya bukan di papan. Keluarga tidak pernah diajari 'bicara balik' dengan papan itu, dan terapis tidak
-> tahu apa yang terjadi di rumah di antara sesi."
+> "Ini Ethan, lima tahun, dari Inggris. Ethan autis dan tidak berbicara. Dulu, caranya meminta sesuatu adalah
+> menarik tangan orang dewasa ke arah yang ia mau.
+> Hari ini Ethan bisa meminta makanan, memberi tahu saat ia sakit, dan membela dirinya sendiri, lewat papan AAC.
+> Tapi yang membuat Ethan berhasil bukan hanya perangkatnya. Ibunya menulis, tugas keluarga adalah
+> **'model, model, model'**: ikut berbicara dengan papan itu setiap hari.
+> **Ethan punya suara karena orang di sekitarnya belajar menjawab.** Pertanyaannya: berapa banyak anak yang tidak
+> seberuntung Ethan?"
 
-## 0:55–1:12 · Slide 2 — Celah
+*Sumber: kisah Laura dan Ethan, National Autistic Society (autism.org.uk), dimuat di majalah Your Autism. Foto Ethan
+tidak dipakai tanpa izin; slide memakai bingkai ilustrasi.*
 
-> "Solusi yang ada sudah kuat di bagiannya masing-masing. BerKata membawa AAC ke Bahasa Indonesia. Jellow gratis dan
-> luring. Avaz matang di kustomisasi dan materi pendamping. CoughDrop punya laporan dan kolaborasi tim.
-> Kami belum menemukan satu alur yang menyatukan semuanya untuk keluarga Indonesia.
-> **Celahnya bukan di satu fitur. Celahnya ada di antara fitur.**"
+## 0:45–1:08 · Slide 3 — Masalah
 
-## 1:12–1:22 · Slide 3 — Nyambung
+> "Datanya menjawab. **25 sampai 30 persen anak autis tetap minimally verbal setelah usia lima tahun.** AAC sudah
+> ada, tapi **29,3 persen alat bantu ditinggalkan sepenuhnya**, paling banyak di tahun pertama. Menurut survei 275
+> terapis wicara, penyebabnya **kurang pelatihan dan kurang dukungan**, bukan anaknya.
+> Di Indonesia tantangannya bertumpuk: alat berbahasa Inggris, mahal, butuh internet, orang tua tidak pernah dilatih,
+> dan terapis tidak tahu apa yang terjadi di rumah di antara sesi."
 
-> "Maka kami membangun **Nyambung**: AAC luring-pertama yang menyambungkan anak, keluarga, dan terapis dalam satu loop.
-> Bukan hanya memberi anak suara, tapi **memastikan suaranya sampai, dipahami, dan kembali menjadi intervensi.**"
+## 1:08–1:22 · Slide 4 — Celah
 
-## 1:22–1:47 · Slide 4 — Papan bicara `[DEMO]`
+> "Solusi yang ada kuat di bagiannya masing-masing: bahasa Indonesia, luring, kustomisasi, atau laporan.
+> **Tapi celahnya bukan di satu fitur. Celahnya ada di antara fitur**: belum ada yang menyatukan anak, keluarga,
+> dan terapis dalam satu alur."
 
-`[DEMO]` Tunjukkan HP sudah **mode pesawat**. Tekan **AKU → MAU → MINUM**, biarkan suaranya keluar.
+## 1:22–1:42 · Slide 5 — Nyambung
 
-> "HP ini tidak punya internet. **Kalau anak butuh sinyal untuk bilang 'aku sakit', sistemnya belum aksesibel.**
-> Dua belas kata inti ini dipilih dari literatur, dan posisinya tidak pernah pindah, karena anak menghafal gerakan
-> tangan. Suaranya dua lapis: suara papan yang sama di setiap HP, dan suara Ibu atau Ayah untuk dua belas kata inti.
-> **Rekaman itu tidak pernah keluar dari HP.** Suara sintetis personal masih roadmap, bukan klaim hari ini."
+> "Maka kami membangun **Nyambung**. Nyambung bukan sekadar papan AAC. **Nyambung mengubah AAC dari alat milik anak
+> menjadi bahasa bersama satu rumah**: anak berbicara lewat papan, orang tua belajar menjawab lewat misi harian,
+> dan terapis melihat apa yang terjadi di rumah lalu mengirim usulan kembali. Satu loop, luring-pertama.
+> **Suara anak, sampai.**"
 
-## 1:47–1:59 · Slide 5 — Aset dan sumbernya
+## 1:42–2:10 · Slide 6 — Yang kami ciptakan untuk anak dan keluarga
 
-> "Semua aset kami punya asal yang jelas. **Simbolnya dari Mulberry Symbols karya Steve Lee, berlisensi terbuka CC
-> BY-SA 4.0**, digambar desainer dan ditinjau terapis wicara. Kata yang tidak punya padanan jujur kami gambar sendiri
-> dengan gaya yang sama. Suara papan diberi label suara buatan AI, dan semua aset tercatat lengkap dengan hash-nya."
+> "Untuk anak, papan bicara yang **tetap hidup tanpa internet**: dua belas kata inti di posisi tetap, 120 kata
+> bersimbol, dan papan dari foto rumahnya sendiri.
+> Suaranya berlapis: suara papan yang sama di semua HP, rekaman Ibu atau Ayah yang tetap di HP, dan tiruan suara
+> keluarga **hanya dengan persetujuan eksplisit**.
+> Untuk orang tua, **satu pelajaran 60 detik dan satu misi di bawah lima menit sehari**, menempel pada rutinitas.
+> Penghitungnya terisi sendiri dari ketukan. Tanpa streak, tanpa rasa bersalah, tanpa formulir."
 
-## 1:59–2:19 · Slide 6 — Pendamping harian `[DEMO]`
+## 2:10–2:25 · Slide 7 — Kenapa misinya dirancang begini
 
-`[DEMO]` Pindah ke beranda orang tua. Tunjukkan kartu **"Tekan MAU lima kali saat makan"**, buka papan bersama,
-tekan MAU dua kali di giliran pendamping, kembali: **2 dari 5**. Tunjuk dua tombol setara.
+> "Desain misinya tidak kami karang. **Intervensi yang dijalankan orang tua dan disisipkan di rutinitas termasuk
+> praktik berbasis bukti** menurut tinjauan 972 studi. Melewatkan satu hari tidak merusak pembentukan kebiasaan, jadi
+> kami tidak menghukum hari yang terlewat. Yang belum teruji, seperti pelajaran 60 detik, kami tandai untuk pilot."
 
-> "Yang perlu belajar bukan hanya anak. **Lingkungannya juga.**
-> Setiap hari orang tua mendapat satu pelajaran 60 detik dan satu misi di bawah lima menit yang menempel pada
-> rutinitas. Penghitungnya terisi sendiri dari ketukan. **Tanpa streak, tanpa rasa bersalah, tanpa formulir.**"
+## 2:25–2:47 · Slide 8 — Yang kami ciptakan untuk terapis
 
-## 2:19–2:37 · Slide 7 — Kenapa misinya dirancang begini
+> "Untuk terapis, kami tidak memberi tumpukan data. Dasbor menandai anak yang perlu ditinjau, **selalu dengan
+> alasannya**, lalu menyusun ringkasan rumah sebelum sesi. Terapis mengusulkan kata atau frasa bersuara, dan
+> keluarga memilih **Terima atau Tolak, tanpa perlu alasan**.
+> **Aturan tetap, alasan tertulis, keputusan tetap di tangan manusia.**"
 
-> "Desain misinya tidak kami karang. **Intervensi yang dijalankan orang tua, dan intervensi yang disisipkan di
-> rutinitas, termasuk praktik berbasis bukti untuk autisme** menurut tinjauan 972 studi. Uji acak pada 82 balita
-> menunjukkan pelatihan orang tua di kegiatan sehari-hari meningkatkan komunikasi sosial.
-> Kenapa tanpa streak? Riset kebiasaan menunjukkan **melewatkan satu hari tidak merusak pembentukan kebiasaan.**
-> Yang belum teruji, seperti pelajaran 60 detik, kami tandai dan uji di pilot."
+## 2:47–3:17 · Slide 9 — Ketepatan teknologi
 
-## 2:37–2:57 · Slide 8 — Sinkron otomatis dan arsitektur `[DEMO]`
+> "Setiap pilihan teknologi berangkat dari kondisi pengguna kami.
+> Karena sinyal tidak bisa diandalkan, **data utama tinggal di HP**: setiap ketukan ditulis ke log yang tidak bisa
+> diubah bersama antrean kirimnya, **dalam satu transaksi**. Saat jaringan kembali, aplikasi mengirim sendiri, dan
+> server mengenali ID yang sama sehingga tidak ada data ganda. Kami menguji ini dengan mematikan proses secara paksa:
+> hasilnya identik.
+> Karena HP keluarga sederhana, aplikasinya **Flutter untuk Android 8 dengan RAM 2 GB**. Server-nya ringan, FastAPI
+> dan SQLite, cukup untuk pilot satu klinik.
+> Dan **AI hanya dipakai di server saat membuat konten**, yaitu frasa, tiruan suara, atau draf papan foto. Hasilnya
+> diputar luring. Tidak ada model di dalam aplikasi, dan triase terapis memakai aturan yang bisa diperiksa."
 
-`[DEMO]` Matikan mode pesawat. **Jangan tekan apa pun.** Bicara sambil menunggu (sinkron berjalan tiap 20 detik
-selama aplikasi terbuka).
+## 3:17–3:32 · Slide 10 — Basis ilmiah dan validasi
 
-> "Sekarang saya nyalakan internetnya, dan saya tidak menekan tombol kirim.
-> Arsitekturnya *local-first*: setiap ketukan ditulis ke log yang tidak bisa diubah, bersama antrean kirimnya,
-> **dalam satu transaksi**. Saat dikirim ulang, server mengenali ID yang sama, jadi tidak ada data ganda. Kami sudah
-> mengujinya dengan mematikan proses secara paksa: hasilnya identik.
-> **Bagi pengguna kami, koneksi putus bukan kasus pinggiran. Itu syarat desain.**"
+> "Kami tidak mengklaim Nyambung sudah terbukti efektif; kami merakit praktik yang sudah terbukti. Kami juga meminta
+> pendapat **[A], Ketua Umum FORMAPI Universitas Brawijaya**, yang berpengalaman mendampingi anak berkebutuhan khusus:
+> *'[kutipan singkat asli dari A]'*. **Validasi klinis bersama terapis wicara adalah bagian dari pilot kami.**"
 
-## 2:57–3:24 · Slide 9 — Dasbor terapis `[DEMO]`
+## 3:32–3:42 · Slide 11 — Asal aset
 
-`[DEMO]` Buka dasbor di laptop (D1). Tunjuk badge **Perlu ditinjau** dan alasannya. Masuk D3, usulkan **BERHENTI**,
-kirim. Di HP: kartu usulan → **Terima**.
+> "Semua aset punya asal yang jelas: **simbol dari Mulberry Symbols karya Steve Lee, berlisensi CC BY-SA 4.0**,
+> kata tanpa padanan digambar tim dengan gaya yang sama, dan semua berkas tercatat lengkap dengan hash-nya."
 
-> "Ketukan tadi sudah sampai. Tapi kalau kami hanya melempar ratusan data, bebannya cuma pindah ke terapis.
-> Jadi dasbor menandai anak yang perlu ditinjau, **selalu dengan alasannya**. Aturannya tetap dan bisa diperiksa.
-> **Bukan 'kata AI'; keputusan klinis tetap di tangan terapis.**
-> Terapis lalu mengusulkan kata baru. Di HP, keluarga memilih **Terima atau Tolak, tanpa perlu alasan.**"
+## 3:42–4:10 · Slide 12 — Kelayakan
 
-## 3:24–3:39 · Slide 10 — Basis ilmiah dan validasi
-
-> "Kami tidak mengklaim Nyambung sudah terbukti efektif; kami merakit praktik yang sudah terbukti.
-> Kami juga meminta pendapat **[A], Ketua Umum FORMAPI Universitas Brawijaya**, yang berpengalaman mendampingi anak
-> berkebutuhan khusus: *'[kutipan singkat asli dari A]'*.
-> **Validasi klinis bersama terapis wicara adalah bagian dari pilot kami.**"
-
-## 3:39–4:06 · Slide 11 — Kelayakan
-
-> "Apakah layak? Ini sudah berjalan, dibangun dalam 24 jam: APK rilis 18 MB untuk Android 8 dengan RAM 2 GB, dan
-> **78 tes otomatis lulus.**
-> Bagi keluarga, biayanya **nol rupiah**: tanpa kuota untuk bicara, simbol berlisensi terbuka, dan suara 120 kata
-> dibuat sekali dengan biaya di bawah 20 sen dolar.
-> Kami mulai dengan pilot enam pekan bersama satu terapis wicara, lalu tumbuh lewat terapis, karena **setiap kode
-> undangan terapis adalah pintu masuk satu keluarga.**
+> "Apakah layak? Ini sudah berjalan, dibangun dalam 24 jam, dengan **113 tes otomatis lulus**.
+> Model bisnisnya: **keluarga gratis selamanya**, karena suara anak tidak boleh dikunci langganan. Biaya per keluarga
+> untuk fitur inti hampir nol, karena semuanya berjalan di HP. **Yang membayar adalah terapis dan institusi**, yang
+> mendapat dasbor dan data rumah. Kami mulai dengan pilot enam pekan bersama satu terapis wicara, lalu tumbuh lewat
+> terapis: **setiap kode undangan adalah satu keluarga baru**.
 > Batasannya kami tulis terbuka: belum HTTPS, dan [belum diuji di HP fisik 2 GB — perbarui bila sudah]."
 
-## 4:06–4:34 · Slide 12 — Dampak
+## 4:10–4:35 · Slide 13 — Dampak
 
 > "Dampaknya kami ukur dengan jujur. Masalah intinya alat ditinggalkan, jadi **metrik utama pilot adalah retensi hari
-> ke-14, minimal 60 persen.**
-> Pendukungnya: hari misi terlaksana, usulan yang dijawab keluarga, dan waktu tinjauan terapis yang diukur otomatis.
-> Jumlah kata kami baca sebagai **pola pemakaian, bukan nilai kemampuan anak.**
-> Kalau tinjauan cukup lima menit per anak, satu jam terapis bisa memantau dua belas keluarga. **Itu asumsi, dan
-> pilot yang akan mengujinya.**"
+> ke-14, minimal 60 persen**, didukung hari misi terlaksana, usulan yang dijawab keluarga, dan waktu tinjauan terapis
+> yang diukur otomatis. Jumlah kata adalah **pola pemakaian, bukan nilai kemampuan anak**.
+> Kalau tinjauan cukup lima menit per anak, satu jam terapis memantau dua belas keluarga. **Itu asumsi, dan pilot yang
+> akan mengujinya.**"
 
-## 4:34–4:48 · Slide 13 — Penutup
+## 4:35–4:48 · Slide 14 — Penutup
 
-> "Nyambung bukan sekadar papan bicara. Kami menyambungkan suara anak, kapasitas keluarga, dan keahlian terapis.
-> Karena hubungan antarmanusia tidak dimulai saat seseorang bisa bicara.
-> **Hubungan dimulai saat ia bisa dipahami.**
+> "Ethan punya suara karena orang di sekitarnya belajar menjawab. Nyambung ingin hal yang sama terjadi di setiap rumah
+> di Indonesia.
+> Karena hubungan antarmanusia tidak dimulai saat seseorang bisa bicara. **Hubungan dimulai saat ia bisa dipahami.**
 > Anak. Keluarga. Terapis. **Nyambung.**"
 
 `[Tahan 2 detik.]`
 
 ---
 
-## Opini profesional: FORMAPI UB
+## Yang harus diisi tim sebelum tampil
 
-**Yang harus diisi tim sebelum tampil (slide 10 dan naskah):** nama lengkap A, jabatan, dan satu kutipan asli
-(≤ 25 kata) dari percakapan dengan A. Minta izin A untuk namanya dipakai. **Jangan mengarang kutipan.**
-
-Posisikan dengan tepat, karena juri bisa bertanya:
-
-- FORMAPI adalah Forum Mahasiswa Peduli Inklusi. A adalah **praktisi pendamping anak berkebutuhan khusus**, bukan
-  terapis wicara berlisensi. Sebut "masukan praktisi" atau "konsultasi", **jangan "validasi klinis"**.
-- Yang sudah dikonsultasikan dengan FORMAPI UB: pemilihan kata (`03-basis-ilmiah.md` §8). Bila A juga memberi masukan
-  soal alur pendampingan orang tua, sebut itu; kalau tidak, ubah baris kedua "Tangga validasi" di slide 10.
-- Kalimat siap pakai: *"Pemilihan kata berbasis literatur dengan alasan tertulis per kata, sudah dikonsultasikan
-  dengan FORMAPI UB, dan validasi klinis bersama terapis wicara adalah bagian dari pilot."*
+1. **Slide 10:** nama A, jabatan, dan satu kutipan asli (≤ 25 kata) dari A, dengan izin A. **Jangan mengarang
+   kutipan.** A adalah praktisi pendamping ABK dari forum mahasiswa, jadi sebut "masukan praktisi", bukan "validasi
+   klinis".
+2. **Slide 2:** kalau ingin memakai foto Ethan, minta izin ke National Autistic Society. Tanpa izin, pakai bingkai
+   ilustrasi yang sudah ada.
+3. **Slide 4:** klaim fitur kompetitor belum dicek ke situs resmi masing-masing.
+4. **Slide 12:** status uji HP fisik; hipotesis harga (Rp150–250 rb per terapis per bulan) adalah tingkat D.
 
 ---
 
@@ -187,72 +175,54 @@ Posisikan dengan tepat, karena juri bisa bertanya:
 
 | Pertanyaan | Jawaban |
 |---|---|
+| Kenapa tidak demo langsung? | Alur lengkapnya ada di video demo. Di pitch kami fokus ke masalah, ketepatan solusi, kelayakan, dan dampak. Kami siap menunjukkan aplikasi saat Q&A. |
+| Siapa Ethan? Apakah pengguna Nyambung? | Bukan. Ethan dari Inggris, kisahnya dimuat National Autistic Society. Kami memakainya karena kisah itu menunjukkan hal yang kami bangun: anak berhasil karena keluarganya ikut memodelkan AAC. |
 | Apa kebaruannya kalau AAC sudah ada? | Integrasinya: AAC Bahasa Indonesia yang luring, pelatihan orang tua di dalam rutinitas, bukti otomatis dari rumah, triase beralasan, dan usulan yang bisa ditolak keluarga, dalam satu loop. |
-| Sudah ada terapis yang memverifikasi? | Pemilihan kata berbasis literatur dan sudah dikonsultasikan dengan FORMAPI UB; opini [A] sebagai praktisi. Validasi klinis bersama terapis wicara adalah pilot enam pekan kami. Daftar kata belum ditinjau terapis wicara (`therapist_ok = belum`). |
-| Bukti misi harian berhasil? | Komponennya berbasis bukti: intervensi oleh orang tua, intervensi di rutinitas, dan *time delay* termasuk praktik berbasis bukti (NCAEP 2020); RCT Wetherby 2014; *aided modeling* efektif (Biggs 2018, O'Neill 2018). **Paket misi Nyambung sendiri belum diuji**; itu tujuan pilot. |
-| Kenapa tidak ada streak atau hitungan hari beruntun? | Melewatkan satu kesempatan tidak berpengaruh berarti pada pembentukan kebiasaan (Lally 2010); orang tua anak *minimally verbal* sudah menanggung stres pengasuhan lebih tinggi (Guerrera 2025). |
-| Berapa lama sampai jadi kebiasaan? | Median 59–66 hari (Keller 2021; Lally 2010). Jadi retensi hari ke-14 hanya sinyal awal, dan pilot 6 pekan belum menjangkau median itu. |
-| Simbolnya dari mana, boleh dipakai? | Mulberry Symbols © Steve Lee, CC BY-SA 4.0: boleh komersial dengan atribusi, turunan berlisensi sama, simbolnya tidak boleh dijual. 85 simbol dipakai tanpa diubah; 35 kata digambar tim. |
-| Simbolnya cocok untuk anak Indonesia? | Mulberry dirancang untuk pengguna dewasa. Simbol yang lebih mudah ditebak lebih cepat dipelajari (Mizuko 1987), jadi kecocokannya diuji di pilot; simbol buatan tim belum diuji pada anak. |
+| Sudah ada terapis yang memverifikasi? | Pemilihan kata berbasis literatur dan sudah dikonsultasikan dengan FORMAPI UB; opini [A] sebagai praktisi. Validasi klinis bersama terapis wicara adalah pilot enam pekan kami. Daftar kata belum ditinjau terapis wicara. |
+| Katanya luring, tapi pakai AI? | Komunikasi anak selalu luring. AI hanya dipanggil **server** saat pendamping **membuat** konten (frasa, tiruan suara, draf papan foto), dan hanya bila fitur itu dipakai. Hasilnya disimpan di HP dan diputar tanpa internet. Tanpa kunci AI, fitur inti tetap jalan. |
+| Rekaman suara keluarga dikirim ke mana? | Rekaman per kata tidak pernah meninggalkan HP. Tiruan suara hanya aktif setelah orang tua menyetujui empat butir; server meneruskan sampel ke ElevenLabs tanpa menyimpannya dan hanya menyimpan `voice_id`. Bisa dicabut kapan saja. Risiko yang kami akui: suara tiruan disimpan penyedia selama belum dicabut. |
+| Foto papan dikirim ke AI? | Hanya bila pendamping meminta draf AI dan menyetujui pada permintaan itu. Server tidak menyimpan foto. AI hanya membuat draf; keluarga wajib memeriksa sebelum menyimpan. |
+| Bukti misi harian berhasil? | Komponennya berbasis bukti (NCAEP 2020; Wetherby 2014; Biggs 2018; O'Neill 2018). Paket misi Nyambung sendiri belum diuji; itu tujuan pilot. |
+| Berapa lama sampai jadi kebiasaan? | Median 59–66 hari (Keller 2021; Lally 2010). Retensi hari ke-14 hanya sinyal awal. |
+| Model bisnisnya? | B2I dengan pola B2B2C: institusi dan terapis membayar dasbor dan add-on; keluarga gratis selamanya. B2G setelah pilot. Rincian di `deck/model-bisnis.md`. |
+| Kenapa keluarga tidak bayar? | Suara anak tidak boleh dikunci langganan, dan hambatan harga menambah alasan alat ditinggalkan. |
 | AAC bikin anak malas bicara? | Tidak. Tinjauan 23 studi: AAC tidak menghambat dan bisa menambah produksi bicara (Millar 2006). |
-| Kenapa tidak pakai AI untuk terapis? | Keputusan klinis harus bisa dijelaskan dan diperiksa. Triase memakai aturan tetap dengan alasan tertulis. Tidak ada model ML saat aplikasi berjalan. |
-| Suaranya rekaman manusia? | Suara papan adalah klip sintetis yang dibuat sekali lalu dibundel di APK: luring dan sama di semua HP, tapi bukan rekaman manusia. Keluarga bisa merekam suaranya sendiri untuk 12 kata inti. |
-| Voice cloning sudah jadi? | Belum. Syaratnya kalau dibangun: rekaman keluarga tetap tidak meninggalkan perangkat (invarian privasi 18). |
-| Bagian teknis tersulit? | Menjaga kesinambungan data tanpa membuat komunikasi anak bergantung pada server: perangkat sebagai sumber kebenaran, log append-only, outbox dalam satu transaksi, sinkron idempoten. |
-| Apakah menggantikan terapis? | Tidak. Nyambung memindahkan beban mengumpulkan informasi dari terapis, bukan penilaian klinisnya. |
-| Data anak dikirim, persetujuannya? | Hanya setelah orang tua menebus kode undangan sekali pakai (UU PDP Pasal 25). Yang dikirim hanya ketukan simbol dan konfirmasi misi; tidak ada audio, video, foto, atau lokasi. Belum: HTTPS dan enkripsi di perangkat. |
-| Penghitung misi bisa dicurangi? | Bisa. Yang dicatat ketukan contoh, bukan interaksi. Karena itu metrik utama pilot retensi; misi indikator pendukung. |
+| Simbolnya dari mana? | Mulberry Symbols © Steve Lee, CC BY-SA 4.0. Kata tanpa padanan digambar tim; simbol tim belum diuji pada anak. |
+| Apakah menggantikan terapis? | Tidak. Nyambung memindahkan beban mengumpulkan informasi, bukan penilaian klinisnya. |
+| Data anak, persetujuannya? | Data keluar HP hanya setelah orang tua menebus kode undangan (UU PDP Pasal 25). Hanya ketukan simbol; tidak ada audio ruangan, video, atau lokasi. Belum: HTTPS dan enkripsi di perangkat. |
 
 ---
 
-## Yang diubah dari naskah sebelumnya, dan alasannya
+## Yang diubah dari naskah sebelumnya
 
-1. **Latar belakang dipadatkan** dari 1:40 menjadi 0:42. Tema dan "dua orang di ruangan yang sama" digabung ke hook.
-2. **Ditambah slide judul dan perkenalan 10 detik** (dikerjakan manual bersama slide hook).
-3. **"Brady et al. (2021)" dihapus**, karena `03-basis-ilmiah.md` §9 mencatat publikasi yang cocok tidak ditemukan.
-4. **Ditambah slide aset (5):** asal simbol Mulberry, simbol tim, kosakata, suara, font, dan jejak audit.
-5. **Ditambah slide riset misi (7):** setiap elemen misi dikaitkan ke bukti yang sudah diverifikasi, dan yang belum
-   teruji ditandai D.
-6. **Ditambah slide basis ilmiah + opini FORMAPI UB (10)**, dengan posisi jujur: konsultasi praktisi, bukan validasi
-   klinis.
-7. **Ditambah slide Kelayakan dan Dampak tersendiri (11, 12)**, pilar wajib deck dengan bobot 20% di penilaian.
-8. **"Tiga level suara" diluruskan** dengan yang benar-benar dibangun.
-9. **"Diam 1–2 detik lalu data muncul" diganti** dengan menjelaskan arsitektur sambil menunggu (sinkron tiap 20 detik).
-10. **Contoh usulan diganti ke BERHENTI**, sesuai lingkar demo `00-rencana.md` §4.
-11. **"Penyebab utama" di slide 1 tidak diberi label "#1"**; Johnson 2006 menyebut beberapa faktor, jadi slide
-    memakai angka 275 terapis wicara.
+1. **Tanpa demo langsung.** Video demo sudah memperagakan alur; waktu pitch dipindah ke aspek penilaian.
+   Slide solusi kini menjelaskan apa yang diciptakan dan kenapa teknologinya tepat.
+2. **Hook dua slide:** pertanyaan tentang saling memahami, lalu Ethan sebagai subjek. Ethan dipakai sebagai bukti
+   bahwa lingkungan yang belajar memodelkan AAC-lah yang membuat anak berhasil.
+3. **Slide ketepatan teknologi** menggantikan slide arsitektur: setiap pilihan teknologi dikaitkan ke kondisi
+   pengguna.
+4. **Fitur yang dibangun sore–malam masuk:** papan dari foto, frasa bersuara, tiruan suara dengan persetujuan,
+   generator misi, dan simbol berwarna lengkap. Tiruan suara bukan lagi roadmap.
+5. **Kelayakan memakai model bisnis tim** (`deck/model-bisnis.md`): keluarga gratis, institusi membayar.
+6. **Penutup kembali ke Ethan** supaya cerita melingkar.
 
 ## Asal angka
 
 | Angka | Sumber |
 |---|---|
-| 25–30% anak autis tetap *minimally verbal* setelah 5 tahun | Tager-Flusberg & Kasari (2013) |
-| 29,3% alat bantu ditinggalkan, terbanyak di tahun pertama | Phillips & Zhao (1993), 227 responden |
-| Kurang pelatihan dan dukungan | Johnson, Inglebret, Jones & Ray (2006), survei 275 terapis wicara |
-| 972 artikel, 28 praktik berbasis bukti; PII 55, NI 75, Time Delay 31 artikel | Steinbrenner dkk. (2020), NCAEP, Tabel 3.1 |
-| RCT 82 balita, pelatihan orang tua di kegiatan sehari-hari | Wetherby dkk. (2014), *Pediatrics* |
-| 48 studi, 267 anak, *aided modeling* umumnya efektif | Biggs, Carter & Gilson (2018), *AJIDD* |
-| d = 0,65 dari 94 studi | Gollwitzer & Sheeran (2006) |
-| Median 66 hari; melewatkan satu kesempatan tidak berpengaruh berarti | Lally dkk. (2010), 96 orang |
-| RCT 192 orang, median 59 hari, pengulangan prediktor utama | Keller dkk. (2021), *BJHP* |
-| AAC tidak menghambat bicara, 23 studi | Millar, Light & Schlosser (2006) |
-| Simbol transparan lebih mudah dipelajari anak 3 tahun | Mizuko (1987) |
-| +19 / +22 ujaran komunikatif (pekan 12 / 24) | Kasari dkk. (2014), 61 anak |
-| 3,3 dtk vs 6,0 dtk menemukan simbol | Thistle dkk. (2018) |
-| 9 dari 12 kata inti ada di Banajee (2003) atau Project Core | `03-basis-ilmiah.md` §3 |
+| Ethan 5 tahun, non-speaking, *hand-leading*, "model, model, model" | Kisah Laura dan Ethan, autism.org.uk |
+| 25–30% tetap *minimally verbal* setelah 5 tahun | Tager-Flusberg & Kasari (2013) |
+| 29,3% alat bantu ditinggalkan | Phillips & Zhao (1993) |
+| Kurang pelatihan dan dukungan, 275 terapis wicara | Johnson dkk. (2006) |
+| 972 artikel, 28 praktik berbasis bukti | Steinbrenner dkk. (2020), NCAEP |
+| Melewatkan satu kesempatan tidak berpengaruh berarti | Lally dkk. (2010) |
+| 64 tes server lulus | `pytest`, 18 Sep 21:45 |
+| 49 tes aplikasi lulus | `status/jalur-1.md`, 18 Sep 21:35 |
+| APK rilis 18,2 MB (armeabi-v7a) / 20,7 MB (arm64-v8a) | `README.md` (diukur sebelum fitur malam) |
+| Suara 120 kata < US$0,20 | `PERUBAHAN.md` entri 3 |
+| Keluarga gratis; Rp150–250 rb per terapis per bulan | `deck/model-bisnis.md`, **hipotesis (D)** |
+| Add-on suara ± Rp2–4 rb per keluarga per bulan | `deck/model-bisnis.md`, target dengan klon sementara (**belum dibangun**) |
 | Retensi hari ke-14 ≥ 60% | `03-basis-ilmiah.md` §6 |
-| 45 tes server + 33 tes aplikasi = 78 lulus | `pytest` 18 Sep 14:45; `status/jalur-1.md` |
-| Uji mati paksa: 60 diterima + 40 duplikat → identik | `status/jalur-3.md` |
-| Angka dasbor = server, 0 selisih | uji jalur 4 |
-| APK rilis 18,2 MB (armeabi-v7a) | `README.md` |
-| Jeda ketukan → suara median 21 ms (emulator 2 GB, bukan HP fisik) | `README.md` |
-| Klip suara 120 kata < US$0,20 | `PERUBAHAN.md` entri 3 |
-| Server pilot ± Rp100–150 rb/bulan | **estimasi** harga VPS kecil, belum termasuk domain dan HTTPS |
-| 175 berkas aset diverifikasi SHA-256 | `assets/PROVENANCE.md` |
-| 16 perubahan tercatat | `PERUBAHAN.md` |
-
-**Perlu dicek tim sebelum tampil:**
-- Klaim fitur kompetitor (BerKata, Jellow, Avaz, CoughDrop) berasal dari naskah awal dan belum ada di sumber mana pun
-  di repo. Cocokkan dengan situs resmi masing-masing dan simpan tautannya untuk Q&A.
-- Estimasi biaya server: ganti dengan harga penyedia yang benar-benar akan dipakai.
-- Status "belum diuji di HP fisik 2 GB" di slide 11: perbarui begitu `int-1-hp-ke-d2` atau uji HP fisik selesai.
+| 12 keluarga per jam terapis | **asumsi**, diuji di pilot |
+| 99 simbol Mulberry, 21 simbol tim | `PERUBAHAN.md` entri 18 (85 + 14 padanan Mulberry) |
+| Riset lain | `deck/riset-pendukung.md` |

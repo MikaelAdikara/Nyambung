@@ -1,11 +1,16 @@
 # Status jalur 4 — Dasbor
-Diperbarui: 20:55
+Diperbarui: 22:02
 
 **Mulai 11:20 semua jalur bekerja langsung di `main`** (tidak ada lagi kerja paralel; branch jalur sudah tergabung).
 
 ## Sedang dikerjakan
-Deck + naskah pitch draf siap di `deck/`. Menunggu: nama + kutipan asli Ketum FORMAPI UB, slide hook & judul (manual),
-cek fitur kompetitor, status uji HP fisik. Lalu latihan dengan stopwatch dan video (J22).
+(22:02) Deck dan naskah dibuat ulang: pitch **tanpa demo langsung** (alur ada di video demo), fokus ke empat aspek
+penilaian. 14 slide + 3 lampiran: hook pertanyaan + Ethan (kisah NAS, tanpa foto), masalah, celah, loop, yang kami
+ciptakan (keluarga, terapis), riset misi, ketepatan teknologi, validasi, aset, kelayakan (model bisnis dari
+`model-bisnis.md`), dampak, penutup. Fitur malam masuk (papan foto, frasa bersuara, tiruan suara dengan persetujuan);
+Q&A "voice cloning belum" sudah diperbaiki. Tangkapan layar dasbor desain baru. Angka: 64 pytest (dijalankan 21:45)
++ 49 tes aplikasi (status jalur 1).
+Menunggu: nama + kutipan asli Ketum FORMAPI UB, cek fitur kompetitor, status uji HP fisik. Slide judul tetap manual.
 (20:55) `deck/model-bisnis.md`: isi slide "Nilai bisnis", model B2I/B2B2C, biaya per keluarga dari harga ElevenLabs
 dan OpenAI yang dicek hari ini, unit ekonomi, skalabilitas, Q&A. Slide belum dimasukkan ke `.pptx`. Q&A "Voice
 cloning sudah jadi? Belum" di `naskah-pitch.md` sudah usang: klon suara sudah dibangun (PERUBAHAN #17).

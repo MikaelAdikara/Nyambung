@@ -33,3 +33,5 @@ flutter:
     - assets/symbols/png/
     - assets/symbols/custom/
     - assets/audio/core/
+    - assets/audio/core/cowo/
+    - assets/audio/core/cewe/

@@ -88,6 +88,7 @@ class AppState extends ChangeNotifier {
       final ts = await eventDao.lastParentTapTs(_child!.childId);
       _lastParentTap = ts == null ? null : DateTime.tryParse(ts);
     }
+    speech.voiceSet = prefs.getString(PrefKeys.voiceSet) ?? SpeechService.voiceSets.first;
     await speech.init();
     _ready = true;
     _bump();
@@ -250,6 +251,16 @@ class AppState extends ChangeNotifier {
 
   Future<void> setHoldMs(int ms) async {
     await prefs.setInt(PrefKeys.holdMs, ms);
+    _bump();
+  }
+
+  /// Set suara audio bundel papan: `cowo` atau `cewe`.
+  String get voiceSet => speech.voiceSet;
+
+  Future<void> setVoiceSet(String set) async {
+    if (!SpeechService.voiceSets.contains(set)) return;
+    speech.voiceSet = set;
+    await prefs.setString(PrefKeys.voiceSet, set);
     _bump();
   }
 

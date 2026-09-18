@@ -12,6 +12,9 @@ import 'error_log.dart';
 /// - ketukan **anak**: audio bundel `{word_id}.ogg` bila ada → TTS id-ID nada 1,3;
 /// - ketukan **pendamping**: rekaman keluarga bila ada → audio bundel → TTS nada 1,0.
 ///
+/// Audio bundel ada dua set suara sintetis (`assets/audio/core/cowo/`, `.../cewe/`), dipilih lewat [voiceSet].
+/// Berkas di `assets/audio/core/{word_id}.ogg` (kontrak §6) tetap dipakai bila set terpilih tidak punya kata itu.
+///
 /// Setiap panggilan plugin diberi batas waktu. Pada ROM tanpa mesin TTS, papan tetap terbuka tanpa suara.
 class SpeechService {
   SpeechService({FlutterTts? tts, AudioPlayer? player}) : _ttsOverride = tts, _playerOverride = player;
@@ -19,12 +22,19 @@ class SpeechService {
   static const childPitch = 1.3;
   static const parentPitch = 1.0;
   static const language = 'id-ID';
+  static const voiceSets = ['cowo', 'cewe'];
 
   final FlutterTts? _ttsOverride;
   final AudioPlayer? _playerOverride;
   FlutterTts? _tts;
   AudioPlayer? _player;
   Set<String> _bundledAssets = const {};
+
+  /// Set suara audio bundel: `cowo` atau `cewe`.
+  String voiceSet = voiceSets.first;
+
+  /// Naik setiap [stop]; rangkaian UCAPKAN yang sedang berjalan berhenti bila nilainya berubah.
+  int _generation = 0;
 
   /// Mesin TTS menyediakan Bahasa Indonesia. Ditampilkan di C6 "Uji suara".
   bool ttsIdAvailable = false;
@@ -78,12 +88,23 @@ class SpeechService {
     }
   }
 
-  bool _hasBundled(String? path) => path != null && _bundledAssets.contains(path);
+  /// Aset audio bundel untuk kata ini, atau null bila tidak ada (lalu jatuh ke TTS).
+  String? _bundledFor(WordSymbol s) {
+    for (final path in [s.audioPath, 'assets/audio/core/$voiceSet/${s.wordId}.ogg', 'assets/audio/core/${s.wordId}.ogg']) {
+      if (path != null && _bundledAssets.contains(path)) return path;
+    }
+    return null;
+  }
 
-  String _bundledFor(WordSymbol s) => s.audioPath ?? 'assets/audio/core/${s.wordId}.ogg';
+  Source? _sourceFor(WordSymbol s, {required bool byParent}) {
+    if (byParent && s.familyAudio != null) return DeviceFileSource(s.familyAudio!);
+    final bundled = _bundledFor(s);
+    return bundled == null ? null : AssetSource(bundled.substring('assets/'.length));
+  }
 
   /// Hentikan ucapan sebelumnya sebelum mulai yang baru.
   Future<void> stop() async {
+    _generation++;
     await _guard('stop', () => _tts?.stop() ?? Future.value());
     try {
       await _player?.stop().timeout(Limits.pluginTimeout);
@@ -94,13 +115,9 @@ class SpeechService {
   Future<void> speakWord(WordSymbol s, {required bool byParent}) async {
     await stop();
     try {
-      if (byParent && s.familyAudio != null) {
-        await _player?.play(DeviceFileSource(s.familyAudio!)).timeout(Limits.pluginTimeout);
-        return;
-      }
-      final bundled = _bundledFor(s);
-      if (_hasBundled(bundled)) {
-        await _player?.play(AssetSource(bundled.substring('assets/'.length))).timeout(Limits.pluginTimeout);
+      final source = _sourceFor(s, byParent: byParent);
+      if (source != null) {
+        await _player?.play(source).timeout(Limits.pluginTimeout);
         return;
       }
     } catch (e, st) {
@@ -119,9 +136,32 @@ class SpeechService {
     await _guard('speak', () => tts.speak(text));
   }
 
-  /// UCAPKAN: bunyikan rangkaian kata di bilah ujaran sebagai satu kalimat.
-  Future<void> speakSentence(List<WordSymbol> words, {required bool byParent}) =>
-      speakText(words.map((w) => w.labelSpeech).join(' '), byParent: byParent);
+  /// UCAPKAN: putar klip setiap kata berurutan dengan suara yang sama seperti saat diketuk.
+  /// Bila ada kata tanpa klip, seluruh kalimat dibunyikan lewat TTS supaya tidak berganti suara di tengah.
+  Future<void> speakSentence(List<WordSymbol> words, {required bool byParent}) async {
+    await stop();
+    final player = _player;
+    final sources = [for (final w in words) _sourceFor(w, byParent: byParent)];
+    if (player == null || sources.contains(null)) {
+      await speakText(words.map((w) => w.labelSpeech).join(' '), byParent: byParent, stopFirst: false);
+      return;
+    }
+    final generation = _generation;
+    try {
+      for (final source in sources) {
+        if (generation != _generation) return;
+        final done = player.onPlayerComplete.first;
+        await player.play(source!).timeout(Limits.pluginTimeout);
+        try {
+          await done.timeout(Limits.clipTimeout);
+        } on TimeoutException {
+          // Klip dihentikan (ketukan baru) atau tidak melapor selesai; lanjut atau berhenti lewat pemeriksaan generasi.
+        }
+      }
+    } catch (e, st) {
+      ErrorLog.record('speech:sentence', e, st);
+    }
+  }
 
   Future<void> dispose() async {
     await stop();

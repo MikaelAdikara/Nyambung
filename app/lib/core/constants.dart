@@ -55,6 +55,9 @@ abstract final class Limits {
   /// Batas waktu setiap panggilan plugin saat bootstrap.
   static const pluginTimeout = Duration(seconds: 3);
 
+  /// Batas tunggu satu klip kata selesai diputar saat UCAPKAN (klip terpanjang ± 1,2 detik).
+  static const clipTimeout = Duration(seconds: 3);
+
   /// Pilihan "Tahan untuk memilih" di C6.
   static const holdMsOptions = [0, 300, 500, 800];
 }
@@ -65,4 +68,5 @@ abstract final class PrefKeys {
   static const holdMs = 'hold_ms';
   static const serverUrl = 'server_url';
   static const deviceToken = 'device_token';
+  static const voiceSet = 'voice_set';
 }

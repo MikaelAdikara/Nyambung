@@ -1,11 +1,14 @@
 # Status jalur 4 — Dasbor
-Diperbarui: 15:30
+Diperbarui: 20:55
 
 **Mulai 11:20 semua jalur bekerja langsung di `main`** (tidak ada lagi kerja paralel; branch jalur sudah tergabung).
 
 ## Sedang dikerjakan
 Deck + naskah pitch draf siap di `deck/`. Menunggu: nama + kutipan asli Ketum FORMAPI UB, slide hook & judul (manual),
 cek fitur kompetitor, status uji HP fisik. Lalu latihan dengan stopwatch dan video (J22).
+(20:55) `deck/model-bisnis.md`: isi slide "Nilai bisnis", model B2I/B2B2C, biaya per keluarga dari harga ElevenLabs
+dan OpenAI yang dicek hari ini, unit ekonomi, skalabilitas, Q&A. Slide belum dimasukkan ke `.pptx`. Q&A "Voice
+cloning sudah jadi? Belum" di `naskah-pitch.md` sudah usang: klon suara sudah dibangun (PERUBAHAN #17).
 
 ## Tonggak selesai (tag)
 - (15:30, tanpa tag) D2 panel "Misi harian" (API + agregator demo), label kartu frasa `frs-`. Build bersih.

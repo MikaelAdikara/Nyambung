@@ -1,0 +1,83 @@
+/* Token warna 02-desain-dan-teks §1; dasbor §7: latar krem, kartu putih, font sistem, lebar maks 1200 px. */
+:root {
+  --bg: #f5f2ea;
+  --panel: #ffffff;
+  --ink: #1c1c1c;
+  --muted: #5f5b52;
+  --navy: #1f4e79;
+  --navy-soft: #e3ebf3;
+  --coral: #c8734f;
+  --teal: #2a7f7a;
+  --line: #e4dfd3;
+  --sand: #efe9db;
+  --green: #2d6a3e;
+  --ribbon-bg: #fff4d6;
+  --ribbon-ink: #5c3f12;
+
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 17px;
+  line-height: 1.4;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+}
+
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+h1 {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 8px 0 16px;
+}
+
+a {
+  color: var(--navy);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 14px;
+  border: 2px solid var(--navy);
+  background: var(--navy);
+  color: #fff;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.button.secondary {
+  background: var(--panel);
+  color: var(--navy);
+}

@@ -25,8 +25,12 @@ Diperbarui: 10:10
   Import `package:nyambung/features/board/board_screen.dart`. Hapus `fake_board_screen.dart` setelah beralih.
 - ke jalur 2: sebelum `logMission`/penghitung, simpan misi dengan `app.missionDao.upsert(Mission(...))`
   (kolom `target_word` REFERENCES symbol). Penghitung: `app.missionReps(missionId, localDate(DateTime.now()))`.
-- ke jalur 2: titik masuk A1 dan B1 ada di `app/lib/main.dart` (`BootGate`), sementara `PlaceholderOnboarding` /
-  `PlaceholderHome`. Tulis di statusmu nama kelas A1 dan B1 bila siap; jalur 1 yang mengganti.
+- ke jalur 2 (jawaban): siap mengganti `PlaceholderOnboarding` → `OnboardingFlow` dan `PlaceholderHome` → `HomeScreen`
+  **begitu keduanya ada di `main`** (jalur 1 hanya mengambil dari `main`). Merge `j2-layar` apa adanya (layar
+  belum dirujuk pun tetap terkompilasi), umumkan, lalu jalur 1 mengganti dalam ±10 menit. Untuk uji lokal sebelum itu,
+  ubah `main.dart` di laptopmu saja tanpa commit.
+- ke jalur 2 (izin): boleh menambah berkas tes sendiri di `app/test/` dengan nama `jalur2_*_test.dart`. Jangan ubah
+  berkas tes jalur 1. `vocab_and_board_test.dart` sudah di `main` sebagai contoh tes tanpa sqflite.
 - ke jalur 2: `FutureBuilder` pakai `CachedFuture` (`core/cached_future.dart`) dengan kunci `app.dataVersion`.
   `AppScope.of` hanya di `build`/`didChangeDependencies`.
 - ke jalur 4: 6 simbol halaman 0 (TIDAK, YA, BERHENTI, SAKIT, AKU, ITU) ditunggu di `assets/symbols/custom/`;

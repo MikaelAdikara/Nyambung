@@ -288,3 +288,48 @@ class TherapistLink {
     'revoked_at': revokedAt,
   };
 }
+
+/// Ringkasan sesi yang dikirim terapis ke keluarga (C5). Tidak berisi catatan sesi terapis.
+class TherapistSummary {
+  const TherapistSummary({
+    required this.summaryId,
+    required this.therapist,
+    required this.sessionDate,
+    required this.familyText,
+    required this.focus,
+    required this.nextSession,
+    required this.sharedAt,
+  });
+
+  final String summaryId;
+  final String? therapist;
+
+  /// `YYYY-MM-DD`.
+  final String sessionDate;
+  final String familyText;
+  final String? focus;
+
+  /// Waktu lokal sesi berikutnya, `YYYY-MM-DD` atau `YYYY-MM-DDTHH:MM`.
+  final String? nextSession;
+  final String sharedAt;
+
+  factory TherapistSummary.fromRow(Map<String, Object?> r) => TherapistSummary(
+    summaryId: r['summary_id']! as String,
+    therapist: r['therapist'] as String?,
+    sessionDate: r['session_date']! as String,
+    familyText: r['family_text']! as String,
+    focus: r['focus'] as String?,
+    nextSession: r['next_session'] as String?,
+    sharedAt: r['shared_at']! as String,
+  );
+
+  Map<String, Object?> toRow() => {
+    'summary_id': summaryId,
+    'therapist': therapist,
+    'session_date': sessionDate,
+    'family_text': familyText,
+    'focus': focus,
+    'next_session': nextSession,
+    'shared_at': sharedAt,
+  };
+}

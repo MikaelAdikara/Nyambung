@@ -79,6 +79,18 @@ CREATE TABLE IF NOT EXISTS vocab_target (
   received_at TEXT
 );
 
+-- Ringkasan sesi yang dikirim terapis ke keluarga (C5). Hanya teks untuk keluarga; catatan sesi terapis tidak
+-- pernah sampai ke perangkat. Ditarik saat sinkron, ditimpa bila terapis mengirim ulang.
+CREATE TABLE IF NOT EXISTS therapist_summary (
+  summary_id   TEXT PRIMARY KEY,
+  therapist    TEXT,
+  session_date TEXT NOT NULL,
+  family_text  TEXT NOT NULL,
+  focus        TEXT,
+  next_session TEXT,
+  shared_at    TEXT NOT NULL
+);
+
 -- Penegakan invarian 3: isi peristiwa tidak berubah, tidak dihapus.
 CREATE TRIGGER IF NOT EXISTS utterance_no_update BEFORE UPDATE OF
   event_id, child_id, ts_device, content, method, actor, prompt_level, context, session_id

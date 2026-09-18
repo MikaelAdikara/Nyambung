@@ -1,5 +1,5 @@
 # Status jalur 1 — Papan
-Diperbarui: 12:00
+Diperbarui: 13:55
 
 **Mulai 11:20 semua jalur bekerja langsung di `main`** (tidak ada lagi kerja paralel; branch jalur sudah tergabung).
 
@@ -29,6 +29,10 @@ Paket HP kentang + UX (18 Sep siang): 1) optimasi O1–O3 ✔, 2) tab halaman di
 - j1-kunci: screen pinning; Home tidak keluar dari papan anak (PINNED), tahan TAHAN 1,5 dtk → keluar + lepas kunci
 
 ## Selesai tanpa tag
+- Skema v2: tabel `therapist_summary` (ringkasan sesi dari terapis, C5), pemutakhiran menjalankan ulang pernyataan
+  `IF NOT EXISTS`. `SummaryDao`, `SymbolDao.insertCustom`. Kartu personal (`data/personal_card.dart`): `word_id`
+  `prs-<label>-<6 hex>`, slot kosong berikutnya sesudah sel cermin. Hitungan pemakaian murni (`usage_stats.dart`)
+  untuk B1/C1. Tes `personal_card_and_stats_test.dart`; 33 tes lulus, analyzer bersih
 - `core/motion.dart`: `PressScale`, `FadeSlideIn`, `SmoothReveal`, `RecordingDot`, semua lewat `Motion.of` (nol bila
   "Hapus animasi"). Beranda `NavigationBar` 4 tab (hanya tab terpilih dibangun). `boardTheme` mematikan lapisan tekan
   di papan. `CompanionColors` = typedef `AppColors`. Tes `motion_test.dart`. Dicek di emulator: misi → papan →
@@ -78,6 +82,9 @@ Paket HP kentang + UX (18 Sep siang): 1) optimasi O1–O3 ✔, 2) tab halaman di
 - `EventDao` nyata: `append`, `pendingBatch(limit: 40)`, `markSynced(ids, ts)`, `defer(ids)`, `outboxCount()`,
   `totalCount()`, `lastSyncedAt()`, `countOnDate(...)`, `since(...)`, `all()`. `UtteranceEvent.toSyncJson()` = bentuk kontrak §4.
 - `SpeechService`: `ttsIdAvailable`, `firstUtteranceLatencyMs` (untuk C6 Uji suara), `speakWord`, `speakText(text, byParent:)`.
+- (13:55) `AppState`: `summaryDao`, `nextCardSlot(page)`, `addPersonalCard(label:, page:, photoPath:)`, `childLock`/
+  `setChildLock`, `afterOnboarding` (enum `AfterOnboarding`). `PrefKeys.childLock`. Sinkron menarik
+  `/shared-summaries` terbaik-usaha setelah target.
 - `TargetDao.upsertFromServer` tidak menimpa status lokal `diterima`/`ditolak`.
 - Konstanta di `core/constants.dart`; waktu ber-offset di `core/time.dart` (`nowIso()`, `isoWithOffset()`, `localDate()`).
 - Windows: build Gradle "Unable to establish loopback connection" → set `TEMP`/`TMP` ke `C:\dev\tmp` (path tanpa spasi).

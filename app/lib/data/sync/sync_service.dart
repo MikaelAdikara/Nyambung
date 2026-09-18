@@ -90,6 +90,7 @@ class SyncService {
       await app.eventDao.markSynced(ids, nowIso());
     }
     await pullTargets(childId, token: token);
+    await pullSummaries(childId, token: token);
     app.markDataChanged();
     return SyncReport(SyncState.complete, accepted: accepted, duplicates: duplicates);
   }
@@ -124,6 +125,34 @@ class SyncService {
       app.markDataChanged();
     } catch (_) {
       // Pull is best-effort. Local data remains the source of truth.
+    }
+  }
+
+  /// Ringkasan sesi yang dikirim terapis ke keluarga (C5). Tarik terbaik-usaha, sama seperti target.
+  Future<void> pullSummaries(String childId, {String? token}) async {
+    final deviceToken = token ?? app.prefs.getString(PrefKeys.deviceToken);
+    if (deviceToken == null || deviceToken.isEmpty || await app.linkDao.active() == null) return;
+    try {
+      final response = await _client
+          .get(Uri.parse('$_baseUrl/v1/children/$childId/shared-summaries'), headers: {'Authorization': 'Bearer $deviceToken'})
+          .timeout(_requestTimeout);
+      if (response.statusCode != 200) return;
+      for (final raw in jsonDecode(response.body) as List<dynamic>) {
+        final row = raw as Map<String, dynamic>;
+        await app.summaryDao.upsert(
+          TherapistSummary(
+            summaryId: row['summary_id']! as String,
+            therapist: row['therapist'] as String?,
+            sessionDate: row['session_date']! as String,
+            familyText: row['family_text']! as String,
+            focus: row['focus'] as String?,
+            nextSession: row['next_session'] as String?,
+            sharedAt: row['shared_at']! as String,
+          ),
+        );
+      }
+    } catch (_) {
+      // Tarik terbaik-usaha. Data lokal tetap sumber kebenaran.
     }
   }
 

@@ -5,7 +5,8 @@
 /// `test/vocab_and_board_test.dart` memastikan keduanya identik.
 library;
 
-const schemaVersion = 1;
+/// v2: tabel `therapist_summary` (C5). Pemutakhiran menjalankan ulang semua pernyataan `IF NOT EXISTS`.
+const schemaVersion = 2;
 
 const schemaStatements = <String>[
   '''
@@ -87,6 +88,16 @@ CREATE TABLE IF NOT EXISTS vocab_target (
   week_index  INTEGER,
   status      TEXT NOT NULL,
   received_at TEXT
+)''',
+  '''
+CREATE TABLE IF NOT EXISTS therapist_summary (
+  summary_id   TEXT PRIMARY KEY,
+  therapist    TEXT,
+  session_date TEXT NOT NULL,
+  family_text  TEXT NOT NULL,
+  focus        TEXT,
+  next_session TEXT,
+  shared_at    TEXT NOT NULL
 )''',
   '''
 CREATE TRIGGER IF NOT EXISTS utterance_no_update BEFORE UPDATE OF

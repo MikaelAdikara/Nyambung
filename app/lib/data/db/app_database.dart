@@ -23,6 +23,14 @@ class AppDatabase {
         }
         await batch.commit(noResult: true);
       },
+      // Semua pernyataan skema memakai IF NOT EXISTS, jadi menjalankannya ulang hanya menambah tabel baru.
+      onUpgrade: (db, _, _) async {
+        final batch = db.batch();
+        for (final s in schemaStatements) {
+          batch.execute(s);
+        }
+        await batch.commit(noResult: true);
+      },
     );
   }
 

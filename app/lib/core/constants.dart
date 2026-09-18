@@ -69,4 +69,7 @@ abstract final class PrefKeys {
   static const serverUrl = 'server_url';
   static const deviceToken = 'device_token';
   static const voiceSet = 'voice_set';
+
+  /// Kunci mode anak (screen pinning) saat papan anak dibuka. Bawaan: aktif.
+  static const childLock = 'child_lock';
 }

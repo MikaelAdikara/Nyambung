@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -10,6 +11,7 @@ import 'package:uuid/uuid.dart';
 import '../data/db/app_database.dart';
 import '../data/db/dao.dart';
 import '../data/models.dart';
+import '../data/personal_card.dart';
 import '../data/repo/vocab_loader.dart';
 import 'constants.dart';
 import 'error_log.dart';
@@ -42,6 +44,7 @@ class AppState extends ChangeNotifier {
   late MissionDao missionDao;
   late TargetDao targetDao;
   late LinkDao linkDao;
+  late SummaryDao summaryDao;
   late SharedPreferences prefs;
 
   bool _ready = false;
@@ -85,6 +88,7 @@ class AppState extends ChangeNotifier {
     missionDao = MissionDao(_db);
     targetDao = TargetDao(_db);
     linkDao = LinkDao(_db);
+    summaryDao = SummaryDao(_db);
     final loader = VocabLoader(symbolDao, _bundle);
     await loader.ensureLoaded();
     pages = await loader.loadPages();
@@ -129,6 +133,46 @@ class AppState extends ChangeNotifier {
 
   /// Semua simbol (untuk D3-seperti daftar atau C2).
   List<WordSymbol> get allSymbols => List.unmodifiable(_symbols);
+
+  /// Posisi kartu baru berikutnya di halaman kategori [page] (C3, B5): slot kosong pertama sesudah sel cermin.
+  int nextCardSlot(int page) => nextFreeSlot(cellsForPage(page), firstContentSlot: mirrorSlots);
+
+  /// Kartu personal dari foto (C3). Foto disalin ke folder aplikasi `cards/` dan tidak pernah dikirim; hanya
+  /// `word_id` (berisi label) yang ikut peristiwa `PRS`. Kartu masuk ke slot kosong berikutnya di [page];
+  /// sel lain tidak bergeser (invarian 8).
+  Future<WordSymbol> addPersonalCard({required String label, required int page, required String photoPath}) async {
+    final display = normalizePersonalLabel(label);
+    if (display.isEmpty || page == 0) throw ArgumentError('label kosong atau halaman kata inti');
+    final wordId = personalWordId(display);
+    final dir = Directory('${(await getApplicationDocumentsDirectory()).path}${Platform.pathSeparator}cards');
+    await dir.create(recursive: true);
+    final dest = '${dir.path}${Platform.pathSeparator}$wordId.jpg';
+    await File(photoPath).copy(dest);
+    final card = WordSymbol(
+      wordId: wordId,
+      labelDisplay: display,
+      labelSpeech: display.toLowerCase(),
+      pos: 'benda',
+      category: 'personal',
+      page: page,
+      positionIndex: nextCardSlot(page),
+      symbolPath: dest,
+      isCustom: true,
+    );
+    try {
+      await symbolDao.insertCustom(card);
+    } catch (_) {
+      try {
+        await File(dest).delete();
+      } catch (_) {}
+      rethrow;
+    }
+    await reloadSymbols();
+    return card;
+  }
+
+  /// Tujuan yang dipilih di A6; beranda membukanya sekali setelah pemasangan, lalu mengosongkannya.
+  AfterOnboarding? afterOnboarding;
 
   /// Pemasangan (A2/A3). `grid_cols` ditetapkan di sini dan tidak punya pengubah.
   Future<Child> createChild({required String nickname, int? ageYears, required String routine, int gridCols = 3}) async {
@@ -254,6 +298,14 @@ class AppState extends ChangeNotifier {
     _bump();
   }
 
+  /// Kunci mode anak (C6): papan anak memakai screen pinning Android. Bawaan aktif.
+  bool get childLock => prefs.getBool(PrefKeys.childLock) ?? true;
+
+  Future<void> setChildLock(bool on) async {
+    await prefs.setBool(PrefKeys.childLock, on);
+    _bump();
+  }
+
   /// "Tahan untuk memilih" (C6): 0 = ketuk biasa.
   int get holdMs => prefs.getInt(PrefKeys.holdMs) ?? 0;
 
@@ -307,6 +359,9 @@ List<WordSymbol?> buildCells(List<WordSymbol> symbols, int page) {
   }
   return cells;
 }
+
+/// Tombol di A6: buka misi hari ini atau lihat papan dulu.
+enum AfterOnboarding { mission, board }
 
 /// Jumlah sel cermin di halaman kategori (baris 1–2 halaman 0).
 const mirrorSlots = 6;

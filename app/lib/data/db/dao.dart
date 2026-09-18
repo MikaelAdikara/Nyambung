@@ -51,6 +51,9 @@ class SymbolDao {
   Future<void> setHidden(String wordId, bool hidden) =>
       db.update('symbol', {'is_hidden': hidden ? 1 : 0}, where: 'word_id = ?', whereArgs: [wordId]);
 
+  /// Kartu personal (C3). Gagal bila posisi di halaman itu sudah terisi (`UNIQUE (page, position_index)`).
+  Future<void> insertCustom(WordSymbol s) => db.insert('symbol', s.toRow(), conflictAlgorithm: ConflictAlgorithm.abort);
+
   /// Rekaman keluarga, jalur berkas lokal. Tidak pernah disinkronkan (invarian 18).
   Future<void> setFamilyAudio(String wordId, String? path) =>
       db.update('symbol', {'family_audio': path}, where: 'word_id = ?', whereArgs: [wordId]);
@@ -275,4 +278,17 @@ class LinkDao {
 
   Future<void> markRevoked(String linkId, String ts) =>
       db.update('therapist_link', {'revoked_at': ts}, where: 'link_id = ?', whereArgs: [linkId]);
+}
+
+class SummaryDao {
+  SummaryDao(this.db);
+  final Database db;
+
+  Future<List<TherapistSummary>> all() async {
+    final rows = await db.query('therapist_summary', orderBy: 'shared_at DESC');
+    return rows.map(TherapistSummary.fromRow).toList();
+  }
+
+  /// Simpan ringkasan dari server; kiriman ulang dari terapis menimpa baris yang sama.
+  Future<void> upsert(TherapistSummary s) => db.insert('therapist_summary', s.toRow(), conflictAlgorithm: ConflictAlgorithm.replace);
 }

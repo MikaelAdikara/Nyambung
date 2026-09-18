@@ -1,8 +1,8 @@
 # Status jalur 2 — Pendamping
-Diperbarui: 09:36
+Diperbarui: 09:38
 
 ## Sedang dikerjakan
-2.1 Layar data tiruan — A1–A6, B1–B3, B6, C1, C5, dan C6 selesai ditulis; analyzer mandiri bersih, menunggu j1-kerangka untuk uji aplikasi
+2.1 Layar data tiruan — layar lengkap dan papan misi tiruan 3 kata tersedia; analyzer mandiri bersih, menunggu j1-kerangka untuk uji aplikasi
 
 ## Tonggak selesai (tag)
 - (kosong)

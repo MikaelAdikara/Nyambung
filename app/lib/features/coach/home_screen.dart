@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'companion_widgets.dart';
 import 'fake_app_state.dart';
+import 'fake_board_screen.dart';
 import 'lesson_screen.dart';
 import 'mission_screen.dart';
 
@@ -26,7 +27,13 @@ class HomeScreen extends StatelessWidget {
         body: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [
-            PrimaryButton(label: 'Buka Papan Bicara untuk anak', icon: Icons.grid_view_rounded, onPressed: openChildBoard),
+            PrimaryButton(
+              label: 'Buka Papan Bicara untuk anak',
+              icon: Icons.grid_view_rounded,
+              onPressed:
+                  openChildBoard ??
+                  () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => FakeBoardScreen(state: state))),
+            ),
             const SizedBox(height: 16),
             _MissionCard(state: state),
             const SizedBox(height: 16),

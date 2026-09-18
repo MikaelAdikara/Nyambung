@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'companion_widgets.dart';
 import 'confirm_screen.dart';
 import 'fake_app_state.dart';
+import 'fake_board_screen.dart';
 
 class MissionScreen extends StatelessWidget {
   const MissionScreen({super.key, required this.state, this.openBoard});
@@ -76,7 +77,11 @@ class MissionScreen extends StatelessWidget {
                 if (openBoard != null) {
                   await openBoard!();
                 } else {
-                  await state.logTap(content: mission.targetWord, method: 'SEL', byParent: true, context: mission.id);
+                  await Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => FakeBoardScreen(state: state, missionContext: mission.id, allowTurnToggle: true),
+                    ),
+                  );
                 }
               },
             ),
@@ -84,7 +89,6 @@ class MissionScreen extends StatelessWidget {
             const Text('Kedua tombol di bawah sama nilainya. Tidak ada hari yang gagal.', style: companionMutedStyle),
             const SizedBox(height: 12),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
                   child: EqualOutlineButton(label: 'Belum sempat hari ini', onPressed: () => _confirm(context, 'belum_sempat')),

@@ -7,6 +7,7 @@ import 'package:record/record.dart';
 
 import '../../core/app_state.dart';
 import '../../core/error_log.dart';
+import '../../core/motion.dart';
 import '../../data/models.dart';
 import '../board/symbol_cell.dart';
 import '../coach/companion_widgets.dart';
@@ -150,6 +151,7 @@ class _FamilyVoiceScreenState extends State<FamilyVoiceScreen> {
               Expanded(
                 child: Text(s.labelDisplay, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
               ),
+              if (recordingThis) ...[const RecordingDot(), const SizedBox(width: 6)],
               Text(
                 recordingThis
                     ? 'Sedang merekam…'

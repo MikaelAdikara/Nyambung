@@ -210,7 +210,10 @@ class _BoardScreenState extends State<BoardScreen> {
           ..hideCurrentSnackBar()
           ..showSnackBar(const SnackBar(duration: Duration(seconds: 2), content: Text('Tahan tombol kunci di kanan atas untuk keluar.')));
       },
-      child: Scaffold(backgroundColor: AppColors.bg, body: body),
+      child: Theme(
+        data: boardTheme(Theme.of(context)),
+        child: Scaffold(backgroundColor: AppColors.bg, body: body),
+      ),
     );
   }
 }

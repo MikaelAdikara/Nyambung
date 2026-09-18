@@ -108,7 +108,12 @@ class PosMarkerPainter extends CustomPainter {
   bool shouldRepaint(PosMarkerPainter old) => old.marker != marker || old.color != color;
 }
 
-/// Tema aplikasi (02 §3): tanpa percikan, tombol 56 dp sudut 14, kartu tanpa bayangan.
+/// Lapisan tekan tombol: warna tinta 12 % selama ditekan. Tanpa percikan (tetap tenang), tapi tombol terasa menjawab.
+WidgetStateProperty<Color?> _pressedOverlay(Color ink) =>
+    WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.pressed) ? ink.withValues(alpha: 0.12) : null);
+
+/// Tema aplikasi (02 §3): tanpa percikan, tombol 56 dp sudut 14, kartu tanpa bayangan. Tombol memberi lapisan tekan;
+/// papan anak mematikannya lewat [boardTheme].
 ThemeData buildTheme() {
   const buttonText = TextStyle(fontSize: 18, fontWeight: FontWeight.w800);
   final buttonShape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(14));
@@ -148,7 +153,7 @@ ThemeData buildTheme() {
         minimumSize: buttonSize,
         shape: buttonShape,
         textStyle: buttonText,
-      ),
+      ).copyWith(overlayColor: _pressedOverlay(Colors.white)),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
@@ -157,10 +162,35 @@ ThemeData buildTheme() {
         shape: buttonShape,
         textStyle: buttonText,
         side: const BorderSide(color: AppColors.navy, width: 2),
-      ),
+      ).copyWith(overlayColor: _pressedOverlay(AppColors.navy)),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(foregroundColor: AppColors.navy, textStyle: buttonText),
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.navy,
+        textStyle: buttonText,
+      ).copyWith(overlayColor: _pressedOverlay(AppColors.navy)),
     ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: AppColors.panel,
+      indicatorColor: AppColors.navySoft,
+      surfaceTintColor: Colors.transparent,
+      height: 72,
+      labelTextStyle: WidgetStateProperty.resolveWith(
+        (s) =>
+            TextStyle(fontSize: 13, fontWeight: s.contains(WidgetState.selected) ? FontWeight.w800 : FontWeight.w600, color: AppColors.ink),
+      ),
+      iconTheme: WidgetStateProperty.resolveWith(
+        (s) => IconThemeData(color: s.contains(WidgetState.selected) ? AppColors.navy : AppColors.muted),
+      ),
+    ),
+  );
+}
+
+/// Tema papan anak: tanpa lapisan tekan yang memudar di tombol (invarian 11). Sel simbol punya keadaan tekan sendiri.
+ThemeData boardTheme(ThemeData base) {
+  const none = WidgetStatePropertyAll<Color?>(Colors.transparent);
+  return base.copyWith(
+    filledButtonTheme: FilledButtonThemeData(style: base.filledButtonTheme.style?.copyWith(overlayColor: none)),
+    iconButtonTheme: const IconButtonThemeData(style: ButtonStyle(overlayColor: none)),
   );
 }

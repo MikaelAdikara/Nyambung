@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants.dart';
+import '../../core/motion.dart';
 import '../../core/time.dart';
 import '../../data/models.dart';
 import '../board/symbol_cell.dart';
@@ -118,39 +119,42 @@ class _ProgressScreenState extends State<ProgressScreen> {
       title: 'Perkembangan',
       body: FutureBuilder<_ProgressData>(
         future: _history,
-        builder: (context, snap) {
-          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-            children: [
-              _todayCard(snap.data!.today, name),
-              const SizedBox(height: 12),
-              for (final week in snap.data!.weeks) ...[
-                CompanionCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Pekan ${week.week}: ${week.uniqueWords} kata berbeda dari $name',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                      ),
-                      if (week.newWords.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [for (final w in week.newWords) _WordChip(word: w, state: widget.state)],
+        builder: (context, snap) => AnimatedSwitcher(
+          duration: Motion.of(context, Motion.fade),
+          child: !snap.hasData
+              ? const Center(key: ValueKey('memuat'), child: CircularProgressIndicator())
+              : ListView(
+                  key: const ValueKey('isi'),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                  children: [
+                    _todayCard(snap.data!.today, name),
+                    const SizedBox(height: 12),
+                    for (final week in snap.data!.weeks) ...[
+                      CompanionCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Pekan ${week.week}: ${week.uniqueWords} kata berbeda dari $name',
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                            ),
+                            if (week.newWords.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [for (final w in week.newWords) _WordChip(word: w, state: widget.state)],
+                              ),
+                            ],
+                          ],
                         ),
-                      ],
+                      ),
+                      const SizedBox(height: 12),
                     ],
-                  ),
+                    const Text('Ini catatan pemakaian, bukan penilaian kemampuan.', style: companionMutedStyle),
+                  ],
                 ),
-                const SizedBox(height: 12),
-              ],
-              const Text('Ini catatan pemakaian, bukan penilaian kemampuan.', style: companionMutedStyle),
-            ],
-          );
-        },
+        ),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../core/app_state.dart';
+import '../../core/motion.dart';
 import '../board/board_screen.dart';
 import '../progress/progress_screen.dart';
 import '../settings/settings_screen.dart';
@@ -69,118 +70,114 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.dispose();
   }
 
+  /// Tab bawah: 0 Beranda, 1 Perkembangan, 2 Terapis, 3 Pengaturan. Hanya tab terpilih yang dibangun, jadi setiap
+  /// kali dibuka datanya segar (sama seperti saat masih dibuka lewat rute).
+  int _tab = 0;
+
+  void _openTab(int i) => setState(() => _tab = i);
+
   @override
   Widget build(BuildContext context) {
     final controller = _controller;
-    if (controller == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
     return ListenableBuilder(
-      listenable: controller,
+      listenable: controller ?? const AlwaysStoppedAnimation(0),
       builder: (context, _) {
-        final child = controller.child;
-        if (!controller.hasMission) {
-          return const Scaffold(
-            backgroundColor: CompanionColors.bg,
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+        final ready = controller != null && controller.hasMission;
         return Scaffold(
           backgroundColor: CompanionColors.bg,
-          appBar: AppBar(
-            backgroundColor: CompanionColors.bg,
-            elevation: 0,
-            title: Text('Halo, keluarga ${child?.nickname ?? ''}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+          body: AnimatedSwitcher(
+            duration: Motion.of(context, Motion.fade),
+            child: !ready
+                ? const Center(key: ValueKey('memuat'), child: CircularProgressIndicator())
+                : KeyedSubtree(key: ValueKey(_tab), child: _tabBody(controller)),
           ),
-          body: RefreshIndicator(
-            onRefresh: controller.load,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-              children: [
-                PrimaryButton(
-                  label: 'Buka Papan Bicara untuk anak',
-                  icon: Icons.grid_view_rounded,
-                  onPressed:
-                      widget.openChildBoard ??
-                      () async {
-                        await Navigator.of(context).push(BoardScreen.childRoute());
-                        await controller.load();
-                        await controller.autoSync();
-                      },
+          bottomNavigationBar: !ready
+              ? null
+              : NavigationBar(
+                  selectedIndex: _tab,
+                  onDestinationSelected: _openTab,
+                  destinations: const [
+                    NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Beranda'),
+                    NavigationDestination(icon: Icon(Icons.bar_chart_outlined), selectedIcon: Icon(Icons.bar_chart), label: 'Perkembangan'),
+                    NavigationDestination(icon: Icon(Icons.people_outline), selectedIcon: Icon(Icons.people), label: 'Terapis'),
+                    NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'Pengaturan'),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                OutlinedButton.icon(
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NowNextScreen())),
-                  icon: const Icon(Icons.view_column_outlined),
-                  label: const Text('Sekarang → Nanti'),
-                ),
-                const SizedBox(height: 16),
-                _MissionCard(state: controller),
-                if (controller.pendingTargets.isNotEmpty) ...[const SizedBox(height: 16), _ProposalCard(state: controller)],
-                const SizedBox(height: 16),
-                CompanionCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Pekan ini', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                      const SizedBox(height: 8),
-                      Text(controller.weeklySummary, style: companionBodyStyle),
-                      const SizedBox(height: 8),
-                      const Text('Angka ini lahir dari ketukan papan, bukan dari isian.', style: companionMutedStyle),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _SyncCard(state: controller),
-              ],
-            ),
-          ),
-          bottomNavigationBar: _CompanionNavigation(state: controller),
         );
       },
     );
   }
-}
 
-class _CompanionNavigation extends StatelessWidget {
-  const _CompanionNavigation({required this.state});
+  Widget _tabBody(CompanionController controller) => switch (_tab) {
+    1 => ProgressScreen(state: controller),
+    2 => TherapistScreen(state: controller),
+    3 => const SettingsScreen(),
+    _ => _home(controller),
+  };
 
-  final CompanionController state;
-
-  @override
-  Widget build(BuildContext context) => BottomAppBar(
-    color: CompanionColors.panel,
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _destination(
-          context,
-          icon: Icons.bar_chart,
-          label: 'Perkembangan',
-          screen: ProgressScreen(state: state),
-        ),
-        _destination(
-          context,
-          icon: Icons.people_outline,
-          label: 'Terapis',
-          screen: TherapistScreen(state: state),
-        ),
-        _destination(context, icon: Icons.settings_outlined, label: 'Pengaturan', screen: const SettingsScreen()),
-      ],
-    ),
-  );
-
-  Widget _destination(BuildContext context, {required IconData icon, required String label, required Widget screen}) => Expanded(
-    child: InkWell(
-      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen)),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon),
-          const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 12)),
-        ],
+  Widget _home(CompanionController controller) {
+    final child = controller.child;
+    return Scaffold(
+      backgroundColor: CompanionColors.bg,
+      appBar: AppBar(
+        backgroundColor: CompanionColors.bg,
+        elevation: 0,
+        title: Text('Halo, keluarga ${child?.nickname ?? ''}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
       ),
-    ),
-  );
+      body: RefreshIndicator(
+        onRefresh: controller.load,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          children: [
+            PrimaryButton(
+              label: 'Buka Papan Bicara untuk anak',
+              icon: Icons.grid_view_rounded,
+              onPressed:
+                  widget.openChildBoard ??
+                  () async {
+                    await Navigator.of(context).push(BoardScreen.childRoute());
+                    await controller.load();
+                    await controller.autoSync();
+                  },
+            ),
+            const SizedBox(height: 8),
+            PressScale(
+              child: OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NowNextScreen())),
+                icon: const Icon(Icons.view_column_outlined),
+                label: const Text('Sekarang → Nanti'),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _MissionCard(state: controller),
+            SmoothReveal(
+              child: controller.pendingTargets.isEmpty
+                  ? null
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: _ProposalCard(state: controller, onOpen: () => _openTab(2)),
+                    ),
+            ),
+            const SizedBox(height: 16),
+            CompanionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Pekan ini', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 8),
+                  Text(controller.weeklySummary, style: companionBodyStyle),
+                  const SizedBox(height: 8),
+                  const Text('Angka ini lahir dari ketukan papan, bukan dari isian.', style: companionMutedStyle),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            _SyncCard(state: controller),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _MissionCard extends StatelessWidget {
@@ -202,33 +199,42 @@ class _MissionCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text('Ibu atau Ayah yang menekan sambil bicara. Anak tidak perlu menekan apa pun.', style: companionBodyStyle),
-          if (state.todayLog != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              state.todayLog!.status == 'selesai'
-                  ? 'Misi hari ini sudah selesai. Terima kasih.'
-                  : 'Hari ini belum sempat. Tidak apa-apa, besok ada lagi.',
-              style: companionMutedStyle,
-            ),
-          ],
+          SmoothReveal(
+            child: state.todayLog == null
+                ? null
+                : Padding(
+                    key: ValueKey(state.todayLog!.status),
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      state.todayLog!.status == 'selesai'
+                          ? 'Misi hari ini sudah selesai. Terima kasih.'
+                          : 'Hari ini belum sempat. Tidak apa-apa, besok ada lagi.',
+                      style: companionMutedStyle,
+                    ),
+                  ),
+          ),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => LessonScreen(state: state, lessonKey: mission.lessonKey),
+                child: PressScale(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => LessonScreen(state: state, lessonKey: mission.lessonKey),
+                      ),
                     ),
+                    child: const Text('Pelajaran 60 detik', textAlign: TextAlign.center),
                   ),
-                  child: const Text('Pelajaran 60 detik', textAlign: TextAlign.center),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: FilledButton(
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => MissionScreen(state: state))),
-                  child: const Text('Mulai misi'),
+                child: PressScale(
+                  child: FilledButton(
+                    onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => MissionScreen(state: state))),
+                    child: const Text('Mulai misi'),
+                  ),
                 ),
               ),
             ],
@@ -240,32 +246,35 @@ class _MissionCard extends StatelessWidget {
 }
 
 class _ProposalCard extends StatelessWidget {
-  const _ProposalCard({required this.state});
+  const _ProposalCard({required this.state, required this.onOpen});
 
   final CompanionController state;
+  final VoidCallback onOpen;
 
   @override
-  Widget build(BuildContext context) => InkWell(
-    borderRadius: BorderRadius.circular(16),
-    onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => TherapistScreen(state: state))),
-    child: CompanionCard(
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${state.pendingTargets.length} usulan kata dari terapis menunggu jawaban',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 4),
-                const Text('Boleh diterima atau ditolak tanpa alasan.', style: companionMutedStyle),
-              ],
+  Widget build(BuildContext context) => PressScale(
+    child: InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onOpen,
+      child: CompanionCard(
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${state.pendingTargets.length} usulan kata dari terapis menunggu jawaban',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text('Boleh diterima atau ditolak tanpa alasan.', style: companionMutedStyle),
+                ],
+              ),
             ),
-          ),
-          const Icon(Icons.chevron_right),
-        ],
+            const Icon(Icons.chevron_right),
+          ],
+        ),
       ),
     ),
   );

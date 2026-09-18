@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/motion.dart';
 import 'companion_widgets.dart';
 import 'companion_controller.dart';
 
@@ -21,28 +22,41 @@ class ConfirmScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              done ? 'Misi hari ini selesai.' : 'Hari ini belum sempat. Besok ada misi yang sama.',
-              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+            // Masuk yang sama persis untuk kedua jawaban: tidak ada perayaan untuk "Selesai" (invarian 15).
+            FadeSlideIn(
+              index: 0,
+              child: Text(
+                done ? 'Misi hari ini selesai.' : 'Hari ini belum sempat. Besok ada misi yang sama.',
+                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+              ),
             ),
             const SizedBox(height: 20),
-            CompanionCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('• $parentTaps ketukan Ibu/Ayah saat memberi contoh', style: companionBodyStyle),
-                  const SizedBox(height: 8),
-                  Text('• $childTaps ketukan anak', style: companionBodyStyle),
-                ],
+            FadeSlideIn(
+              index: 1,
+              child: CompanionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('• $parentTaps ketukan Ibu/Ayah saat memberi contoh', style: companionBodyStyle),
+                    const SizedBox(height: 8),
+                    Text('• $childTaps ketukan anak', style: companionBodyStyle),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Catatan ini akan sampai ke terapis saat ada jaringan. Tidak ada yang perlu dilaporkan lagi.',
-              style: companionMutedStyle,
+            const FadeSlideIn(
+              index: 2,
+              child: Text(
+                'Catatan ini akan sampai ke terapis saat ada jaringan. Tidak ada yang perlu dilaporkan lagi.',
+                style: companionMutedStyle,
+              ),
             ),
             const Spacer(),
-            PrimaryButton(label: 'Kembali ke beranda', onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst)),
+            FadeSlideIn(
+              index: 3,
+              child: PrimaryButton(label: 'Kembali ke beranda', onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst)),
+            ),
           ],
         ),
       ),

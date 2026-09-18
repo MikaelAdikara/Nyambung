@@ -153,3 +153,16 @@ Format entri:
 - **Dampak terhadap masalah inti:** M1: menyusun kalimat lebih murah langkahnya. Gerak hanya terjadi saat jari sedang
   menyeret, jadi tidak ada gerakan yang tidak dipicu anak. Terapis tidak melihat penggeseran sebagai peristiwa
   tersendiri; yang terlihat hanya urutan kalimat yang diucapkan.
+
+## 12. Layar orang tua: tab bawah sungguhan dan gerak halus (12:25, jalur 2 & 1)
+- **Kondisi di proposal:** Beranda memakai bilah bawah yang membuka Perkembangan, Terapis, dan Pengaturan sebagai
+  halaman baru. Tema mematikan percikan dan sorotan, jadi tombol tidak memberi tanda saat ditekan.
+- **Yang diubah:** Beranda punya `NavigationBar` empat tab (Beranda, Perkembangan, Terapis, Pengaturan); kartu usulan
+  terapis membuka tab Terapis. Tombol memberi lapisan tekan 12 % dan tombol utama mengecil ke 0,97 selama ditekan.
+  Lingkaran penghitung misi yang baru terisi memudar satu per satu; layar "Tercatat" masuk memudar dan naik 12 dp,
+  **sama persis** untuk "Selesai" dan "Belum sempat". Kartu yang muncul di beranda dan pergantian memuat → isi memudar
+  halus; titik merah berdenyut saat merekam suara keluarga. Semua di bawah 350 ms dan seketika bila Android diatur
+  "Hapus animasi". Token warna pendamping disatukan dengan token papan.
+- **Alasan:** Tanpa umpan balik, aplikasi terasa kaku dan orang tua tidak yakin ketukannya diterima.
+- **Dampak terhadap masalah inti:** M2: pendamping harian terasa lebih ringan dipakai. Papan anak tidak ikut bergerak
+  (kecuali geser urutan bilah, entri 11); nada bebas rasa bersalah (invarian 15) dijaga dengan gerak yang identik.

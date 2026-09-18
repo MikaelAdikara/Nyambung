@@ -7,6 +7,7 @@ import 'package:record/record.dart';
 
 import '../../core/app_state.dart';
 import '../../core/error_log.dart';
+import '../../core/motion.dart';
 import '../coach/companion_widgets.dart';
 
 /// Rekaman suara keluarga untuk satu kata (A5). Hanya merekam selama tombol rekam aktif, disimpan di
@@ -108,7 +109,16 @@ class _FamilyVoiceRecorderState extends State<FamilyVoiceRecorder> {
                 ],
               ],
             ),
-          if (_state == _RecState.recording) ...[const SizedBox(height: 8), const Text('Sedang merekam…', style: companionMutedStyle)],
+          if (_state == _RecState.recording) ...[
+            const SizedBox(height: 8),
+            const Row(
+              children: [
+                RecordingDot(),
+                SizedBox(width: 6),
+                Text('Sedang merekam…', style: companionMutedStyle),
+              ],
+            ),
+          ],
         ],
       ),
     );

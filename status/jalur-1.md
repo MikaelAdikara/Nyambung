@@ -5,7 +5,7 @@ Diperbarui: 12:00
 
 ## Sedang dikerjakan
 Paket HP kentang + UX (18 Sep siang): 1) optimasi O1–O3 ✔, 2) tab halaman di kiri + nama tab baru + keadaan tekan ✔,
-3) geser urutan bilah ujaran ✔, 4) animasi layar orang tua, 5) O4–O6 + ukur ulang. j1-suara ditahan: belum didengar manusia.
+3) geser urutan bilah ujaran ✔, 4) animasi layar orang tua ✔, 5) O4–O6 + ukur ulang. j1-suara ditahan: belum didengar manusia.
 
 ## Optimasi HP kentang (diukur di emulator arm64 Android 16, `-memory 2048 -cores 2`, APK rilis; **perkiraan, bukan HP fisik**)
 - O1 klip kata tunggal lewat SoundPool (`PlayerMode.lowLatency`, satu pemutar per klip, LRU 40), kata inti dimuat saat
@@ -24,6 +24,10 @@ Paket HP kentang + UX (18 Sep siang): 1) optimasi O1–O3 ✔, 2) tab halaman di
 - j1-kunci: screen pinning; Home tidak keluar dari papan anak (PINNED), tahan TAHAN 1,5 dtk → keluar + lepas kunci
 
 ## Selesai tanpa tag
+- `core/motion.dart`: `PressScale`, `FadeSlideIn`, `SmoothReveal`, `RecordingDot`, semua lewat `Motion.of` (nol bila
+  "Hapus animasi"). Beranda `NavigationBar` 4 tab (hanya tab terpilih dibangun). `boardTheme` mematikan lapisan tekan
+  di papan. `CompanionColors` = typedef `AppColors`. Tes `motion_test.dart`. Dicek di emulator: misi → papan →
+  MAU ×2 + geser AKU → kembali "2 dari 5" → Selesai → Hari ini "MAU MAKAN MAU AKU"
 - Bilah ujaran `ReorderableListView` horizontal: tahan ± 0,5 dtk lalu seret (onReorderItem), kata diangkat 1,05×
   + bayangan, kata baru membuat bilah lompat ke ujung kanan tanpa animasi. Tanpa peristiwa baru. Dicek di emulator:
   MAU BERHENTI BANTU → seret BANTU ke depan → BANTU MAU BERHENTI → UCAPKAN memutar 3 klip

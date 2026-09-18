@@ -69,6 +69,19 @@ lalu disimpan langsung di `app/assets/audio/core/`, bukan di folder ini. Karena 
 
 ---
 
+## Font dan aset merek aplikasi
+
+| Berkas | Sumber | Lisensi |
+|---|---|---|
+| `app/assets/fonts/Fredoka.ttf` | `github.com/google/fonts`, `ofl/fredoka/Fredoka[wdth,wght].ttf` (variable font), SHA-256 `2ba02e68…73fc8` | SIL Open Font License 1.1, teks di `app/assets/fonts/OFL-Fredoka.txt` |
+| `app/assets/fonts/Nunito.ttf` | `github.com/google/fonts`, `ofl/nunito/Nunito[wght].ttf` (variable font), SHA-256 `bb55a5ca…85207` | SIL Open Font License 1.1, teks di `app/assets/fonts/OFL-Nunito.txt` |
+| `app/assets/brand/logo_mark.png`, ikon peluncur `app/android/app/src/main/res/mipmap-*/ic_launcher*.png` | Logo Nyambung buatan tim (`aset.zip`, `nyambung-logo.png`). Tanda dua gelembung dipotong, bayangan dan kotak putih dibuang, warna dilepas dari latar putih lalu diperkecil (skrip Python murni, tanpa pustaka) | Milik tim |
+| `app/assets/brand/cloud.png`, `app/assets/brand/sun.png` | Ilustrasi awan dan matahari buatan tim dari berkas desain ulang (`aset.zip`, `8.png` dan `9.png`), dipotong dan diperkecil | Milik tim |
+
+Font dibundel di APK supaya tetap tampil tanpa internet (invarian 1).
+
+---
+
 ## Yang tidak ada di folder ini
 
 Tidak ada kode aplikasi, server, papan pantau, skrip pembuat data, APK, keystore, maupun data peristiwa.

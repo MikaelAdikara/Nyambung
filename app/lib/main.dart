@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'core/app_state.dart';
+import 'core/brand.dart';
 import 'core/error_log.dart';
 import 'features/coach/home_screen.dart';
 import 'features/onboarding/onboarding_flow.dart';
@@ -97,9 +98,11 @@ class _Preparing extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(color: AppColors.navy),
-            SizedBox(height: 16),
-            Text('Menyiapkan papan', style: TextStyle(fontSize: 18)),
+            BrandMark(size: 88),
+            SizedBox(height: 24),
+            SizedBox(width: 28, height: 28, child: CircularProgressIndicator(strokeWidth: 3)),
+            SizedBox(height: 14),
+            Text('Menyiapkan papan', style: AppText.muted),
           ],
         ),
       ),

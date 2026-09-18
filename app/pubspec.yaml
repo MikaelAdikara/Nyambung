@@ -36,3 +36,12 @@ flutter:
     - assets/audio/core/
     - assets/audio/core/cowo/
     - assets/audio/core/cewe/
+    - assets/brand/
+  # Font dibundel supaya tetap tampil tanpa internet (OFL, lihat assets/fonts/OFL-*.txt).
+  fonts:
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito.ttf
+    - family: Fredoka
+      fonts:
+        - asset: assets/fonts/Fredoka.ttf

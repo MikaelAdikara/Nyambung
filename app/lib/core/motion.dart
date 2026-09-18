@@ -159,7 +159,90 @@ class _RecordingDotState extends State<RecordingDot> with SingleTickerProviderSt
     child: Container(
       width: 12,
       height: 12,
-      decoration: const BoxDecoration(color: Color(0xFFC62828), shape: BoxShape.circle),
+      decoration: const BoxDecoration(color: Color(0xFFD34349), shape: BoxShape.circle),
     ),
+  );
+}
+
+/// Masuk sekali dengan sedikit pantulan: skala 0,85 → 1 (easeOutBack) dan memudar, 420 ms setelah jeda [delay].
+/// Hanya untuk momen yang jarang (konfirmasi misi, kartu tersimpan).
+class PopIn extends StatefulWidget {
+  const PopIn({super.key, required this.child, this.delay = Duration.zero});
+
+  final Widget child;
+  final Duration delay;
+
+  @override
+  State<PopIn> createState() => _PopInState();
+}
+
+class _PopInState extends State<PopIn> with SingleTickerProviderStateMixin {
+  static const _run = Duration(milliseconds: 420);
+  late final AnimationController _c = AnimationController(vsync: this, duration: widget.delay + _run);
+  late final Animation<double> _t = CurvedAnimation(
+    parent: _c,
+    curve: Interval(widget.delay.inMilliseconds / (widget.delay + _run).inMilliseconds, 1),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_c.isDismissed) Motion.reduced(context) ? _c.value = 1 : _c.forward();
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _t,
+    builder: (context, child) => Opacity(
+      opacity: Curves.easeOut.transform(_t.value),
+      child: Transform.scale(scale: 0.85 + 0.15 * Curves.easeOutBack.transform(_t.value), child: child),
+    ),
+    child: widget.child,
+  );
+}
+
+/// Masuk cepat untuk hal yang sering terjadi (kata baru di bilah ujaran): skala 0,8 → 1 dan memudar, 180 ms,
+/// sekali saat widget pertama dipasang.
+class QuickIn extends StatefulWidget {
+  const QuickIn({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<QuickIn> createState() => _QuickInState();
+}
+
+class _QuickInState extends State<QuickIn> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 180));
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_c.isDismissed) Motion.reduced(context) ? _c.value = 1 : _c.forward();
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _c,
+    builder: (context, child) {
+      final t = Curves.easeOutCubic.transform(_c.value);
+      return Opacity(
+        opacity: t,
+        child: Transform.scale(scale: 0.8 + 0.2 * t, child: child),
+      );
+    },
+    child: widget.child,
   );
 }

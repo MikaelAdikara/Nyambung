@@ -8,6 +8,8 @@ import '../board/board_screen.dart';
 import '../coach/companion_widgets.dart';
 import '../coach/home_screen.dart';
 import 'parent_pin.dart';
+import 'teacher_mode.dart';
+import 'teacher_pin.dart';
 
 /// Layar pertama setiap kali aplikasi dibuka (setelah pemasangan): "Aku {nama anak}" langsung ke papan anak,
 /// "Aku orang tua" lewat PIN ke beranda orang tua. Anak yang membuka aplikasi sendiri cukup satu ketukan untuk
@@ -90,6 +92,25 @@ class _RoleGateState extends State<RoleGate> with WidgetsBindingObserver {
     }
   }
 
+  /// "Aku guru": PIN guru → mode guru. Keluar (atau PIN kedaluwarsa) kembali ke layar ini.
+  Future<void> _openTeacher() async {
+    final store = TeacherPinStore(_app.prefs);
+    final nav = Navigator.of(context);
+    await nav.push<void>(
+      MaterialPageRoute(
+        builder: (routeContext) => TeacherPinScreen(
+          store: store,
+          onUnlocked: (pin) => Navigator.of(routeContext).pushReplacement(
+            MaterialPageRoute<void>(
+              builder: (modeContext) =>
+                  TeacherModeScreen(pin: pin, store: store, onExit: () => Navigator.of(modeContext).popUntil((r) => r.isFirst)),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   /// Lupa PIN: ketik nama panggilan anak persis seperti saat pemasangan, lalu buat PIN baru.
   Future<void> _forgot(BuildContext routeContext) async {
     final name = TextEditingController();
@@ -170,6 +191,20 @@ class _RoleGateState extends State<RoleGate> with WidgetsBindingObserver {
                       onTap: _openParent,
                     ),
                   ),
+                  // Hanya muncul setelah orang tua membuat PIN guru (Pengaturan → PIN guru).
+                  if (TeacherPinStore(_app.prefs).all().isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    FadeSlideIn(
+                      index: 2,
+                      child: _RoleCard(
+                        title: 'Aku guru',
+                        subtitle: 'Masuk dengan PIN dari orang tua',
+                        icon: Icons.badge_outlined,
+                        colors: const [AppColors.panel, AppColors.panel],
+                        onTap: _openTeacher,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

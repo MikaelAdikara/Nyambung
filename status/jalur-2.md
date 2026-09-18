@@ -7,6 +7,8 @@ Diperbarui: 15:30
 Layar mockup A–C lengkap (18 Sep siang). Belum dibuka di emulator: C3, C5 baru, C6 baru, kartu B1, A5/A6 baru.
 
 ## Tonggak selesai (tag)
+- (18 Sep sore, tanpa tag) Mode guru + Pengaturan → PIN guru (masa berlaku 1/3/5/7 hari atau tanpa batas, catatan
+  frasa per guru), tombol Dengarkan rekaman berubah jadi Berhenti saat diputar, AI papan foto tanpa kata fungsi.
 - (15:30, tanpa tag) Layar pilihan Aku {nama}/orang tua + PIN, generator misi per rutinitas (`misi-w{pekan}-{kata}`),
   pelajaran & misi bergambar, Kelola kosakata (cari, geser, hapus), perbaikan rekam ulang di pemasangan. Dicek di emulator.
 - (14:45, tanpa tag) Frasa bersuara: layar Pengaturan → Frasa bersuara (buat frasa, taruh di papan, jawab usulan

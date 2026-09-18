@@ -1,3 +1,5 @@
+import 'teacher_pins_screen.dart';
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -251,6 +253,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: 'Ganti PIN orang tua',
             subtitle: 'PIN menjaga layar orang tua dari ketukan anak',
             onTap: () => _open(ChangePinScreen(prefs: app!.prefs)),
+          ),
+          const SizedBox(height: 10),
+          NavRow(
+            icon: Icons.badge_outlined,
+            title: 'PIN guru',
+            subtitle: 'Titip akses frasa suara keluarga ke guru, dengan masa berlaku',
+            tint: CompanionColors.sunTint,
+            iconColor: CompanionColors.sunText,
+            onTap: () => _open(const TeacherPinsScreen()),
           ),
           const SizedBox(height: 10),
           NavRow(

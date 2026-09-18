@@ -311,3 +311,31 @@ Format entri:
   modelnya diisi. Dialog persetujuan di aplikasi menyebut OpenAI atau Google sesuai setelan server.
 - **Dampak:** Aturan privasi tetap: foto hanya dikirim setelah persetujuan per permintaan, tidak disimpan server, dan
   hasilnya tetap draf yang wajib diperiksa keluarga.
+
+## 24. AI papan foto tidak lagi memilih kata fungsi, dan area bertumpuk dibuang (18 Sep 2026)
+- **Kondisi sebelumnya:** AI memetakan benda ke kata apa saja dari inventaris (laptop → NANTI, wajah → LAGI) dan
+  bisa mengembalikan kotak besar yang saling menumpuk. Strip jalan pintas di bawah foto memakai gaya bingkai area
+  setinggi 46 dp sehingga tampak terpotong.
+- **Yang diubah:** Aplikasi tidak mengirim kata fungsi (pos pengatur, tanya, sosial, ganti) ke AI; pendamping tetap
+  bisa memilihnya manual. Inventaris membawa `pos` dan `category`. Prompt meminta benda nyata saja (tanpa orang atau
+  wajah), kotak yang tidak menumpuk, dan `null` bila tidak ada kata yang cocok. Server membuang area yang lebih dari
+  separuhnya tertutup area sebelumnya dan tidak memakai satu kata dua kali. Strip bawah menjadi tombol kartu ≥ 64 dp.
+- **Dampak:** AI lebih sering mengembalikan area tanpa kata; itu disengaja, karena kata yang salah lebih buruk
+  daripada kosong. Hasil tetap draf yang wajib diperiksa keluarga.
+
+## 25. Mode guru dengan PIN titipan orang tua (18 Sep 2026)
+- **Kondisi sebelumnya:** Frasa bersuara keluarga dari guru hanya bisa lewat dasbor terapis sebagai usulan yang
+  dijawab keluarga satu per satu (PERUBAHAN #16, #17).
+- **Yang diubah:** Pengaturan → PIN guru: orang tua membuat PIN 4 angka per orang (nama + masa berlaku 1, 3, 5, 7
+  hari, atau tidak kedaluwarsa), lalu bisa memperpanjang, mengaktifkan lagi, atau mencabutnya. Layar pertama
+  menampilkan "Aku guru" setelah ada PIN guru. Mode guru hanya bisa membuat frasa (suara keluarga atau suara papan)
+  dan membuka papan sebagai pendamping; tidak ada akses ke pengaturan, data, atau kosakata. Frasa guru langsung
+  menjadi kartu di papan dan tercatat atas nama pemegang PIN; orang tua melihat daftar itu dan bisa menghapus
+  frasanya. PIN guru harus beda dari PIN orang tua dan PIN guru aktif lain, disimpan SHA-256 bergaram hanya di HP,
+  dicek ulang sebelum setiap frasa, dan mode guru tertutup setelah 5 menit di latar belakang.
+- **Alasan:** permintaan tim. Guru butuh frasa saat itu juga, dan orang tua sering tidak bisa menjawab usulan tepat
+  waktu.
+- **Dampak:** Persetujuan bergeser dari per frasa menjadi titipan per orang (invarian 18 dan 19): orang tua tidak lagi
+  menyetujui tiap kalimat, tetapi memilih siapa yang dipercaya, sampai kapan, dan bisa menghapus setelahnya. PIN
+  hanya berlaku di HP anak, jadi guru membuat frasa di HP itu. Di server frasa guru tercatat sebagai `keluarga`
+  (dibuat dengan token perangkat); nama guru hanya ada di catatan lokal HP.

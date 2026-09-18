@@ -77,12 +77,18 @@ class CompanionController extends ChangeNotifier {
   String? get therapistName => activeLink?.therapist;
   String get routineLabel => routineDisplayLabel(mission.routine);
 
+  /// Label kapital sebuah kata (`kamar_mandi` → `KAMAR MANDI`), bukan `word_id` mentah.
+  String wordLabel(String wordId) => app.symbolById(wordId)?.labelDisplay ?? wordId.replaceAll('_', ' ').toUpperCase();
+
+  /// Label kata misi pekan ini.
+  String get targetLabel => wordLabel(mission.targetWord);
+
   String get weeklySummary {
     final name = child?.nickname ?? 'anak';
     final word = weeklyTopWord;
     if (word == null) return 'Papan belum dipakai $name pekan ini. Tidak apa-apa; contoh dari Ibu dan Ayah tetap berarti.';
     final others = weeklyOtherWords == 0 ? '' : ', dan $weeklyOtherWords kata lain';
-    return 'Pekan ini $name menekan ${word.toUpperCase()} $weeklyTopCount kali$others.';
+    return 'Pekan ini $name menekan ${wordLabel(word)} $weeklyTopCount kali$others.';
   }
 
   Future<void> load() async {
@@ -209,8 +215,17 @@ class CompanionController extends ChangeNotifier {
     await syncNow();
   }
 
+  bool _disposed = false;
+
+  /// Sinkron otomatis bisa selesai setelah beranda ditutup (mis. sesudah "Hapus semua data").
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
   @override
   void dispose() {
+    _disposed = true;
     sync.close();
     links.close();
     super.dispose();

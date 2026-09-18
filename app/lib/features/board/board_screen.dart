@@ -63,6 +63,10 @@ class _BoardScreenState extends State<BoardScreen> {
   bool _started = false;
   int _page = 0;
 
+  /// Halaman yang disarankan lewat penanda di tab (N1: sesudah SAKIT → halaman TUBUH). Hanya penanda;
+  /// papan tidak pindah sendiri dan tidak ada yang menghalangi ketukan berikutnya.
+  final _suggestedPage = ValueNotifier<int?>(null);
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -78,6 +82,7 @@ class _BoardScreenState extends State<BoardScreen> {
   void dispose() {
     _utterance.dispose();
     _parentTurn.dispose();
+    _suggestedPage.dispose();
     super.dispose();
   }
 
@@ -96,12 +101,26 @@ class _BoardScreenState extends State<BoardScreen> {
     _utterance.value = [..._utterance.value, s];
     _app.speech.speakWord(s, byParent: _byParent);
     _log(s.wordId, _page == 0 ? Method.sel : Method.kat);
+    _suggestedPage.value = _suggestionAfter(s);
+  }
+
+  /// SAKIT → tandai halaman TUBUH (halaman kata tubuh diambil dari kosakata, bukan nomor tetap).
+  int? _suggestionAfter(WordSymbol s) {
+    if (s.wordId != 'sakit') return null;
+    final bodyPage = _app.symbolById('perut')?.page;
+    return bodyPage == null || bodyPage == _page ? null : bodyPage;
+  }
+
+  void _openPage(int p) {
+    _suggestedPage.value = null;
+    setState(() => _page = p);
   }
 
   void _onDelete() {
     final words = _utterance.value;
     if (words.isEmpty) return;
     _utterance.value = words.sublist(0, words.length - 1);
+    _suggestedPage.value = null;
     _log(words.last.wordId, Method.hap);
   }
 
@@ -141,7 +160,10 @@ class _BoardScreenState extends State<BoardScreen> {
               onSelect: _onSelect,
             ),
           ),
-          _PageTabs(pages: _app.pages, selected: _page, onSelect: (p) => setState(() => _page = p)),
+          ValueListenableBuilder<int?>(
+            valueListenable: _suggestedPage,
+            builder: (context, suggested, _) => _PageTabs(pages: _app.pages, selected: _page, suggested: suggested, onSelect: _openPage),
+          ),
           if (widget.allowTurnToggle) _TurnToggle(parentTurn: _parentTurn),
         ],
       ),
@@ -291,54 +313,89 @@ class _BoardGrid extends StatelessWidget {
 }
 
 /// Tab halaman bergulir horizontal, ikon + label, tinggi 64 dp.
-class _PageTabs extends StatelessWidget {
-  const _PageTabs({required this.pages, required this.selected, required this.onSelect});
+/// Tab [suggested] diberi garis toska tebal dan digulir ke tampilan tanpa animasi (invarian 11).
+class _PageTabs extends StatefulWidget {
+  const _PageTabs({required this.pages, required this.selected, required this.onSelect, this.suggested});
 
   final List<BoardPage> pages;
   final int selected;
+  final int? suggested;
   final ValueChanged<int> onSelect;
+
+  @override
+  State<_PageTabs> createState() => _PageTabsState();
+}
+
+class _PageTabsState extends State<_PageTabs> {
+  // 13 tab: semuanya dibangun (Row, bukan ListView malas) supaya tab yang disarankan selalu bisa digulir ke tampilan.
+  final _keys = <int, GlobalKey>{};
+
+  @override
+  void didUpdateWidget(_PageTabs old) {
+    super.didUpdateWidget(old);
+    final target = widget.suggested;
+    if (target != null && target != old.suggested) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx = _keys[target]?.currentContext;
+        if (ctx != null && ctx.mounted) Scrollable.ensureVisible(ctx, alignment: 0.5);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 64,
       color: AppColors.sand,
-      child: ListView.separated(
+      child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        itemCount: pages.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 6),
-        itemBuilder: (_, i) {
-          final p = pages[i];
-          final active = p.page == selected;
-          return Semantics(
-            button: true,
-            selected: active,
-            label: p.tabLabel,
-            excludeSemantics: true,
-            child: GestureDetector(
-              onTap: () => onSelect(p.page),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: active ? AppColors.navySoft : AppColors.panel,
-                  border: Border.all(color: active ? AppColors.navy : AppColors.line, width: active ? 3 : 1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(pageIcons[p.page] ?? Icons.grid_view, color: AppColors.navy, size: 22),
-                    const SizedBox(width: 6),
-                    Text(
-                      p.tabLabel,
-                      style: TextStyle(fontSize: 14, fontWeight: active ? FontWeight.w800 : FontWeight.w600, color: AppColors.ink),
-                    ),
-                  ],
-                ),
-              ),
+        child: Row(
+          children: [
+            for (var i = 0; i < widget.pages.length; i++) ...[if (i > 0) const SizedBox(width: 6), _tab(widget.pages[i])],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _tab(BoardPage p) {
+    final active = p.page == widget.selected;
+    final suggested = !active && p.page == widget.suggested;
+    return Semantics(
+      key: _keys.putIfAbsent(p.page, GlobalKey.new),
+      button: true,
+      selected: active,
+      label: p.tabLabel,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: () => widget.onSelect(p.page),
+        child: Container(
+          height: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: active ? AppColors.navySoft : AppColors.panel,
+            border: Border.all(
+              color: active
+                  ? AppColors.navy
+                  : suggested
+                  ? AppColors.teal
+                  : AppColors.line,
+              width: active || suggested ? 3 : 1,
             ),
-          );
-        },
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(pageIcons[p.page] ?? Icons.grid_view, color: suggested ? AppColors.teal : AppColors.navy, size: 22),
+              const SizedBox(width: 6),
+              Text(
+                p.tabLabel,
+                style: TextStyle(fontSize: 14, fontWeight: active || suggested ? FontWeight.w800 : FontWeight.w600, color: AppColors.ink),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

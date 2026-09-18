@@ -33,7 +33,7 @@ class MissionScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [
             Text(
-              'Tekan ${mission.targetWord.toUpperCase()} sambil bicara, 5 kali, saat ${state.routineLabel}.',
+              'Tekan ${state.targetLabel} sambil bicara, 5 kali, saat ${state.routineLabel}.',
               style: const TextStyle(fontSize: 24, height: 1.3, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
@@ -24,6 +25,7 @@ class SymbolCell extends StatefulWidget {
 
 class _SymbolCellState extends State<SymbolCell> {
   Timer? _timer;
+  Offset _down = Offset.zero;
 
   void _cancel() {
     _timer?.cancel();
@@ -45,12 +47,18 @@ class _SymbolCellState extends State<SymbolCell> {
     } else {
       input = Listener(
         behavior: HitTestBehavior.opaque,
-        onPointerDown: (_) {
+        onPointerDown: (e) {
           _cancel();
+          _down = e.position;
           _timer = Timer(Duration(milliseconds: widget.holdMs), () {
             _timer = null;
             widget.onSelect(widget.symbol);
           });
+        },
+        // Jari yang bergeser sedang menggulir, bukan menahan: batalkan. Listener tidak menerima
+        // pointerCancel saat gulir menang di arena gestur.
+        onPointerMove: (e) {
+          if (_timer != null && (e.position - _down).distance > kTouchSlop) _cancel();
         },
         onPointerUp: (_) => _cancel(),
         onPointerCancel: (_) => _cancel(),

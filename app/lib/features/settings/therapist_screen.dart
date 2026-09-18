@@ -52,7 +52,7 @@ class _TherapistScreenState extends State<TherapistScreen> {
     if (mounted) {
       setState(() {
         _connectionMessage = accepted
-            ? 'Diterima. Misi berganti ke ${target.words.first.toUpperCase()}.'
+            ? 'Diterima. Misi berganti ke ${widget.state.wordLabel(target.words.first)}.'
             : 'Ditolak. Terapis akan melihat jawaban ini.';
       });
     }
@@ -138,7 +138,7 @@ class _TherapistScreenState extends State<TherapistScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Usulan kata pekan ini: ${pending.words.first.toUpperCase()}',
+                'Usulan kata pekan ini: ${pending.words.map(widget.state.wordLabel).join(', ')}',
                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
               ),
               if (pending.note != null) ...[const SizedBox(height: 8), Text(pending.note!, style: companionBodyStyle)],

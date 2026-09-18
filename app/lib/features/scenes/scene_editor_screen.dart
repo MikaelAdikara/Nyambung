@@ -10,7 +10,9 @@ import 'package:uuid/uuid.dart';
 import '../../core/app_state.dart';
 import '../../core/constants.dart';
 import '../../core/theme.dart';
+import '../../data/phrase.dart';
 import '../../data/scene.dart';
+import '../../data/sync/phrase_service.dart';
 import '../../data/sync/scene_ai_service.dart';
 import '../coach/companion_widgets.dart';
 import 'scene_geometry.dart';
@@ -41,6 +43,12 @@ class _SceneEditorScreenState extends State<SceneEditorScreen> {
   Timer? _draftTimer;
   bool _dependenciesReady = false;
   bool _restored = false;
+
+  /// Nama benda yang sedang dibuatkan kata baru (untuk teks tombol), null bila tidak ada.
+  String? _making;
+
+  /// Area yang katanya baru dibuat di layar ini, supaya barisnya bisa menyebut "Kata baru".
+  final Set<String> _madeFor = {};
 
   @override
   void initState() {
@@ -212,7 +220,7 @@ class _SceneEditorScreenState extends State<SceneEditorScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Kirim foto untuk dianalisis?'),
         content: const Text(
-          'Foto ini akan dikirim ke server Nyambung dan layanan AI (OpenAI atau Google, sesuai setelan server) untuk membuat usulan area bicara. Nama anak, riwayat ketukan, dan rekaman suara tidak ikut dikirim. Kamu bisa mengatur area sendiri tanpa mengirim foto.',
+          'Foto ini akan dikirim ke server Nyambung dan layanan AI (OpenAI atau Google, sesuai setelan server) untuk membuat usulan area bicara. Benda yang belum ada di kosakata dibuatkan kartu kata baru dengan suara papan. Nama anak, riwayat ketukan, dan rekaman suara tidak ikut dikirim. Kamu bisa mengatur area sendiri tanpa mengirim foto.',
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Atur sendiri')),
@@ -248,11 +256,72 @@ class _SceneEditorScreenState extends State<SceneEditorScreen> {
           }
         });
         _scheduleDraft();
+        await _makeMissingWords([
+          for (final h in _hotspots)
+            if (h.wordId == null && _labelOf(h) != null) h.id,
+        ]);
       }
     } on SceneAiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  static String? _labelOf(DraftHotspot h) {
+    final label = normalizePhraseText(h.observedLabel ?? '');
+    return label.isEmpty || label.length > phraseTextMax ? null : label;
+  }
+
+  /// Benda yang tidak ada di kosakata (mis. "laptop") dibuatkan kartu kata baru: teks dari AI, suara papan lewat
+  /// TTS server (alur frasa bersuara), lalu klipnya disimpan di HP sehingga papan tetap jalan tanpa internet.
+  /// Kata yang labelnya sudah ada di papan dipakai ulang, tidak digandakan.
+  Future<void> _makeMissingWords(List<String> hotspotIds) async {
+    if (hotspotIds.isEmpty) return;
+    final service = PhraseService(_app);
+    final voice = _app.voiceSet == PhraseVoice.cewe ? PhraseVoice.cewe : PhraseVoice.cowo;
+    final failed = <String>[];
+    String? reason;
+    setState(() => _busy = true);
+    try {
+      for (final id in hotspotIds) {
+        final hotspot = _hotspots.where((h) => h.id == id).firstOrNull;
+        final label = hotspot == null ? null : _labelOf(hotspot);
+        if (hotspot == null || label == null || hotspot.wordId != null) continue;
+        if (mounted) setState(() => _making = label);
+        try {
+          final existing = _app.visibleSymbols.where((s) => s.labelDisplay.toLowerCase() == label.toLowerCase()).firstOrNull;
+          final wordId =
+              existing?.wordId ??
+              (await _app.addPhraseCard(
+                await service.create(label, voice),
+                page: _app.objectWordPage,
+                pos: 'benda',
+                category: 'benda',
+              )).wordId;
+          if (!mounted) return;
+          setState(() {
+            _madeFor.add(id);
+            _hotspots = [for (final h in _hotspots) h.id == id ? h.copyWith(wordId: wordId) : h];
+          });
+          _scheduleDraft();
+        } on PhraseException catch (e) {
+          failed.add(label);
+          reason = e.message;
+          // Tanpa tautan atau internet, sisa area pasti gagal juga.
+          if (e.needsLink) break;
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _making = null;
+          if (failed.isNotEmpty) {
+            _error = 'Kata baru untuk ${failed.join(', ')} belum bisa dibuat. ${reason ?? ''} Pilih kata sendiri atau coba lagi.';
+          }
+        });
+      }
     }
   }
 
@@ -315,7 +384,7 @@ class _SceneEditorScreenState extends State<SceneEditorScreen> {
               OutlinedButton.icon(
                 onPressed: _busy ? null : _askAi,
                 icon: const Icon(Icons.auto_awesome),
-                label: Text(_busy ? 'Menganalisis…' : 'Bantu pilih dengan AI'),
+                label: Text(_making != null ? 'Membuat kata "$_making"…' : (_busy ? 'Menganalisis…' : 'Bantu pilih dengan AI')),
               ),
               TextButton.icon(
                 onPressed: _busy ? null : () => _pick(ImageSource.gallery),
@@ -348,30 +417,56 @@ class _SceneEditorScreenState extends State<SceneEditorScreen> {
 
   Widget _mappingRow(int index) {
     final hotspot = _hotspots[index];
+    final label = _labelOf(hotspot);
+    final made = _madeFor.contains(hotspot.id) && hotspot.wordId != null;
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: DropdownButtonFormField<String>(
-                initialValue: hotspot.wordId != null && _app.visibleSymbols.any((s) => s.wordId == hotspot.wordId) ? hotspot.wordId : null,
-                decoration: InputDecoration(
-                  labelText: hotspot.observedLabel == null ? 'Area ${index + 1}' : 'AI melihat: ${hotspot.observedLabel}',
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    // Kunci ikut word_id: kata yang dibuat otomatis mengganti pilihan tanpa ketukan.
+                    key: ValueKey('${hotspot.id}:${hotspot.wordId}'),
+                    initialValue: hotspot.wordId != null && _app.visibleSymbols.any((s) => s.wordId == hotspot.wordId)
+                        ? hotspot.wordId
+                        : null,
+                    decoration: InputDecoration(
+                      labelText: made
+                          ? 'Kata baru dari AI: ${hotspot.observedLabel}'
+                          : hotspot.observedLabel == null
+                          ? 'Area ${index + 1}'
+                          : 'AI melihat: ${hotspot.observedLabel}',
+                    ),
+                    items: [
+                      for (final symbol in _app.visibleSymbols) DropdownMenuItem(value: symbol.wordId, child: Text(symbol.labelDisplay)),
+                    ],
+                    onChanged: (word) {
+                      final next = [..._hotspots];
+                      next[index] = hotspot.copyWith(wordId: word, clearWord: word == null);
+                      _setHotspots(next);
+                    },
+                  ),
                 ),
-                items: [for (final symbol in _app.visibleSymbols) DropdownMenuItem(value: symbol.wordId, child: Text(symbol.labelDisplay))],
-                onChanged: (word) {
-                  final next = [..._hotspots];
-                  next[index] = hotspot.copyWith(wordId: word, clearWord: word == null);
-                  _setHotspots(next);
-                },
+                IconButton(
+                  tooltip: 'Hapus area',
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: () => _setHotspots([..._hotspots]..removeAt(index)),
+                ),
+              ],
+            ),
+            if (hotspot.wordId == null && label != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: TextButton.icon(
+                  onPressed: _busy ? null : () => _makeMissingWords([hotspot.id]),
+                  icon: const Icon(Icons.add_circle_outline_rounded),
+                  label: Text('Buat kata "$label"'),
+                ),
               ),
-            ),
-            IconButton(
-              tooltip: 'Hapus area',
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () => _setHotspots([..._hotspots]..removeAt(index)),
-            ),
           ],
         ),
       ),

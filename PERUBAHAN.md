@@ -339,3 +339,15 @@ Format entri:
   menyetujui tiap kalimat, tetapi memilih siapa yang dipercaya, sampai kapan, dan bisa menghapus setelahnya. PIN
   hanya berlaku di HP anak, jadi guru membuat frasa di HP itu. Di server frasa guru tercatat sebagai `keluarga`
   (dibuat dengan token perangkat); nama guru hanya ada di catatan lokal HP.
+
+## 26. Benda yang tidak ada di kosakata dibuatkan kata baru bersuara (18 Sep 2026)
+- **Kondisi sebelumnya:** Area papan foto tanpa kata yang cocok (mis. laptop) tetap kosong dan harus dipetakan
+  manual ke kata yang ada, padahal kata yang pas memang belum ada.
+- **Yang diubah:** Setelah bantuan AI, setiap area tanpa kata dibuatkan kartu kata baru dari `observed_label` AI.
+  Suaranya dibuat sekali lewat alur frasa bersuara (OpenAI TTS, suara papan cowok/cewek sesuai setelan), klipnya
+  disimpan di HP, dan kartunya ditaruh di halaman BENDA dengan pos `benda` sehingga ikut ditawarkan ke AI pada foto
+  berikutnya. Label yang sudah ada di papan dipakai ulang. Bila gagal (tanpa tautan, internet, atau batas harian),
+  area tetap kosong dengan tombol "Buat kata …" untuk mencoba lagi.
+- **Dampak:** Tidak ada perubahan API server. Kata baru langsung masuk papan walau papan foto tidak jadi disimpan;
+  orang tua bisa menghapusnya di Kelola kosakata. Kartu kata baru belum bergambar (tampil huruf pertama) dan dihitung
+  dalam batas 30 frasa per hari.

@@ -247,7 +247,13 @@ class AppState extends ChangeNotifier {
 
   /// Taruh frasa (yang klipnya sudah terunduh) sebagai kartu di slot kosong berikutnya di [page]. Kartu yang
   /// sudah ada tidak digandakan. Sel lain tidak bergeser (invarian 8).
-  Future<WordSymbol> addPhraseCard(Phrase p, {int? page}) async {
+  /// Halaman kata benda baru dari papan foto: BENDA bila ada, selain itu halaman frasa bawaan.
+  int? get objectWordPage =>
+      pages.where((p) => p.page != 0 && p.tabLabel.startsWith('BENDA')).map((p) => p.page).firstOrNull ?? defaultPhrasePage;
+
+  /// [pos]/[category] bawaan menandai kartu frasa. Kata benda dari papan foto memakai `benda`, supaya kata itu ikut
+  /// ditawarkan ke AI pada foto berikutnya (kata ber-pos `sosial` disaring sebagai kata fungsi).
+  Future<WordSymbol> addPhraseCard(Phrase p, {int? page, String pos = 'sosial', String category = 'frasa'}) async {
     final existing = phraseCard(p);
     if (existing != null) return existing;
     final target = page ?? defaultPhrasePage;
@@ -258,8 +264,8 @@ class AppState extends ChangeNotifier {
       wordId: p.wordId,
       labelDisplay: p.text.toUpperCase(),
       labelSpeech: p.text,
-      pos: 'sosial',
-      category: 'frasa',
+      pos: pos,
+      category: category,
       page: target,
       positionIndex: nextCardSlot(target),
       symbolPath: '',

@@ -8,6 +8,8 @@ import '../../core/constants.dart';
 import '../../core/error_log.dart';
 import '../coach/companion_widgets.dart';
 import '../coach/mission_rules.dart';
+import '../vocab/family_voice_screen.dart';
+import '../vocab/manage_vocab_screen.dart';
 import 'export_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -71,6 +73,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await Future<void>.delayed(const Duration(milliseconds: 300));
     if (mounted) setState(() {});
   }
+
+  /// Ganti set klip suara papan lalu perdengarkan "mau" dengan suara baru itu (ketukan anak).
+  Future<void> _changeVoiceSet(String set) async {
+    final app = _app!;
+    await app.setVoiceSet(set);
+    if (mounted) setState(() {});
+    final mau = app.symbolById('mau');
+    if (mau != null) await app.speech.speakWord(mau, byParent: false);
+  }
+
+  void _open(Widget screen) => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
 
   Future<void> _changeRoutine(String routine) async {
     await _app!.updateRoutine(routine);
@@ -167,6 +180,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const Text('Suara papan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              const Text('Suara saat anak menekan kata. Klip tersimpan di aplikasi, jalan tanpa internet.', style: companionMutedStyle),
+              RadioGroup<String>(
+                groupValue: _app?.voiceSet,
+                onChanged: (value) => value == null ? null : _changeVoiceSet(value),
+                child: const Column(
+                  children: [
+                    RadioListTile<String>(contentPadding: EdgeInsets.zero, value: 'cowo', title: Text('Suara cowok')),
+                    RadioListTile<String>(contentPadding: EdgeInsets.zero, value: 'cewe', title: Text('Suara cewek')),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        CompanionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               const Text('Tahan untuk memilih', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
               const Text('Untuk anak yang tangannya sering menyenggol layar.', style: companionMutedStyle),
               DropdownButton<int>(
@@ -212,6 +245,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         const SizedBox(height: 12),
+        ListTile(
+          title: const Text('Suara keluarga'),
+          subtitle: const Text('Rekam suara Ibu atau Ayah untuk kata inti'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => _open(const FamilyVoiceScreen()),
+        ),
+        ListTile(
+          title: const Text('Kelola kosakata'),
+          subtitle: const Text('Sembunyikan kata tanpa memindahkan posisinya'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => _open(const ManageVocabScreen()),
+        ),
         ListTile(title: const Text('Ekspor catatan'), trailing: const Icon(Icons.chevron_right), onTap: _export),
         ListTile(title: const Text('Diagnosa'), trailing: const Icon(Icons.chevron_right), onTap: _showDiagnostics),
         ListTile(title: const Text('Hapus semua data'), trailing: const Icon(Icons.chevron_right), onTap: _deleteAllData),

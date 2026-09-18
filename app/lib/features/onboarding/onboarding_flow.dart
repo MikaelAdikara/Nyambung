@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/app_state.dart';
 import '../coach/companion_widgets.dart';
 import '../coach/mission_rules.dart';
+import 'family_voice_recorder.dart';
 
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({super.key, this.onFinished});
@@ -279,28 +280,46 @@ class _BoardPreviewPage extends StatelessWidget {
   );
 }
 
-class _FamilyVoicePage extends StatelessWidget {
+class _FamilyVoicePage extends StatefulWidget {
   const _FamilyVoicePage({required this.onNext});
 
   final VoidCallback onNext;
 
   @override
+  State<_FamilyVoicePage> createState() => _FamilyVoicePageState();
+}
+
+class _FamilyVoicePageState extends State<_FamilyVoicePage> {
+  String? _recording;
+
+  Future<void> _save() async {
+    final path = _recording;
+    if (path == null) return;
+    final app = AppScope.of(context);
+    await app.symbolDao.setFamilyAudio('mau', path);
+    await app.reloadSymbols();
+    widget.onNext();
+  }
+
+  @override
   Widget build(BuildContext context) => _PageShell(
     title: 'Rekam suara Ibu atau Ayah (boleh dilewati)',
-    body: const [
-      Text(
+    body: [
+      const Text(
         'Suara ini dipakai saat Ibu atau Ayah memberi contoh di papan, supaya anak mendengar orang yang dikenalnya. Saat anak sendiri yang menekan, papan bicara dengan suara anak, karena itu suaranya. Rekaman tersimpan di perangkat ini saja dan tidak pernah dikirim ke siapa pun, termasuk terapis.',
         style: companionBodyStyle,
       ),
+      const SizedBox(height: 16),
+      FamilyVoiceRecorder(onRecorded: (path) => setState(() => _recording = path)),
     ],
     bottom: Row(
       children: [
         Expanded(
-          child: EqualOutlineButton(label: 'Lewati', onPressed: onNext),
+          child: EqualOutlineButton(label: 'Lewati', onPressed: widget.onNext),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: EqualOutlineButton(label: 'Simpan', onPressed: onNext),
+          child: EqualOutlineButton(label: 'Simpan', onPressed: _recording == null ? null : _save),
         ),
       ],
     ),

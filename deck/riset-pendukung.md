@@ -52,10 +52,11 @@ anak autis. Di deck, manfaatnya ditandai **hipotesis tim (D)** dan diuji di pilo
 
 | Aset | Asal | Lisensi dan catatan |
 |---|---|---|
-| **85 simbol** | **Mulberry Symbols** v3.6.1 © **Steve Lee**. Digambar desainer grafis Claire Barge dan ditinjau terapis wicara. Diunduh 13 Sep 2026 dari rilis resmi GitHub (SHA-256 tercatat). SVG asli tidak diubah, hanya dirasterkan ke PNG 256 px | **CC BY-SA 4.0**: boleh dipakai komersial, wajib atribusi, turunan berlisensi sama; simbolnya sendiri tidak boleh dijual. Mulberry dirancang untuk **pengguna dewasa**; kecocokan untuk anak Indonesia diuji di pilot |
-| **35 simbol buatan tim** | Kata tanpa padanan jujur di Mulberry (mis. TIDAK, YA, BERHENTI, SAKIT, AKU, ITU), digambar tim dengan gaya dan konvensi yang sama (`05-kosakata-dan-simbol.md` §6) | CC BY-SA 4.0. **Belum selesai digambar**; sementara tampil sebagai huruf pertama. Belum diuji pada anak |
+| **99 simbol** | **Mulberry Symbols** v3.6.1 © **Steve Lee**. Digambar desainer grafis Claire Barge dan ditinjau terapis wicara. Diunduh 13 Sep 2026 dari rilis resmi GitHub (SHA-256 tercatat). SVG asli tidak diubah, hanya dirasterkan ke PNG 256 px berwarna (85 awal + 14 padanan yang ditemukan kemudian; `PERUBAHAN.md` entri 18) | **CC BY-SA 4.0**: boleh dipakai komersial, wajib atribusi, turunan berlisensi sama; simbolnya sendiri tidak boleh dijual. Mulberry dirancang untuk **pengguna dewasa**; kecocokan untuk anak Indonesia diuji di pilot |
+| **21 simbol buatan tim** | Kata tanpa padanan jujur di Mulberry (mis. BERHENTI, AKU), digambar tim dengan gaya dan konvensi yang sama (`05-kosakata-dan-simbol.md` §6) | CC BY-SA 4.0. Belum diuji pada anak |
 | **120 kata** | Riset tim: Banajee dkk. (2003), Project Core Universal Core, frekuensi OpenSubtitles 2018 (hermitdave/FrequencyWords, kode MIT; data OPUS) | Frekuensi dari dialog film dewasa, hanya pemecah seri |
 | **Suara papan** 2 × 120 klip | Dibuat sekali saat Hack Day dengan OpenAI TTS (`gpt-4o-mini-tts`, suara *fable* dan *marin*), dibundel di APK, diputar luring | Suara **sintetis buatan AI**; pendengar wajib diberi tahu. Lafal belum ditinjau satu per satu |
+| **Frasa bersuara dan tiruan suara** | Frasa dibuat server sekali dengan OpenAI TTS; tiruan suara keluarga lewat ElevenLabs hanya atas persetujuan orang tua (`PERUBAHAN.md` entri 16 dan 17) | Server hanya menyimpan `voice_id`, bukan rekaman; suara tiruan disimpan penyedia sampai dicabut |
 | **Font** Fredoka, Nunito | Google Fonts | SIL Open Font License 1.1 |
 | **Logo, awan, matahari** | Buatan tim | Milik tim |
 | **Jejak audit** | 175 berkas aset diverifikasi SHA-256 (`assets/PROVENANCE.md`, `PROVENANCE.sha256`) | Yang dibawa sebelum acara hanya konten, bukan kode (ketentuan panitia 9) |

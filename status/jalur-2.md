@@ -1,10 +1,14 @@
 # Status jalur 2 — Pendamping
-Diperbarui: 10:45
+Diperbarui: 11:20
+
+**Mulai 11:20 semua jalur bekerja langsung di `main`** (tidak ada lagi kerja paralel; branch jalur sudah tergabung).
 
 ## Sedang dikerjakan
 2.8 sisa: C2 sembunyikan kata dan C3 kartu foto tidak dikerjakan (urutan buang #1). Pengerasan bersama jalur 1.
 
 ## Tonggak selesai (tag)
+- (11:20, tanpa tag) C2 Kelola kosakata, C4 Suara keluarga per kata inti, pilihan Suara papan cowok/cewek,
+  Sekarang → Nanti, "Hari ini" di C1, sinkron otomatis tiap 20 dtk + saat aplikasi aktif. C2 dan C1 diuji di emulator
 - j2-layar (10:00): seluruh layar terhubung AppState/DAO
 - j2-misi: B1 → B2 → papan bersama → pendamping tekan MAU 2× → "2 dari 5"; B6 Selesai → 1 peristiwa MIS + `mission_log`
   (`reps_counted` dari ketukan); B3 lima pelajaran dari 02 §6

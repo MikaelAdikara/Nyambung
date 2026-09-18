@@ -1,10 +1,14 @@
 # Status jalur 4 — Dasbor
-Diperbarui: 10:42
+Diperbarui: 11:20
+
+**Mulai 11:20 semua jalur bekerja langsung di `main`** (tidak ada lagi kerja paralel; branch jalur sudah tergabung).
 
 ## Sedang dikerjakan
 Paruh kedua: PERUBAHAN.md (terus-menerus), lalu naskah demo, deck, video. Siap menyaksikan `int-1-hp-ke-d2`.
 
 ## Tonggak selesai (tag)
+- (11:20, tanpa tag) D1 alasan "Perlu ditinjau"; D2 kartu Perlu diperiksa + target diterima + label "tanpa contoh ≤ 60 dtk".
+  `npm run build` + lint bersih, dicek di mode demo
 - 4.1 kerangka: Vite + React + TS tanpa pustaka UI/router/grafik, hash routing D1–D4, `prepare-public`
 - 4.2 lapisan data (`j4-data`): `data.ts` sumber api | demo; token terapis di sessionStorage;
   otomatis demo + alasan bila `/v1/health` tidak menjawab `ok`; pita DATA ILUSTRATIF di setiap halaman mode demo.

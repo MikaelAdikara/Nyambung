@@ -1,5 +1,7 @@
 # Status jalur 1 — Papan
-Diperbarui: 10:55
+Diperbarui: 11:20
+
+**Mulai 11:20 semua jalur bekerja langsung di `main`** (tidak ada lagi kerja paralel; branch jalur sudah tergabung).
 
 ## Sedang dikerjakan
 1.7 Pengerasan: tinggal uji HP fisik + RAM 2 GB (butuh perangkat). j1-suara ditahan: rekaman suara sedang dibuat manusia
@@ -13,6 +15,8 @@ Diperbarui: 10:55
 - j1-kunci: screen pinning; Home tidak keluar dari papan anak (PINNED), tahan TAHAN 1,5 dtk → keluar + lepas kunci
 
 ## Selesai tanpa tag
+- Penanda tab TUBUH setelah SAKIT (N1); tahan-untuk-memilih batal saat jari menggulir; label kata misi memakai
+  `label_display`. Diuji di emulator: SAKIT → tab TUBUH bergaris toska → PERUT → UCAPKAN "sakit perut"
 - Hapus semua data juga menghapus rekaman keluarga dan berkas ekspor sementara (permintaan jalur 2, invarian 18)
 - Tanda tangan rilis: `android/key.properties` + `nyambung-release.jks` (dibuat 18 Sep, di-gitignore) dibaca lewat
   `rootProject.file`; tanpa berkas itu rilis ditandatangani kunci debug. APK rilis arm64 = 18,8 MB, apksigner: CN=Nyambung

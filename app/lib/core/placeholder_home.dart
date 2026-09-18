@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../features/board/board_screen.dart';
 import 'app_state.dart';
+import 'cached_future.dart';
 import 'constants.dart';
 import 'theme.dart';
 
@@ -35,6 +37,8 @@ class PlaceholderOnboarding extends StatelessWidget {
   }
 }
 
+final _counts = CachedFuture<List<int>>();
+
 /// Pengganti sementara B1 (beranda, milik jalur 2).
 class PlaceholderHome extends StatelessWidget {
   const PlaceholderHome({super.key});
@@ -57,6 +61,27 @@ class PlaceholderHome extends StatelessWidget {
                   'Kosakata: ${app.allSymbols.length} kata di ${app.pages.length} halaman.',
                 ),
               ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          FilledButton(
+            onPressed: () => Navigator.of(context).push(BoardScreen.childRoute()),
+            child: const Text('Buka Papan Bicara untuk anak'),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton(
+            onPressed: () =>
+                Navigator.of(context)
+                    .push(MaterialPageRoute<void>(builder: (_) => const BoardScreen(missionContext: 'misi-w1', allowTurnToggle: true))),
+            child: const Text('Papan misi (uji)'),
+          ),
+          const SizedBox(height: 16),
+          ListenableBuilder(
+            listenable: app,
+            builder: (context, _) => FutureBuilder<List<int>>(
+              future: _counts.get(app.dataVersion, () async => [await app.eventDao.totalCount(), await app.eventDao.outboxCount()]),
+              builder: (context, snap) =>
+                  Text(snap.hasData ? 'Catatan: ${snap.data![0]} · menunggu terkirim: ${snap.data![1]}' : '', key: const Key('counts')),
             ),
           ),
           const SizedBox(height: 8),

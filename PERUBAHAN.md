@@ -56,3 +56,58 @@ Format entri:
     1,0 / 1,3 hilang;
   - pilihan cowok/cewek belum punya tombol di Pengaturan, jadi semua perangkat memakai suara cowok.
   Entri 2 ("kata selain MAU memakai suara HP") perlu disesuaikan: kata selain MAU sekarang memakai klip bundel ini.
+
+## 4. Kelola kosakata (C2) dan suara keluarga per kata (C4) akhirnya dibangun (11:20, jalur 1 & 2)
+- **Kondisi di proposal:** C2 menyembunyikan simbol tanpa menggeser posisinya; C4 merekam suara ibu atau ayah per kata
+  inti. Entri 1 dan 2 mencatat keduanya ditunda.
+- **Yang diubah:** Pengaturan kini punya **Kelola kosakata**: ketuk kata untuk menyembunyikan atau menampilkannya lagi,
+  dan kata yang disembunyikan tetap memegang slotnya. Ada juga **Suara keluarga**: 12 kata inti dengan status rekaman,
+  plus tombol rekam, dengarkan, ulangi, dan hapus. Pilihan **Suara papan** (cowok/cewek) juga sudah ada, jadi batasan
+  terakhir di entri 3 tidak berlaku lagi.
+- **Alasan:** Jalur kritis (papan, outbox, sinkron, target) sudah hidup, sehingga waktu tersisa dipakai untuk layar
+  proposal yang paling murah dan tidak butuh paket baru.
+- **Dampak terhadap masalah inti:** M2 menguat karena anak mendengar suara orang tuanya pada 12 kata inti, tidak hanya MAU.
+  Yang **masih belum ada**: menambah kata atau kartu baru (C3 kartu foto), dan rekaman untuk kata di luar halaman inti.
+
+## 5. Penanda tab TUBUH setelah SAKIT (11:20, jalur 1)
+- **Kondisi di proposal:** SAKIT ada di posisi tetap halaman inti, dan kata tubuh ada di halaman TUBUH. Belum ada jalan
+  pintas dari SAKIT ke TUBUH.
+- **Yang diubah:** Setelah SAKIT diketuk, tab TUBUH digulir ke tampilan dan diberi garis toska. Papan tidak pindah
+  halaman sendiri, tidak ada pop-up, tidak ada kosakata baru, dan tidak ada peristiwa tambahan. Kata tubuh yang diketuk
+  tetap tercatat sebagai `KAT`.
+- **Alasan:** Mempersingkat jalur "SAKIT + PERUT" tanpa sistem nyeri baru dan tanpa skala intensitas.
+- **Dampak terhadap masalah inti:** Memperluas komunikasi fungsional S1 (M1). Ini bukan alat diagnosis: aplikasi tidak
+  menyimpulkan penyebab atau tingkat sakit.
+
+## 6. Sekarang → Nanti dan linimasa "Hari ini" (11:20, jalur 2)
+- **Kondisi di proposal:** Misi menempel pada rutinitas, tapi belum ada urutan visual dua langkah. C1 hanya menampilkan
+  ringkasan per pekan.
+- **Yang diubah:** Beranda punya tombol **Sekarang → Nanti**: orang tua memilih dua kata yang sudah ada, lalu
+  menunjukkannya ke anak sebagai dua kartu besar. Pasangan kata ini hanya disimpan di preferensi perangkat, tidak
+  menjadi peristiwa, dan tidak dikirim ke server. C1 dibuka dengan bagian **Hari ini**, yaitu ujaran hari ini yang
+  disusun otomatis dari log peristiwa. MIS dan TGT tidak pernah ditampilkan sebagai ujaran.
+- **Alasan:** Data pemakaian lebih mudah dibaca keluarga dalam bentuk kalimat daripada grafik. Urutan kegiatan juga
+  membantu rutinitas. Tidak ada formulir tambahan.
+- **Dampak terhadap masalah inti:** Mendukung M2 dan M3 dari sisi keluarga. Urutan visual ini **belum punya rujukan di
+  `03-basis-ilmiah.md`**, jadi tidak diklaim berbasis bukti.
+
+## 7. Sinkron otomatis berkala (11:20, jalur 2)
+- **Kondisi di proposal:** Peristiwa dikirim oleh pekerja latar saat jaringan tersedia.
+- **Yang diubah:** Sebelumnya pengiriman hanya terjadi saat beranda dibuka, setelah kembali dari papan, atau lewat
+  **Kirim sekarang**. Sekarang beranda juga mencoba kirim setiap 20 detik, dan sekali lagi saat aplikasi kembali aktif,
+  sambil menarik usulan terapis. Ini hanya berjalan selama aplikasi terbuka. Belum ada layanan latar Android
+  (WorkManager) yang jalan saat aplikasi tertutup.
+- **Alasan:** Supaya skenario "mode pesawat dimatikan → catatan sampai ke terapis" berjalan tanpa tombol.
+- **Dampak terhadap masalah inti:** Jembatan M3 terasa otomatis. Luring tetap keadaan biasa, bukan peringatan.
+
+## 8. Dasbor menjelaskan alasan "Perlu ditinjau" dan mengganti label "spontan" (11:20, jalur 4)
+- **Kondisi di proposal:** D1 memberi badge Perlu ditinjau. D2 menampilkan "rasio ujaran spontan".
+- **Yang diubah:** Setiap badge di D1 sekarang disertai alasannya, diambil dari aturan `needs_review` yang sudah beku.
+  D2 menampilkan kartu **Perlu diperiksa** yang juga memuat penurunan kata berbeda lebih dari 50% dan target diterima
+  yang belum dipakai selama 7 hari, beserta kalimat bahwa ini aturan tetap, bukan kesimpulan klinis. D2 juga
+  menampilkan pemakaian target yang diterima. Kartu "Ketukan spontan" diganti namanya menjadi **"Ketukan anak tanpa
+  contoh ≤ 60 dtk"**. Kontrak API tidak berubah.
+- **Alasan:** Aplikasi tidak merekam suara, jadi tidak bisa tahu apakah anak dipancing secara lisan. Label yang jujur
+  hanya menyebut apa yang teramati. Alasan yang terlihat membuat triase terapis bisa dijelaskan.
+- **Dampak terhadap masalah inti:** M4: terapis bisa langsung melihat siapa yang perlu ditinjau dan kenapa. Nama medan
+  `spontaneous_ratio` di API tetap sama. Teks D4 sejak awal sudah memakai rumusan "tanpa contoh dalam 60 detik".

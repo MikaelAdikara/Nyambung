@@ -1,12 +1,18 @@
 # Status jalur 4 — Dasbor
-Diperbarui: 13:55
+Diperbarui: 15:08
 
 **Mulai 11:20 semua jalur bekerja langsung di `main`** (tidak ada lagi kerja paralel; branch jalur sudah tergabung).
 
 ## Sedang dikerjakan
-Paruh kedua: PERUBAHAN.md (terus-menerus), lalu naskah demo, deck, video. Siap menyaksikan `int-1-hp-ke-d2`.
+Deck + naskah pitch draf siap di `deck/`. Menunggu: nama + kutipan asli Ketum FORMAPI UB, slide hook & judul (manual),
+cek fitur kompetitor, status uji HP fisik. Lalu latihan dengan stopwatch dan video (J22).
 
 ## Tonggak selesai (tag)
+- (15:08, tanpa tag) `deck/Nyambung-Pitch-Deck.pptx` + `.pdf`: 13 slide pitch (4 pilar wajib) + 3 lampiran Q&A,
+  palet mint-tosca aplikasi, tangkapan layar dasbor asli (mode demo, berlabel ilustratif). `deck/naskah-pitch.md`:
+  naskah 5 menit per slide + Q&A + asal angka. `deck/riset-pendukung.md`: riset misi harian dan asal aset,
+  sumber dicek ke penerbit/PubMed/PDF (NCAEP 2020, Wetherby 2014, Biggs 2018, Gollwitzer & Sheeran 2006, Lally 2010,
+  Keller 2021, Millar 2006, Mizuko 1987)
 - (13:55, tanpa tag) D4 dibangun penuh: butir "Sebelum sesi, dari data rumah" + Salin ringkasan, formulir catatan
   (tanggal, catatan, fokus, sesi berikutnya) → server, tabel sesi sebelumnya + Ubah, Kirim ringkasan ke keluarga
   (teks bisa disunting). Mode demo: formulir nonaktif, sesi ilustratif Arka tampil. PERUBAHAN.md entri 13–15
@@ -40,6 +46,9 @@ Naskah demo J12–J20, deck J14–
 - (kosong)
 
 ## Permintaan ke jalur lain
+- ke jalur 3 / semua: sepakati sumber baru di `deck/riset-pendukung.md` masuk ke `docs/hackday/03-basis-ilmiah.md`,
+  supaya kutipan deck dan jawaban juri tetap dari satu sumber.
+- ke jalur 1: kabari hasil uji HP fisik 2 GB; slide Kelayakan masih menulis "belum diuji di HP fisik".
 - ke jalur 2 / semua: D2 sudah di `main` (`j4-d1d2`), `int-1-hp-ke-d2` bisa diuji. Buka dasbor, masuk dengan token
   terapis yang sama dengan server, D1 → anak → D2.
 - ke jalur 3: dasbor jalan dengan `cd dashboard && npm install && npm run dev` → `http://127.0.0.1:5173`

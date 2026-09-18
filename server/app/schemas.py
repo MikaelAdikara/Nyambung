@@ -120,3 +120,46 @@ class TargetOut(BaseModel):
     status: Literal["usulan", "diterima", "ditolak"]
     answered_at: Optional[str]
     used_count_since_accept: int
+
+
+class SessionNoteIn(StrictModel):
+    session_date: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+    note: str = Field(min_length=1, max_length=4000)
+    focus: Optional[str] = Field(default=None, max_length=200)
+    # Waktu lokal sesi berikutnya, mis. 2026-09-23T15:30 (tanpa zona: jadwal tatap muka, bukan stempel peristiwa).
+    next_session: Optional[str] = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$")
+
+
+class SessionShareIn(StrictModel):
+    family_text: str = Field(min_length=1, max_length=1000)
+
+
+class SessionNoteOut(BaseModel):
+    note_id: str
+    child_id: str
+    therapist: str
+    session_date: str
+    note: str
+    focus: Optional[str]
+    next_session: Optional[str]
+    created_at: str
+    updated_at: str
+    family_text: Optional[str]
+    shared_at: Optional[str]
+
+
+class SharedSummaryOut(BaseModel):
+    """Yang diterima perangkat keluarga: hanya ringkasan yang dikirim terapis, tanpa catatan sesi."""
+
+    summary_id: str
+    therapist: str
+    session_date: str
+    family_text: str
+    focus: Optional[str]
+    next_session: Optional[str]
+    shared_at: str
+
+
+class ReviewTimeIn(StrictModel):
+    child_id: str = Field(min_length=1, max_length=64)
+    seconds: int = Field(ge=5, le=3600)

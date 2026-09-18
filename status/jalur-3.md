@@ -1,10 +1,14 @@
 # Status jalur 3 — Server
-Diperbarui: 11:00
+Diperbarui: 13:55
 
 ## Sedang dikerjakan
 3.7 APK rilis: tanda tangan siap (keystore baru 18 Sep, jalur 1 menambah signingConfig). Tag j3-apk menunggu int-1-hp-ke-d2 (HP fisik)
 
 ## Tonggak selesai (tag)
+- (13:55, tanpa tag) Catatan sesi D4: tabel `session_note`, `GET/POST/PUT /v1/children/{id}/sessions`,
+  `POST .../sessions/{note_id}/share` (hanya `family_text` sampai ke keluarga), `GET /v1/children/{id}/shared-summaries`
+  untuk perangkat. Waktu tinjauan D1: tabel `review_log`, `POST /v1/review-time`, rerata 30 hari di `/v1/children`.
+  45 tes pytest lulus
 - j0-repo: kerangka repo, hash aset 175/175 OK
 - j3-sync: `POST /v1/sync/events` idempoten, 422 untuk medan tak dikenal dan `ts_device` tanpa zona, trigger append-only
 - j3-auth: undangan, tebus, cabut, token Bearer (SHA-256), 401/403/404/410 sesuai kontrak
@@ -44,6 +48,9 @@ j3-apk setelah int-1-hp-ke-d2; README diuji ulang di J23 di laptop lain
   `/summary` sebagai 2 kata berbeda. Belum dilihat di layar D2 dan belum dari HP fisik, jadi `int-1-hp-ke-d2` belum ditag.
 
 ## Perubahan API/kontrak yang perlu diketahui
+- (13:55) Endpoint baru, endpoint lama tidak berubah: catatan sesi (terapis pemiliknya saja), `share` → ringkasan
+  keluarga, `shared-summaries` (token perangkat; tanpa `note`), `review-time` (204). `/v1/children` menambah
+  `review_avg_minutes` dan `review_count_30d`. Semua masukan baru menolak medan tak dikenal (422).
 - Tidak mengubah kontrak. CORS dibuka (`*`) supaya dasbor di port lain bisa memanggil API dengan header Bearer.
 
 ## Cara menjalankan (untuk tim)

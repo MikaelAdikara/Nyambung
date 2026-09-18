@@ -24,6 +24,7 @@ dasbor mode demo. Angka keduanya HARUS sama untuk data yang sama. Dibekukan di J
 | linked_weeks | floor(hari sejak linked_at tautan aktif tertua / 7); null bila tidak tertaut |
 | needs_review (D1) | last_sync kosong atau > 7 hari, atau trend_3w = turun, atau missions_done ≤ 1 (jendela 7 hari) |
 | unsynced_over_7d | jumlah anak yang last_sync kosong atau > 7 hari |
+| review_avg_minutes (D1) | rerata `review_log.seconds` / 60 milik terapis ini, 30 hari terakhir; null bila belum ada |
 
 Medan tambahan: total_taps = semua ketukan dalam jendela; parent_taps / child_taps per actor;
 prompted_taps / spontaneous_taps = ketukan anak per prompt_level; missions_done_6w / missions_skipped di
@@ -241,10 +242,57 @@ def children_overview(conn: sqlite3.Connection, now: Optional[datetime] = None, 
             }
         )
     children.sort(key=lambda c: (not c["needs_review"], (c["nickname"] or "").lower()))
+    avg, reviews = review_average(conn, now, therapist)
     return {
+        "review_avg_minutes": avg,
+        "review_count_30d": reviews,
         "active_families": len(children),
         "needs_review": sum(1 for c in children if c["needs_review"]),
         "unsynced_over_7d": sum(1 for c in children if _stale(c["last_sync"], now)),
         "pending_targets": sum(c["pending_targets"] for c in children),
         "children": children,
     }
+
+
+def review_average(conn: sqlite3.Connection, now: datetime, therapist: Optional[str] = None) -> tuple[Optional[float], int]:
+    """Rerata lama satu tinjauan (menit) dan jumlah tinjauan dalam 30 hari terakhir."""
+    q = "SELECT AVG(seconds) AS a, COUNT(*) AS n FROM review_log WHERE recorded_at >= ?"
+    args: list = [utc_iso(now - timedelta(days=30))]
+    if therapist:
+        q += " AND therapist = ?"
+        args.append(therapist)
+    row = conn.execute(q, args).fetchone()
+    n = row["n"] if row else 0
+    return (round(row["a"] / 60, 1) if n else None), n
+
+
+def session_rows(conn: sqlite3.Connection, child_id: str, therapist: str) -> list[dict]:
+    """Catatan sesi milik terapis ini untuk satu anak, terbaru dulu."""
+    rows = conn.execute(
+        "SELECT * FROM session_note WHERE child_id = ? AND therapist = ? ORDER BY session_date DESC, created_at DESC",
+        (child_id, therapist),
+    ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def shared_summary_rows(conn: sqlite3.Connection, child_id: str) -> list[dict]:
+    """Ringkasan yang sudah dikirim ke keluarga, hanya dari terapis yang masih tertaut. Tanpa `note`."""
+    rows = conn.execute(
+        "SELECT s.note_id, s.therapist, s.session_date, s.family_text, s.focus, s.next_session, s.shared_at "
+        "FROM session_note s WHERE s.child_id = ? AND s.shared_at IS NOT NULL AND EXISTS ("
+        "  SELECT 1 FROM therapist_link l WHERE l.child_id = s.child_id AND l.therapist = s.therapist AND l.revoked_at IS NULL"
+        ") ORDER BY s.shared_at DESC LIMIT 20",
+        (child_id,),
+    ).fetchall()
+    return [
+        {
+            "summary_id": r["note_id"],
+            "therapist": r["therapist"],
+            "session_date": r["session_date"],
+            "family_text": r["family_text"],
+            "focus": r["focus"],
+            "next_session": r["next_session"],
+            "shared_at": r["shared_at"],
+        }
+        for r in rows
+    ]

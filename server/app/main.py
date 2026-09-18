@@ -18,7 +18,24 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import auth
 from .db import connect, now_utc, parse_utc, transaction, utc_iso
-from .schemas import InviteOut, LoginIn, LoginOut, MeOut, RedeemIn, RedeemOut, SyncIn, SyncOut, TargetIn, TargetOut, parse_device_ts
+from .schemas import (
+    InviteOut,
+    LoginIn,
+    LoginOut,
+    MeOut,
+    RedeemIn,
+    RedeemOut,
+    ReviewTimeIn,
+    SessionNoteIn,
+    SessionNoteOut,
+    SessionShareIn,
+    SharedSummaryOut,
+    SyncIn,
+    SyncOut,
+    TargetIn,
+    TargetOut,
+    parse_device_ts,
+)
 from .services import summary as agg
 
 
@@ -190,6 +207,76 @@ def create_app(db_path: Optional[Path | str] = None, therapist_tokens: Optional[
         elif not auth.therapist_sees_child(conn, p.therapist, child_id):
             raise HTTPException(404, "anak tidak ditemukan")
         return agg.target_rows(conn, child_id)
+
+    # ---------- catatan sesi (D4) ----------
+
+    def _own_note(child_id: str, note_id: str, therapist: str) -> sqlite3.Row:
+        row = conn.execute(
+            "SELECT * FROM session_note WHERE note_id = ? AND child_id = ? AND therapist = ?", (note_id, child_id, therapist)
+        ).fetchone()
+        if not row:
+            raise HTTPException(404, "catatan tidak ditemukan")
+        return row
+
+    @app.get("/v1/children/{child_id}/sessions", response_model=list[SessionNoteOut])
+    async def list_sessions(child_id: str, request: Request) -> list[dict]:
+        p = _therapist_child(request, child_id)
+        return agg.session_rows(conn, child_id, p.therapist)
+
+    @app.post("/v1/children/{child_id}/sessions", status_code=201, response_model=SessionNoteOut)
+    async def create_session(child_id: str, body: SessionNoteIn, request: Request) -> dict:
+        p = _therapist_child(request, child_id)
+        note_id = str(uuid.uuid4())
+        now = utc_iso(now_utc())
+        with transaction(conn):
+            conn.execute(
+                "INSERT INTO session_note (note_id, child_id, therapist, session_date, note, focus, next_session, created_at, "
+                "updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (note_id, child_id, p.therapist, body.session_date, body.note, body.focus, body.next_session, now, now),
+            )
+        return dict(_own_note(child_id, note_id, p.therapist))
+
+    @app.put("/v1/children/{child_id}/sessions/{note_id}", response_model=SessionNoteOut)
+    async def update_session(child_id: str, note_id: str, body: SessionNoteIn, request: Request) -> dict:
+        p = _therapist_child(request, child_id)
+        _own_note(child_id, note_id, p.therapist)
+        with transaction(conn):
+            conn.execute(
+                "UPDATE session_note SET session_date = ?, note = ?, focus = ?, next_session = ?, updated_at = ? WHERE note_id = ?",
+                (body.session_date, body.note, body.focus, body.next_session, utc_iso(now_utc()), note_id),
+            )
+        return dict(_own_note(child_id, note_id, p.therapist))
+
+    @app.post("/v1/children/{child_id}/sessions/{note_id}/share", response_model=SessionNoteOut)
+    async def share_session(child_id: str, note_id: str, body: SessionShareIn, request: Request) -> dict:
+        """Kirim ringkasan ke keluarga. Hanya `family_text` yang sampai ke perangkat; catatan sesi tetap milik terapis."""
+        p = _therapist_child(request, child_id)
+        _own_note(child_id, note_id, p.therapist)
+        with transaction(conn):
+            conn.execute(
+                "UPDATE session_note SET family_text = ?, shared_at = ? WHERE note_id = ?",
+                (body.family_text.strip(), utc_iso(now_utc()), note_id),
+            )
+        return dict(_own_note(child_id, note_id, p.therapist))
+
+    @app.get("/v1/children/{child_id}/shared-summaries", response_model=list[SharedSummaryOut])
+    async def shared_summaries(child_id: str, request: Request) -> list[dict]:
+        p = auth.require_device(conn, request)
+        if p.child_id != child_id:
+            raise HTTPException(403, "token perangkat untuk anak lain")
+        return agg.shared_summary_rows(conn, child_id)
+
+    # ---------- waktu tinjauan (D1) ----------
+
+    @app.post("/v1/review-time", status_code=204)
+    async def review_time(body: ReviewTimeIn, request: Request) -> Response:
+        p = _therapist_child(request, body.child_id)
+        with transaction(conn):
+            conn.execute(
+                "INSERT INTO review_log (therapist, child_id, seconds, recorded_at) VALUES (?, ?, ?, ?)",
+                (p.therapist, body.child_id, body.seconds, utc_iso(now_utc())),
+            )
+        return Response(status_code=204)
 
     return app
 

@@ -104,6 +104,33 @@ CREATE TABLE IF NOT EXISTS vocab_target (
   therapist  TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
+
+-- Catatan sesi tatap muka (D4). Milik terapis: keluarga tidak pernah melihat `note`. Keluarga hanya menerima
+-- `family_text` setelah terapis menekan "Kirim ringkasan ke keluarga" (`shared_at` terisi).
+CREATE TABLE IF NOT EXISTS session_note (
+  note_id      TEXT PRIMARY KEY,
+  child_id     TEXT NOT NULL REFERENCES child(child_id),
+  therapist    TEXT NOT NULL,
+  session_date TEXT NOT NULL,
+  note         TEXT NOT NULL,
+  focus        TEXT,
+  next_session TEXT,
+  created_at   TEXT NOT NULL,
+  updated_at   TEXT NOT NULL,
+  family_text  TEXT,
+  shared_at    TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_session_child ON session_note(child_id, session_date);
+
+-- Lama satu tinjauan dasbor atas satu anak (D2–D4 terbuka dan terlihat), untuk kartu D1 "Waktu tinjauan".
+CREATE TABLE IF NOT EXISTS review_log (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  therapist   TEXT NOT NULL,
+  child_id    TEXT NOT NULL,
+  seconds     INTEGER NOT NULL,
+  recorded_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_review_therapist ON review_log(therapist, recorded_at);
 """
 
 

@@ -4,6 +4,7 @@ import '../../core/app_state.dart';
 import '../coach/companion_widgets.dart';
 import '../coach/mission_rules.dart';
 import 'family_voice_recorder.dart';
+import 'therapist_entry.dart';
 
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({super.key, this.onFinished});
@@ -137,7 +138,19 @@ class _IntroPage extends StatelessWidget {
         style: companionBodyStyle,
       ),
     ],
-    bottom: PrimaryButton(label: 'Mulai', onPressed: onNext),
+    bottom: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        PrimaryButton(label: 'Mulai', onPressed: onNext),
+        const SizedBox(height: 8),
+        // Pintu kedua, sengaja kecil: 90% yang membuka aplikasi adalah keluarga.
+        TextButton(
+          onPressed: () => showTherapistEntry(context),
+          style: TextButton.styleFrom(minimumSize: const Size(48, 48), foregroundColor: CompanionColors.navy),
+          child: const Text('Saya terapis →', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        ),
+      ],
+    ),
   );
 }
 

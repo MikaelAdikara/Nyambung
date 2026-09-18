@@ -57,6 +57,17 @@ export NYAMBUNG_THERAPIST_TOKENS="token-demo-panjang-2026:Bu Rina (ilustratif)"
 Cek: `http://127.0.0.1:8000/v1/health` harus menjawab `{"ok": true, ...}`. Contoh isi `.env` ada di `server/.env.example`.
 Basis data ada di `server/data/nyambung.db` (tidak di-commit; ubah dengan `NYAMBUNG_DB_PATH`).
 
+Akun login terapis (email + kata sandi) dibuat oleh pengelola, tidak ada pendaftaran terbuka:
+
+```bash
+server/.venv/Scripts/python tools/create_therapist.py --demo                                  # dua akun ILUSTRATIF
+server/.venv/Scripts/python tools/create_therapist.py --email rina@klinik.id --name "Bu Rina"   # kata sandi ditanyakan
+```
+
+Akun demo: `rina@demo.nyambung.id` dan `dimas@demo.nyambung.id`, kata sandi `nyambung-demo`. Nama akun demo sama
+dengan contoh token env, jadi keduanya menunjuk terapis yang sama. Login menghasilkan token sesi 30 hari; server hanya
+menyimpan SHA-256-nya, dan kata sandi di-hash dengan scrypt. Token env tetap berlaku untuk simulator dan pengelola.
+
 Tes:
 
 ```bash
@@ -69,6 +80,8 @@ Dengan server menyala dan `NYAMBUNG_THERAPIST_TOKENS` terset di terminal yang sa
 
 ```bash
 python tools/simclient.py demo --days 21
+# atau masuk dengan akun demo, dan tulis seed ke tempat lain supaya seed/demo_events.json tidak berubah:
+python tools/simclient.py demo --email rina@demo.nyambung.id --password nyambung-demo --out tools/.sim/seed.json
 ```
 
 Lima keluarga ilustratif ditautkan lewat kode undangan, peristiwa 21 hari dikirim lewat outbox yang sama dengan
@@ -87,7 +100,7 @@ python tools/simclient.py verify --child <child_id>                   # {"identi
 ```bash
 cd dashboard
 npm install
-npm run dev          # http://127.0.0.1:5173 (masuk dengan token terapis) · http://127.0.0.1:5173/?source=demo tanpa server
+npm run dev          # http://127.0.0.1:5173 (masuk dengan email + kata sandi terapis) · http://127.0.0.1:5173/?source=demo tanpa server
 npm run build        # hasil di dashboard/dist; `npm run preview` → http://127.0.0.1:4173
 ```
 
@@ -136,6 +149,12 @@ Simbol yang belum punya gambar tampil sebagai huruf pertama katanya.
 ## Batasan yang kami akui
 
 - Server memakai HTTP di jaringan lokal, belum HTTPS.
+- Login terapis belum punya lupa kata sandi, pembatasan laju percobaan login, atau halaman hapus akun (wajib di
+  Play Store/App Store begitu ada pembuatan akun). Akun dibuat lewat `tools/create_therapist.py`.
+- Keluarga sengaja tanpa akun (papan harus jalan luring sejak dibuka pertama kali). Akibatnya data belum bisa
+  dipulihkan saat ganti HP selain lewat ekspor JSON.
+- Server memakai SQLite: cukup untuk pilot satu klinik. Untuk banyak klinik perlu Postgres; semua SQL server ada di
+  `server/app/` sehingga pemindahan terbatas di situ.
 - Belum ada pembatasan laju tebakan kode undangan (kode 8 karakter, sekali pakai, kedaluwarsa 7 hari).
 - Token perangkat disimpan di `shared_preferences` tanpa enkripsi.
 - Suara papan memakai TTS perangkat, bukan rekaman manusia; kualitasnya bergantung mesin TTS di HP.

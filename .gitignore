@@ -1,5 +1,6 @@
 # Dokumen rencana hack day (bukan kode aplikasi), disimpan lokal di setiap laptop
-docs/
+docs/*
+!docs/demo_script.md
 .DS_Store
 
 .env

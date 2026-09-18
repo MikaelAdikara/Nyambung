@@ -111,3 +111,19 @@ Format entri:
   hanya menyebut apa yang teramati. Alasan yang terlihat membuat triase terapis bisa dijelaskan.
 - **Dampak terhadap masalah inti:** M4: terapis bisa langsung melihat siapa yang perlu ditinjau dan kenapa. Nama medan
   `spontaneous_ratio` di API tetap sama. Teks D4 sejak awal sudah memakai rumusan "tanpa contoh dalam 60 detik".
+
+## 9. Terapis masuk dengan email dan kata sandi; keluarga tetap tanpa akun (11:30, jalur 3 & 4)
+- **Kondisi di proposal:** Terapis masuk papan pantau dengan token Bearer dari variabel lingkungan server, ditempel
+  di gerbang token. Keluarga tertaut lewat kode undangan, tanpa akun.
+- **Yang diubah:** Server mendapat login email + kata sandi (`POST /v1/auth/login`, `/logout`, `GET /v1/auth/me`),
+  tabel `therapist_login` (hash scrypt) dan `therapist_session` (token sesi 30 hari, hanya SHA-256 disimpan). Akun dibuat
+  pengelola lewat `tools/create_therapist.py`; dua akun demo ilustratif disediakan. Gerbang dasbor meminta email dan
+  kata sandi; token server tetap bisa dipakai lewat tautan "Pakai token server". Layar A1 aplikasi mendapat tautan kecil
+  "Saya terapis →" yang menunjukkan alamat papan pantau. Kontrak §4 bertambah tiga endpoint; endpoint lama tidak berubah.
+- **Alasan:** Menempel token panjang tidak layak untuk terapis sungguhan bila aplikasi dikomersialkan. Keluarga sengaja
+  tidak diberi login: papan harus jalan luring sejak dibuka pertama kali (invarian 1) dan pemasangan hanya menanyakan
+  nama panggilan dan usia.
+- **Dampak terhadap masalah inti:** Jembatan terapis (M3) dan satu terapis untuk banyak keluarga (M4) kini bisa dipakai
+  terapis tanpa bantuan pengelola server setiap kali masuk; setiap terapis hanya melihat keluarga yang tertaut kepadanya.
+  Papan anak (M1) tidak berubah dan tetap luring. Belum ada: lupa kata sandi, pembatasan laju login, hapus akun.
+

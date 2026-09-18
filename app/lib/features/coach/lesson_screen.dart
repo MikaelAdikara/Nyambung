@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
 import 'companion_widgets.dart';
-import 'fake_app_state.dart';
+import 'companion_controller.dart';
 import 'lessons.dart';
 import 'mission_screen.dart';
 
 class LessonScreen extends StatelessWidget {
   const LessonScreen({super.key, required this.state, required this.lessonKey});
 
-  final FakeAppState state;
+  final CompanionController state;
   final String lessonKey;
 
   @override

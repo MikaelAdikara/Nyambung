@@ -1,67 +1,104 @@
 import 'package:flutter/material.dart';
 
+import '../../core/app_state.dart';
+import 'companion_controller.dart';
 import 'companion_widgets.dart';
-import 'fake_app_state.dart';
 import 'fake_board_screen.dart';
 import 'lesson_screen.dart';
 import 'mission_screen.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key, required this.state, this.openChildBoard});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key, this.openChildBoard});
 
-  final FakeAppState state;
   final VoidCallback? openChildBoard;
 
   @override
-  Widget build(BuildContext context) => ListenableBuilder(
-    listenable: state,
-    builder: (context, _) {
-      final child = state.child;
-      return Scaffold(
-        backgroundColor: CompanionColors.bg,
-        appBar: AppBar(
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  CompanionController? _controller;
+  AppState? _app;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final app = AppScope.of(context);
+    if (_app == app) return;
+    _app = app;
+    _controller?.dispose();
+    _controller = CompanionController(app)..load();
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = _controller;
+    if (controller == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        final child = controller.child;
+        if (!controller.hasMission) {
+          return const Scaffold(
+            backgroundColor: CompanionColors.bg,
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        return Scaffold(
           backgroundColor: CompanionColors.bg,
-          elevation: 0,
-          title: Text('Halo, keluarga ${child?.nickname ?? ''}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-        ),
-        body: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-          children: [
-            PrimaryButton(
-              label: 'Buka Papan Bicara untuk anak',
-              icon: Icons.grid_view_rounded,
-              onPressed:
-                  openChildBoard ??
-                  () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => FakeBoardScreen(state: state))),
+          appBar: AppBar(
+            backgroundColor: CompanionColors.bg,
+            elevation: 0,
+            title: Text('Halo, keluarga ${child?.nickname ?? ''}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+          ),
+          body: RefreshIndicator(
+            onRefresh: controller.load,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+              children: [
+                PrimaryButton(
+                  label: 'Buka Papan Bicara untuk anak',
+                  icon: Icons.grid_view_rounded,
+                  onPressed:
+                      widget.openChildBoard ??
+                      () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => FakeBoardScreen(state: controller))),
+                ),
+                const SizedBox(height: 16),
+                _MissionCard(state: controller),
+                const SizedBox(height: 16),
+                CompanionCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Pekan ini', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 8),
+                      Text(controller.weeklySummary, style: companionBodyStyle),
+                      const SizedBox(height: 8),
+                      const Text('Angka ini lahir dari ketukan papan, bukan dari isian.', style: companionMutedStyle),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _SyncCard(state: controller),
+              ],
             ),
-            const SizedBox(height: 16),
-            _MissionCard(state: state),
-            const SizedBox(height: 16),
-            CompanionCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Pekan ini', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 8),
-                  Text('Pekan ini ${child?.nickname ?? 'anak'} menekan TIDAK 4 kali, dan 3 kata lain.', style: companionBodyStyle),
-                  const SizedBox(height: 8),
-                  const Text('Angka ini lahir dari ketukan papan, bukan dari isian.', style: companionMutedStyle),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            _SyncCard(state: state),
-          ],
-        ),
-      );
-    },
-  );
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _MissionCard extends StatelessWidget {
   const _MissionCard({required this.state});
 
-  final FakeAppState state;
+  final CompanionController state;
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +145,7 @@ class _MissionCard extends StatelessWidget {
 class _SyncCard extends StatelessWidget {
   const _SyncCard({required this.state});
 
-  final FakeAppState state;
+  final CompanionController state;
 
   @override
   Widget build(BuildContext context) => CompanionCard(
@@ -117,15 +154,15 @@ class _SyncCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          state.isOnline
+          state.outboxCount == 0
               ? 'Semua catatan sudah sampai ke terapis.'
               : 'Tidak ada jaringan saat ini. ${state.outboxCount} catatan tersimpan di perangkat dan akan terkirim nanti.',
           style: companionBodyStyle,
         ),
         const SizedBox(height: 12),
-        Align(
+        const Align(
           alignment: Alignment.centerLeft,
-          child: TextButton(onPressed: state.syncNow, child: const Text('Kirim sekarang')),
+          child: TextButton(onPressed: null, child: Text('Kirim sekarang')),
         ),
       ],
     ),

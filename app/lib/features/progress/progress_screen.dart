@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../coach/companion_widgets.dart';
-import '../coach/fake_app_state.dart';
+import '../coach/companion_controller.dart';
 
 class ProgressScreen extends StatelessWidget {
   const ProgressScreen({super.key, required this.state});
 
-  final FakeAppState state;
+  final CompanionController state;
 
   @override
   Widget build(BuildContext context) {
@@ -16,22 +16,22 @@ class ProgressScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          for (final week in const [(3, 7, 'BERHENTI, BANTU'), (2, 5, 'TIDAK'), (1, 4, 'MAU, LAGI')]) ...[
-            CompanionCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Pekan ${week.$1}: ${week.$2} kata berbeda dari $name',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                  ),
+          CompanionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Pekan ${state.currentWeek}: ${state.weeklyWords.length} kata berbeda dari $name',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                ),
+                if (state.weeklyWords.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  Text('Kata baru: ${week.$3}', style: companionBodyStyle),
+                  Text('Kata baru: ${state.weeklyWords.map((word) => word.toUpperCase()).join(', ')}', style: companionBodyStyle),
                 ],
-              ),
+              ],
             ),
-            const SizedBox(height: 12),
-          ],
+          ),
+          const SizedBox(height: 12),
           const Text('Ini catatan pemakaian, bukan penilaian kemampuan.', style: companionMutedStyle),
         ],
       ),

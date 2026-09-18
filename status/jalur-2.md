@@ -1,24 +1,24 @@
 # Status jalur 2 — Pendamping
-Diperbarui: 09:41
+Diperbarui: 09:49
 
 ## Sedang dikerjakan
-2.1 Layar data tiruan — layar lengkap, papan misi tiruan, dan aturan pekan/kata/pelajaran tersedia; analyzer mandiri bersih, menunggu j1-kerangka untuk uji aplikasi
+2.2 Integrasi j1-kerangka — fake AppState sudah dihapus; layar membaca AppState/DAO nyata, analyzer seluruh app bersih
 
 ## Tonggak selesai (tag)
 - (kosong)
 
 ## Perkiraan tonggak berikutnya
-j2-layar setelah j1-kerangka tersedia; kerangka visual tiruan sekitar 10:30
+j2-layar sekitar 10:05 setelah titik masuk main.dart dan smoke test
 
 ## Terblokir oleh
-- Integrasi AppState nyata menunggu tag j1-kerangka dari jalur 1
+- Uji widget belum tersedia karena app/test milik jalur 1 dan belum ada di j1-kerangka
 
 ## Permintaan ke jalur lain
-- ke jalur 1: pertahankan API publik AppState/DAO yang dijanjikan di jalur-1-papan.md; jalur 2 sedang memakai tiruan lokal
-- ke jalur 1: setelah integrasi jalur 2, ganti PlaceholderOnboarding/PlaceholderHome di main.dart dengan titik masuk A1/B1
+- ke jalur 1: ganti PlaceholderOnboarding dengan `const OnboardingFlow()` dari `features/onboarding/onboarding_flow.dart`
+- ke jalur 1: ganti PlaceholderHome dengan `const HomeScreen()` dari `features/coach/home_screen.dart`
 
 ## Perubahan API/kontrak yang perlu diketahui
-- Belum ada; jalur 2 tidak mengubah kontrak beku
+- Mengikuti API j1-kerangka apa adanya; tidak ada perubahan kontrak
 
 ## Perubahan terhadap proposal (untuk PERUBAHAN.md, dibaca jalur 4)
 - (kosong)

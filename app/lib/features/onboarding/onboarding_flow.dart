@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../core/app_state.dart';
 import '../coach/companion_widgets.dart';
-import '../coach/fake_app_state.dart';
 import '../coach/mission_rules.dart';
 
 class OnboardingFlow extends StatefulWidget {
-  const OnboardingFlow({super.key, required this.state, required this.onFinished});
+  const OnboardingFlow({super.key, this.onFinished});
 
-  final FakeAppState state;
-  final VoidCallback onFinished;
+  final VoidCallback? onFinished;
 
   @override
   State<OnboardingFlow> createState() => _OnboardingFlowState();
@@ -20,6 +19,13 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   int _page = 0;
   int? _ageYears;
   String _routine = 'makan';
+  AppState? _app;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _app = AppScope.of(context);
+  }
 
   @override
   void dispose() {
@@ -34,8 +40,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 
   Future<void> _finish() async {
-    await widget.state.createChild(nickname: _name.text.trim(), ageYears: _ageYears, routine: _routine);
-    widget.onFinished();
+    await _app!.createChild(nickname: _name.text.trim(), ageYears: _ageYears, routine: _routine);
+    widget.onFinished?.call();
   }
 
   @override

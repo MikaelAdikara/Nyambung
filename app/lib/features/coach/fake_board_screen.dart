@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 import 'companion_widgets.dart';
-import 'fake_app_state.dart';
+import 'companion_controller.dart';
 
 /// Temporary board used only until lane 1 publishes `j1-papan`.
 class FakeBoardScreen extends StatefulWidget {
   const FakeBoardScreen({super.key, required this.state, this.missionContext, this.allowTurnToggle = false});
 
-  final FakeAppState state;
+  final CompanionController state;
   final String? missionContext;
   final bool allowTurnToggle;
 

@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 
 import 'companion_widgets.dart';
 import 'confirm_screen.dart';
-import 'fake_app_state.dart';
+import 'companion_controller.dart';
 import 'fake_board_screen.dart';
 
 class MissionScreen extends StatelessWidget {
   const MissionScreen({super.key, required this.state, this.openBoard});
 
-  final FakeAppState state;
+  final CompanionController state;
   final Future<void> Function()? openBoard;
 
   Future<void> _confirm(BuildContext context, String status) async {

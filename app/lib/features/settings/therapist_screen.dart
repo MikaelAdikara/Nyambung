@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants.dart';
+import '../coach/companion_controller.dart';
 import '../coach/companion_widgets.dart';
-import '../coach/fake_app_state.dart';
 
 class TherapistScreen extends StatefulWidget {
   const TherapistScreen({super.key, required this.state});
 
-  final FakeAppState state;
+  final CompanionController state;
 
   @override
   State<TherapistScreen> createState() => _TherapistScreenState();
@@ -15,6 +16,7 @@ class TherapistScreen extends StatefulWidget {
 class _TherapistScreenState extends State<TherapistScreen> {
   final _code = TextEditingController();
   bool _busy = false;
+  String? _connectionMessage;
 
   @override
   void dispose() {
@@ -25,8 +27,13 @@ class _TherapistScreenState extends State<TherapistScreen> {
   Future<void> _connect() async {
     if (_code.text.trim().length != 8) return;
     setState(() => _busy = true);
-    await widget.state.connectTherapist(_code.text.trim().toUpperCase());
-    if (mounted) setState(() => _busy = false);
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    if (mounted) {
+      setState(() {
+        _busy = false;
+        _connectionMessage = 'Belum ada jaringan. Coba lagi saat tersambung.';
+      });
+    }
   }
 
   Future<void> _revoke() async {
@@ -41,7 +48,7 @@ class _TherapistScreenState extends State<TherapistScreen> {
         ],
       ),
     );
-    if (confirmed == true) await widget.state.revokeTherapist();
+    if (confirmed == true) await widget.state.revokeLocally();
   }
 
   @override
@@ -71,47 +78,47 @@ class _TherapistScreenState extends State<TherapistScreen> {
     ),
     const SizedBox(height: 12),
     PrimaryButton(label: _busy ? 'Menghubungkan…' : 'Hubungkan', onPressed: _busy || _code.text.trim().length != 8 ? null : _connect),
+    if (_connectionMessage != null) ...[const SizedBox(height: 8), Text(_connectionMessage!, style: companionMutedStyle)],
   ];
 
-  List<Widget> _linked(BuildContext context) => [
-    CompanionCard(child: Text('Terhubung dengan ${widget.state.therapistName} sejak hari ini.', style: companionBodyStyle)),
-    const SizedBox(height: 16),
-    CompanionCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Usulan kata pekan ini: BERHENTI', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 8),
-          const Text('Contohkan saat makan selesai.', style: companionBodyStyle),
-          const SizedBox(height: 8),
-          const Text('Keluarga boleh menolak tanpa alasan.', style: companionMutedStyle),
-          const SizedBox(height: 16),
-          if (widget.state.targetStatus == 'usulan')
-            Row(
-              children: [
-                Expanded(
-                  child: EqualOutlineButton(label: 'Tolak', onPressed: () => widget.state.logTargetAnswer('target-demo', false)),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: EqualOutlineButton(label: 'Terima', onPressed: () => widget.state.logTargetAnswer('target-demo', true)),
-                ),
-              ],
-            )
-          else
-            Text(
-              widget.state.targetStatus == 'diterima'
-                  ? 'Diterima. Misi berganti ke BERHENTI.'
-                  : 'Ditolak. Terapis akan melihat jawaban ini.',
-              style: companionBodyStyle,
-            ),
-        ],
+  List<Widget> _linked(BuildContext context) {
+    final pending = widget.state.targets.where((target) => target.status == TargetStatus.usulan && target.words.isNotEmpty).firstOrNull;
+    return [
+      CompanionCard(child: Text('Terhubung dengan ${widget.state.therapistName} sejak hari ini.', style: companionBodyStyle)),
+      if (pending != null) ...[
+        const SizedBox(height: 16),
+        CompanionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Usulan kata pekan ini: ${pending.words.first.toUpperCase()}',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+              ),
+              if (pending.note != null) ...[const SizedBox(height: 8), Text(pending.note!, style: companionBodyStyle)],
+              const SizedBox(height: 8),
+              const Text('Keluarga boleh menolak tanpa alasan.', style: companionMutedStyle),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: EqualOutlineButton(label: 'Tolak', onPressed: () => widget.state.logTargetAnswer(pending.targetId, false)),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: EqualOutlineButton(label: 'Terima', onPressed: () => widget.state.logTargetAnswer(pending.targetId, true)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+      const SizedBox(height: 16),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton(onPressed: _revoke, child: const Text('Cabut akses')),
       ),
-    ),
-    const SizedBox(height: 16),
-    Align(
-      alignment: Alignment.centerLeft,
-      child: TextButton(onPressed: _revoke, child: const Text('Cabut akses')),
-    ),
-  ];
+    ];
+  }
 }

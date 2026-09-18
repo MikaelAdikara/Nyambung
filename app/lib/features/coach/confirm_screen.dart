@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 import 'companion_widgets.dart';
-import 'fake_app_state.dart';
+import 'companion_controller.dart';
 
 class ConfirmScreen extends StatelessWidget {
   const ConfirmScreen({super.key, required this.state, required this.status, required this.parentTaps, required this.childTaps});
 
-  final FakeAppState state;
+  final CompanionController state;
   final String status;
   final int parentTaps;
   final int childTaps;

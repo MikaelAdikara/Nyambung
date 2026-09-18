@@ -1,6 +1,7 @@
 import { href } from '../route'
 import { useApp, useAsync } from '../ctx'
-import { pct, relTime, wordLabel } from '../format'
+import { fmtDate, pct, relTime, wordLabel } from '../format'
+import { attentionSignals } from '../attention'
 import { BarChart, ErrorBox, Loading, StatCard, TrendBadge, WordIcon } from '../ui'
 
 const HOURS = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0'))
@@ -26,6 +27,8 @@ export function D2({ childId }: { childId: string }) {
   const s = res.data.summary
   const accepted = new Set(res.data.targets.filter((t) => t.status === 'diterima').flatMap((t) => t.words))
   const diff = s.unique_words - s.unique_words_prev
+  const signals = attentionSignals(s, res.data.targets, vocab)
+  const acceptedTargets = res.data.targets.filter((t) => t.status === 'diterima')
 
   return (
     <section>
@@ -39,6 +42,18 @@ export function D2({ childId }: { childId: string }) {
         {s.pending_targets > 0 && ` · ${s.pending_targets} usulan menunggu jawaban keluarga`}
       </p>
 
+      {signals.length > 0 && (
+        <div className="card attention">
+          <h2>Perlu diperiksa</h2>
+          <ul>
+            {signals.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </ul>
+          <p className="muted">Ditandai oleh aturan tetap, bukan kesimpulan klinis. Penafsirannya tetap di tangan terapis.</p>
+        </div>
+      )}
+
       <div className="stats">
         <StatCard
           label="Kata berbeda pekan ini"
@@ -47,7 +62,7 @@ export function D2({ childId }: { childId: string }) {
           accent="teal"
         />
         <StatCard
-          label="Ketukan spontan"
+          label="Ketukan anak tanpa contoh ≤ 60 dtk"
           value={pct(s.spontaneous_ratio)}
           sub={`${s.spontaneous_taps} dari ${s.child_taps} ketukan anak`}
           accent="teal"
@@ -61,8 +76,9 @@ export function D2({ childId }: { childId: string }) {
         <StatCard label="Ketukan anak / pendamping" value={`${s.child_taps} / ${s.parent_taps}`} sub={`total ${s.total_taps} ketukan`} />
       </div>
       <p className="note">
-        <strong>Angka ini pola pemakaian, bukan ukuran kemampuan anak.</strong> Rasio spontan bergantung pada giliran yang dipilih
-        pendamping.
+        <strong>Angka ini pola pemakaian, bukan ukuran kemampuan anak.</strong> "Tanpa contoh" hanya berarti tidak ada
+        ketukan pendamping dalam 60 detik sebelumnya; aplikasi tidak merekam suara, jadi tidak tahu apakah anak dipancing
+        secara lisan. Angka ini juga bergantung pada giliran yang dipilih pendamping.
       </p>
 
       <div className="grid-2">
@@ -76,6 +92,10 @@ export function D2({ childId }: { childId: string }) {
 
       <div className="card">
         <h2>Kata yang paling sering</h2>
+        <p className="muted">
+          Hitungan ketukan anak dalam 7 hari terakhir ({s.child_taps} ketukan anak, {s.parent_taps} ketukan pendamping tidak
+          dihitung di sini).
+        </p>
         {s.top_words.length === 0 ? (
           <p className="muted">Belum ada ketukan anak dalam 7 hari terakhir.</p>
         ) : (
@@ -91,6 +111,20 @@ export function D2({ childId }: { childId: string }) {
           </ol>
         )}
       </div>
+
+      {acceptedTargets.length > 0 && (
+        <div className="card">
+          <h2>Target yang diterima keluarga</h2>
+          <ul className="targets">
+            {acceptedTargets.map((t) => (
+              <li key={t.target_id}>
+                <strong>{t.words.map((w) => wordLabel(vocab, w)).join(', ')}</strong> · diterima {fmtDate(t.answered_at)} · dipakai{' '}
+                {t.used_count_since_accept} kali sejak diterima (anak dan pendamping)
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <nav className="actions">
         <a className="button" href={href.d3(childId)}>

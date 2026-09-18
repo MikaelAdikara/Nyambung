@@ -3,6 +3,7 @@ import type { InviteOut } from '../types'
 import { href } from '../route'
 import { useApp, useAsync } from '../ctx'
 import { relTime } from '../format'
+import { reviewReasons } from '../attention'
 import { ErrorBox, Loading, StatCard, TrendBadge } from '../ui'
 
 // D1 Keluarga binaan (jalur 4 §4.3, teks 02 §7)
@@ -50,6 +51,7 @@ export function D1() {
                           {c.nickname ?? '(tanpa nama)'}
                         </a>
                         {c.needs_review && <span className="badge">Perlu ditinjau</span>}
+                        {c.needs_review && <div className="reasons">{reviewReasons(c).join(' · ')}</div>}
                       </td>
                       <td>{c.age_years ?? '–'}</td>
                       <td>{c.routine ?? '–'}</td>

@@ -87,8 +87,13 @@ python tools/simclient.py verify --child <child_id>                   # {"identi
 ```bash
 cd dashboard
 npm install
-npm run dev          # buka http://127.0.0.1:5173/?source=demo untuk data ilustratif tanpa server
+npm run dev          # http://127.0.0.1:5173 (masuk dengan token terapis) · http://127.0.0.1:5173/?source=demo tanpa server
+npm run build        # hasil di dashboard/dist; `npm run preview` → http://127.0.0.1:4173
 ```
+
+Dasbor memanggil API di `http://127.0.0.1:8000`; ganti dengan variabel lingkungan `VITE_API_BASE` (mis.
+`VITE_API_BASE=http://192.168.1.10:8000 npm run dev`). Bila server tidak menjawab `/v1/health`, dasbor pindah ke mode
+demo dengan pita **DATA ILUSTRATIF** di setiap halaman.
 
 ### 4. Aplikasi Android
 
@@ -99,6 +104,25 @@ flutter test
 flutter run                                   # emulator atau HP dengan USB debugging
 flutter build apk --release --split-per-abi   # armeabi-v7a dan arm64-v8a
 ```
+
+**Tanda tangan rilis.** Buat keystore sekali dan simpan di luar git (sudah di-gitignore):
+
+```bash
+cd app/android
+keytool -genkeypair -keystore nyambung-release.jks -storetype PKCS12 -alias nyambung -keyalg RSA -keysize 2048 -validity 10000
+```
+
+lalu tulis `app/android/key.properties`:
+
+```
+storeFile=nyambung-release.jks
+storePassword=<kata sandi>
+keyAlias=nyambung
+keyPassword=<kata sandi>
+```
+
+Tanpa `key.properties`, APK rilis ditandatangani kunci debug (tetap bisa dipasang untuk uji). Ukuran APK rilis
+(18 Sep 2026): `arm64-v8a` 18,8 MB, `armeabi-v7a` 16,3 MB.
 
 Di HP, isi alamat server di Pengaturan dengan IP laptop yang menjalankan server (mis. `http://192.168.1.10:8000`);
 emulator Android menjangkau laptop lewat `http://10.0.2.2:8000`.

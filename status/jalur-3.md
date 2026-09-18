@@ -1,8 +1,8 @@
 # Status jalur 3 — Server
-Diperbarui: 10:55
+Diperbarui: 11:00
 
 ## Sedang dikerjakan
-3.6 README (draf di main; tag j3-readme menunggu dasbor jalur 4 ada dan uji clone bersih)
+3.7 APK rilis: tanda tangan siap (keystore baru 18 Sep, jalur 1 menambah signingConfig). Tag j3-apk menunggu int-1-hp-ke-d2 (HP fisik)
 
 ## Tonggak selesai (tag)
 - j0-repo: kerangka repo, hash aset 175/175 OK
@@ -12,10 +12,12 @@ Diperbarui: 10:55
 - j3-simulator: `tools/simclient.py` + `seed/demo_events.json` (5 anak ilustratif, 870 peristiwa, 21 hari; Arka naik,
   Bima turun, Reza tetap, Tiara perlu ditinjau, 1 target diterima, 1 usulan menunggu). Uji mati paksa setelah 200:
   kirim ulang 60 diterima + 40 duplikat → `verify` identical: true
+- j3-readme: diuji dari clone bersih (`C:\dev	mp\clean`): pytest 29 lulus, validate_vocab LULUS, dasbor `npm install` +
+  `npm run build` bersih, `flutter pub get` + `flutter test` 18 lulus, APK rilis tanpa keystore terbangun (16,3 MB armeabi-v7a)
 - (tanpa tag) `tools/validate_vocab.py`: LULUS, 35 simbol gambar tim belum ada
 
 ## Perkiraan tonggak berikutnya
-j3-readme setelah dasbor ada; j3-apk setelah int-1-hp-ke-d2
+j3-apk setelah int-1-hp-ke-d2; README diuji ulang di J23 di laptop lain
 
 ## Terblokir oleh
 - (kosong)
@@ -37,6 +39,9 @@ j3-readme setelah dasbor ada; j3-apk setelah int-1-hp-ke-d2
 
 - ke jalur 4: `seed/demo_events.json` sudah ada (bentuk kontrak §7), stempel relatif terhadap 18 Sep 10:30 WIB.
   Jalankan ulang `python tools/simclient.py demo` di hari demo supaya jendela 7 hari tidak kosong.
+
+- Integrasi emulator → server → API ringkasan (10:46): 3 peristiwa anak dari app (TIDAK, BERHENTI, UCAPKAN) muncul di
+  `/summary` sebagai 2 kata berbeda. Belum dilihat di layar D2 dan belum dari HP fisik, jadi `int-1-hp-ke-d2` belum ditag.
 
 ## Perubahan API/kontrak yang perlu diketahui
 - Tidak mengubah kontrak. CORS dibuka (`*`) supaya dasbor di port lain bisa memanggil API dengan header Bearer.

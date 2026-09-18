@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/app_state.dart';
+import '../board/symbol_cell.dart';
 import '../coach/companion_widgets.dart';
 import '../coach/mission_rules.dart';
 import 'family_voice_recorder.dart';
@@ -41,7 +42,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     if (_page < 5) _pages.nextPage(duration: const Duration(milliseconds: 220), curve: Curves.easeOut);
   }
 
-  Future<void> _finish() async {
+  Future<void> _finish(AfterOnboarding next) async {
+    _app!.afterOnboarding = next;
     await _app!.createChild(nickname: _name.text.trim(), ageYears: _ageYears, routine: _routine);
     widget.onFinished?.call();
   }
@@ -293,6 +295,8 @@ class _BoardPreviewPage extends StatelessWidget {
   );
 }
 
+/// A5: enam kata yang paling sering dicontohkan. Ketuk baris untuk memilih kata, rekam, lalu kata berikutnya yang
+/// belum direkam terpilih sendiri. Setiap rekaman langsung tersimpan; "Lewati" tetap setara.
 class _FamilyVoicePage extends StatefulWidget {
   const _FamilyVoicePage({required this.onNext});
 
@@ -303,40 +307,88 @@ class _FamilyVoicePage extends StatefulWidget {
 }
 
 class _FamilyVoicePageState extends State<_FamilyVoicePage> {
-  String? _recording;
+  static const _words = ['mau', 'tidak', 'lagi', 'makan', 'minum', 'bantu'];
+  String _selected = _words.first;
 
-  Future<void> _save() async {
-    final path = _recording;
+  Future<void> _saved(String wordId, String? path) async {
     if (path == null) return;
     final app = AppScope.of(context);
-    await app.symbolDao.setFamilyAudio('mau', path);
+    await app.symbolDao.setFamilyAudio(wordId, path);
     await app.reloadSymbols();
-    widget.onNext();
+    if (!mounted) return;
+    final next = _words.where((w) => app.symbolById(w)?.familyAudio == null).firstOrNull;
+    setState(() => _selected = next ?? wordId);
   }
 
   @override
-  Widget build(BuildContext context) => _PageShell(
-    title: 'Rekam suara Ibu atau Ayah (boleh dilewati)',
-    body: [
-      const Text(
-        'Suara ini dipakai saat Ibu atau Ayah memberi contoh di papan, supaya anak mendengar orang yang dikenalnya. Saat anak sendiri yang menekan, papan bicara dengan suara anak, karena itu suaranya. Rekaman tersimpan di perangkat ini saja dan tidak pernah dikirim ke siapa pun, termasuk terapis.',
-        style: companionBodyStyle,
-      ),
-      const SizedBox(height: 16),
-      FamilyVoiceRecorder(onRecorded: (path) => setState(() => _recording = path)),
-    ],
-    bottom: Row(
-      children: [
-        Expanded(
-          child: EqualOutlineButton(label: 'Lewati', onPressed: widget.onNext),
+  Widget build(BuildContext context) {
+    final app = AppScope.of(context);
+    final recorded = _words.where((w) => app.symbolById(w)?.familyAudio != null).length;
+    return _PageShell(
+      title: 'Mau pakai suaramu?',
+      body: [
+        const Text(
+          'Anak biasanya lebih cepat mengenali suara orang tuanya daripada suara bawaan HP. Enam kata saja, bisa juga '
+          'nanti. Rekaman tersimpan di HP ini saja dan tidak pernah dikirim ke siapa pun, termasuk terapis.',
+          style: companionBodyStyle,
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: EqualOutlineButton(label: 'Simpan', onPressed: _recording == null ? null : _save),
+        const SizedBox(height: 16),
+        CompanionCard(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          child: Column(
+            children: [
+              for (final w in _words)
+                if (app.symbolById(w) case final s?)
+                  InkWell(
+                    onTap: () => setState(() => _selected = w),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                      decoration: BoxDecoration(
+                        color: w == _selected ? CompanionColors.navySoft : null,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Image(
+                            image: symbolImage(s.symbolPath),
+                            width: 36,
+                            height: 36,
+                            errorBuilder: (_, _, _) => const SizedBox(width: 36),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(s.labelDisplay, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                          ),
+                          Text(
+                            s.familyAudio != null ? 'sudah direkam' : 'belum',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: s.familyAudio != null ? CompanionColors.green : CompanionColors.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+            ],
+          ),
         ),
+        const SizedBox(height: 12),
+        FamilyVoiceRecorder(key: ValueKey(_selected), wordId: _selected, onRecorded: (path) => _saved(_selected, path)),
       ],
-    ),
-  );
+      bottom: Column(
+        children: [
+          PrimaryButton(label: recorded == 0 ? 'Lanjut' : 'Simpan dan lanjut', onPressed: widget.onNext),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: EqualOutlineButton(label: 'Lewati, rekam nanti saja', onPressed: widget.onNext),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _FinishPage extends StatelessWidget {
@@ -344,22 +396,60 @@ class _FinishPage extends StatelessWidget {
 
   final String name;
   final String routine;
-  final VoidCallback onFinish;
+
+  /// Dipanggil dengan tujuan setelah pemasangan: misi hari ini atau papan.
+  final ValueChanged<AfterOnboarding> onFinish;
 
   @override
   Widget build(BuildContext context) {
     final selectedRoutineLabel = routineDisplayLabel(routine);
     return _PageShell(
-      title: 'Misi hari pertama',
+      title: 'Papan $name siap dipakai',
       body: [
-        Text(
-          'Saat $selectedRoutineLabel nanti: tekan MAU sambil berkata "mau", lima kali. $name tidak perlu menekan apa pun. Itu saja untuk hari ini.',
-          style: companionBodyStyle,
-        ),
+        const Text('Semuanya tersimpan di HP ini. Papan tetap jalan walau tidak ada jaringan.', style: companionBodyStyle),
         const SizedBox(height: 16),
-        const Text('Tidak ada skor. Tidak ada hari yang gagal. Kalau belum sempat, besok ada lagi.', style: companionMutedStyle),
+        CompanionCard(
+          color: CompanionColors.navy,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'MISI HARI PERTAMA',
+                style: TextStyle(fontSize: 13, letterSpacing: 1.2, fontWeight: FontWeight.w800, color: Color(0xFFF1E6C8)),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Saat $selectedRoutineLabel nanti, tekan simbol MAU lima kali sambil mengucapkannya.',
+                style: const TextStyle(fontSize: 22, height: 1.3, fontWeight: FontWeight.w800, color: Colors.white),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '$name tidak perlu ikut menekan. Kurang dari lima menit.',
+                style: const TextStyle(fontSize: 16, height: 1.4, color: Color(0xFFDCE6F1)),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        const CompanionCard(
+          color: CompanionColors.sand,
+          child: Text(
+            'Terapis bisa dihubungkan nanti dengan kode undangan. Tanpa itu pun aplikasi tetap berguna. '
+            'Tidak ada skor dan tidak ada hari yang gagal.',
+            style: companionBodyStyle,
+          ),
+        ),
       ],
-      bottom: PrimaryButton(label: 'Ke beranda', onPressed: onFinish),
+      bottom: Column(
+        children: [
+          PrimaryButton(label: 'Buka misi hari ini', onPressed: () => onFinish(AfterOnboarding.mission)),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: EqualOutlineButton(label: 'Lihat papan dulu', onPressed: () => onFinish(AfterOnboarding.board)),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -7,6 +7,8 @@ Diperbarui: 13:55
 Layar mockup A–C lengkap (18 Sep siang). Belum dibuka di emulator: C3, C5 baru, C6 baru, kartu B1, A5/A6 baru.
 
 ## Tonggak selesai (tag)
+- (13:55, tanpa tag) A5 merekam 6 kata yang paling sering dicontohkan (kata berikutnya terpilih sendiri, Lewati
+  setara). A6 "Buka misi hari ini" / "Lihat papan dulu", dijalankan sekali oleh beranda. **Belum dicek di emulator**
 - (13:55, tanpa tag) B1 kartu "Sepekan ini" (kata berbeda pekan ini, batang 7 pekan, titik misi 7 hari isi/garis) dan
   "Buka Papan Bicara" (4 kata keluarga). B6 menampilkan jumlah modeling kata target hari ini dan status kirim ke
   terapis, teks setara untuk Selesai/Belum sempat. C1 pilihan rentang, kartu kata berbeda, kata terbanyak, porsi

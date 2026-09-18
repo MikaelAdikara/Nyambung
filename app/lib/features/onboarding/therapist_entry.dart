@@ -10,7 +10,7 @@ import '../coach/companion_widgets.dart';
 /// email + kata sandi. Di sini tidak dibuat profil anak dan tidak ada yang tersimpan.
 Future<void> showTherapistEntry(BuildContext context) {
   final app = AppScope.of(context);
-  final url = dashboardUrlFor(app.prefs.getString(PrefKeys.serverUrl));
+  final url = dashboardUrlFor(ServerConfig.resolve(app.prefs.getString(PrefKeys.serverUrl)));
   return showModalBottomSheet<void>(
     context: context,
     backgroundColor: CompanionColors.bg,

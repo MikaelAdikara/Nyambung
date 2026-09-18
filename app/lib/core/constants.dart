@@ -62,6 +62,21 @@ abstract final class Limits {
   static const holdMsOptions = [0, 300, 500, 800];
 }
 
+/// Alamat server. Bawaan ditanam saat build (`--dart-define=NYAMBUNG_SERVER=http://192.168.1.10:8000`, nanti alamat
+/// VPS), jadi HP keluarga tersambung tanpa mengetik apa pun. Isian "Alamat server" di Atur hanya menimpa bila diisi.
+abstract final class ServerConfig {
+  static const defaultUrl = String.fromEnvironment('NYAMBUNG_SERVER', defaultValue: 'http://127.0.0.1:8000');
+
+  /// Alamat tersimpan bila ada, selain itu bawaan build. `localhost` diganti `127.0.0.1` (di Windows mencoba IPv6
+  /// dulu), garis miring akhir dibuang.
+  static String resolve(String? saved) {
+    final trimmed = saved?.trim() ?? '';
+    final value = trimmed.isEmpty ? defaultUrl.trim() : trimmed;
+    final normalized = value.replaceFirst('://localhost', '://127.0.0.1');
+    return normalized.endsWith('/') ? normalized.substring(0, normalized.length - 1) : normalized;
+  }
+}
+
 /// Kunci `shared_preferences`.
 abstract final class PrefKeys {
   static const vocabLoaded = 'vocab_loaded_v1';

@@ -28,7 +28,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final _server = TextEditingController(text: 'http://127.0.0.1:8000');
+  final _server = TextEditingController(text: ServerConfig.resolve(null));
   int _holdMs = 0;
   String? _connectionResult;
   AppState? _app;
@@ -39,7 +39,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final app = AppScope.of(context);
     if (_app == app) return;
     _app = app;
-    _server.text = app.prefs.getString(PrefKeys.serverUrl) ?? 'http://127.0.0.1:8000';
+    _server.text = ServerConfig.resolve(app.prefs.getString(PrefKeys.serverUrl));
     _holdMs = app.holdMs;
     _measureData();
   }
@@ -93,11 +93,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   /// Simpan alamat lalu uji `GET /v1/health` (harus `{"ok": true}`; port yang dijawab proses lain tidak dihitung).
   Future<void> _saveServer() async {
-    var url = _server.text.trim().replaceFirst('://localhost', '://127.0.0.1');
-    if (url.endsWith('/')) url = url.substring(0, url.length - 1);
+    var url = _server.text.trim();
     if (url.isNotEmpty && !url.startsWith('http')) url = 'http://$url';
+    url = ServerConfig.resolve(url);
     _server.text = url;
-    await _app!.prefs.setString(PrefKeys.serverUrl, url);
+    // Kosong atau sama dengan bawaan build → tidak disimpan, supaya build berikutnya (mis. alamat VPS) langsung berlaku.
+    if (url == ServerConfig.resolve(null)) {
+      await _app!.prefs.remove(PrefKeys.serverUrl);
+    } else {
+      await _app!.prefs.setString(PrefKeys.serverUrl, url);
+    }
     setState(() => _testing = true);
     var ok = false;
     try {

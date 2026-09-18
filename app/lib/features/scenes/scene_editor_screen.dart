@@ -248,10 +248,7 @@ class _SceneEditorScreenState extends State<SceneEditorScreen> {
     }
   }
 
-  String get _baseUrl {
-    final value = _app.prefs.getString(PrefKeys.serverUrl)?.trim() ?? 'http://127.0.0.1:8000';
-    return value.endsWith('/') ? value.substring(0, value.length - 1) : value;
-  }
+  String get _baseUrl => ServerConfig.resolve(_app.prefs.getString(PrefKeys.serverUrl));
 
   Future<void> _save() async {
     final path = _imagePath;

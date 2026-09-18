@@ -165,8 +165,16 @@ Semua angka di atas dari emulator, **belum dari HP fisik** 2 GB. Waktu rasterisa
 tidak bisa dipakai: emulator menggambar dengan OpenGL perangkat lunak (SwiftShader), bukan GPU. Perilaku Impeller di
 GPU Mali/Adreno lama juga belum diuji.
 
-Di HP, isi alamat server di Pengaturan dengan IP laptop yang menjalankan server (mis. `http://192.168.1.10:8000`);
-emulator Android menjangkau laptop lewat `http://10.0.2.2:8000`.
+**Alamat server ditanam saat build**, jadi keluarga tidak perlu mengetik apa pun. Pakai IP laptop yang menjalankan
+server (cek dengan `ipconfig`), atau alamat VPS nanti:
+
+```bash
+flutter build apk --release --split-per-abi --dart-define=NYAMBUNG_SERVER=http://192.168.1.10:8000
+```
+
+Tanpa `--dart-define`, bawaannya `http://127.0.0.1:8000` (hanya berguna untuk `adb reverse tcp:8000 tcp:8000`).
+Isian **Atur → Teknis → Alamat server** tetap ada sebagai penimpa, misalnya bila IP laptop berganti; mengosongkannya
+mengembalikan alamat bawaan build. Emulator Android menjangkau laptop lewat `http://10.0.2.2:8000`.
 
 ## Lisensi simbol
 

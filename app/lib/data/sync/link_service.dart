@@ -18,12 +18,7 @@ class LinkService {
   final AppState app;
   final http.Client _client;
 
-  String get _baseUrl {
-    final saved = app.prefs.getString(PrefKeys.serverUrl)?.trim();
-    final value = saved == null || saved.isEmpty ? 'http://127.0.0.1:8000' : saved;
-    final normalized = value.replaceFirst('://localhost', '://127.0.0.1');
-    return normalized.endsWith('/') ? normalized.substring(0, normalized.length - 1) : normalized;
-  }
+  String get _baseUrl => ServerConfig.resolve(app.prefs.getString(PrefKeys.serverUrl));
 
   Future<LinkResult> redeem(String inviteCode) async {
     final child = app.child;

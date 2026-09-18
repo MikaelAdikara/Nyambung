@@ -30,13 +30,8 @@ class SyncService {
 
   String get _baseUrl => serverBaseUrl(app);
 
-  /// Alamat server dari pengaturan; `localhost` diganti `127.0.0.1` (di Windows `localhost` mencoba IPv6 dulu).
-  static String serverBaseUrl(AppState app) {
-    final saved = app.prefs.getString(PrefKeys.serverUrl)?.trim();
-    final value = saved == null || saved.isEmpty ? 'http://127.0.0.1:8000' : saved;
-    final normalized = value.replaceFirst('://localhost', '://127.0.0.1');
-    return normalized.endsWith('/') ? normalized.substring(0, normalized.length - 1) : normalized;
-  }
+  /// Alamat server: isian di Atur bila ada, selain itu alamat yang ditanam saat build.
+  static String serverBaseUrl(AppState app) => ServerConfig.resolve(app.prefs.getString(PrefKeys.serverUrl));
 
   Future<SyncReport> push(String childId) async {
     if (app.prefs.getString(LinkService.pendingRevokeLinkKey) != null) {

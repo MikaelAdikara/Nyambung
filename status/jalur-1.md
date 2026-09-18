@@ -4,6 +4,12 @@ Diperbarui: 21:40
 **Mulai 11:20 semua jalur bekerja langsung di `main`** (tidak ada lagi kerja paralel; branch jalur sudah tergabung).
 
 ## Sedang dikerjakan
+- (21:35) **Alamat server ditanam saat build**: `flutter build apk --release --split-per-abi
+  --dart-define=NYAMBUNG_SERVER=http://<IP laptop>:8000` (nanti alamat VPS). Semua pembaca alamat lewat
+  `ServerConfig.resolve` di `core/constants.dart`; isian Atur → Alamat server hanya menimpa, dikosongkan = kembali ke
+  bawaan build. `start.bat` di akar menyalakan server (demo.db ilustratif) + papan pantau dan mencetak perintah build APK
+  dengan IP laptop. Analyzer bersih, 49 tes lulus; alur login → kode undangan → tebus → sinkron → usulan diuji lewat
+  IP LAN, belum dari HP fisik dengan APK baru.
 - (21:40) Beranda orang tua punya bagian **Fitur unggulan**: Papan dari foto (AI), Suara keluarga (klon), Frasa bersuara.
   Popup "Butuh kode dari terapis" (`features/settings/link_required.dart`) muncul di ketiga fitur bila perangkat belum
   tertaut, dengan tombol ke tab Terapis. Onboarding: keyboard tidak lagi mendorong awan dan tombol Lanjut naik.

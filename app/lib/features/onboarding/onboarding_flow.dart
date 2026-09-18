@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../coach/companion_widgets.dart';
 import '../coach/fake_app_state.dart';
+import '../coach/mission_rules.dart';
 
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({super.key, required this.state, required this.onFinished});
@@ -309,16 +310,12 @@ class _FinishPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final routineLabel = switch (routine) {
-      'mandi' => 'mandi sore',
-      'main' => 'main pagi',
-      _ => 'makan sore',
-    };
+    final selectedRoutineLabel = routineDisplayLabel(routine);
     return _PageShell(
       title: 'Misi hari pertama',
       body: [
         Text(
-          'Saat $routineLabel nanti: tekan MAU sambil berkata "mau", lima kali. $name tidak perlu menekan apa pun. Itu saja untuk hari ini.',
+          'Saat $selectedRoutineLabel nanti: tekan MAU sambil berkata "mau", lima kali. $name tidak perlu menekan apa pun. Itu saja untuk hari ini.',
           style: companionBodyStyle,
         ),
         const SizedBox(height: 16),

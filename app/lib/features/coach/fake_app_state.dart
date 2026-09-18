@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'mission_rules.dart';
+
 @immutable
 class FakeChild {
   const FakeChild({required this.nickname, required this.ageYears, required this.routine});
@@ -50,11 +52,9 @@ class FakeAppState extends ChangeNotifier {
   String? missionStatus;
   String targetStatus = 'usulan';
 
-  String get routineLabel => switch (mission.routine) {
-    'mandi' => 'mandi sore',
-    'main' => 'main pagi',
-    _ => 'makan sore',
-  };
+  String get routineLabel => routineLabelFor(mission.routine);
+
+  String routineLabelFor(String routine) => routineDisplayLabel(routine);
 
   Future<void> createChild({required String nickname, int? ageYears, required String routine}) async {
     child = FakeChild(nickname: nickname, ageYears: ageYears, routine: routine);

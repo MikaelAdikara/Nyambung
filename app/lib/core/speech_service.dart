@@ -15,6 +15,9 @@ import 'error_log.dart';
 /// Audio bundel ada dua set suara sintetis (`assets/audio/core/cowo/`, `.../cewe/`), dipilih lewat [voiceSet].
 /// Berkas di `assets/audio/core/{word_id}.ogg` (kontrak §6) tetap dipakai bila set terpilih tidak punya kata itu.
 ///
+/// Klip kata tunggal diputar lewat pemutar latensi rendah (SoundPool) yang disimpan per klip, supaya ketukan
+/// berikutnya pada kata yang sama tidak menunggu MediaPlayer menyiapkan berkas. Kata inti dimuat sejak awal.
+///
 /// Setiap panggilan plugin diberi batas waktu. Pada ROM tanpa mesin TTS, papan tetap terbuka tanpa suara.
 class SpeechService {
   SpeechService({FlutterTts? tts, AudioPlayer? player}) : _ttsOverride = tts, _playerOverride = player;
@@ -29,6 +32,16 @@ class SpeechService {
   FlutterTts? _tts;
   AudioPlayer? _player;
   Set<String> _bundledAssets = const {};
+
+  /// Pemutar SoundPool per aset klip, urut pemakaian terakhir (yang paling lama tidak dipakai di depan).
+  final _clipPlayers = <String, AudioPlayer>{};
+
+  /// Batas pemutar klip yang dimuat. Satu klip ± 1 detik PCM (± 90 KB); 40 klip tetap ringan di RAM 2 GB.
+  static const maxClipPlayers = 40;
+  AudioPlayer? _activeClip;
+
+  /// Pemutar utama (MediaPlayer) atau TTS mungkin sedang berbunyi; hanya dihentikan bila perlu.
+  bool _mainBusy = false;
 
   /// Set suara audio bundel: `cowo` atau `cewe`.
   String voiceSet = voiceSets.first;
@@ -105,19 +118,46 @@ class SpeechService {
   /// Hentikan ucapan sebelumnya sebelum mulai yang baru.
   Future<void> stop() async {
     _generation++;
-    await _guard('stop', () => _tts?.stop() ?? Future.value());
+    final clip = _activeClip;
+    _activeClip = null;
+    final mainBusy = _mainBusy;
+    _mainBusy = false;
+    await Future.wait([
+      if (clip != null) _quiet(clip.stop),
+      if (mainBusy) _guard('stop', () => _tts?.stop() ?? Future.value()),
+      if (mainBusy && _player != null) _quiet(_player!.stop),
+    ]);
+  }
+
+  Future<void> _quiet(Future<void> Function() call) async {
     try {
-      await _player?.stop().timeout(Limits.pluginTimeout);
+      await call().timeout(Limits.pluginTimeout);
     } catch (_) {}
   }
 
   /// Bunyikan satu kata sesuai siapa yang menekan.
   Future<void> speakWord(WordSymbol s, {required bool byParent}) async {
+    final family = byParent ? s.familyAudio : null;
+    final bundled = family == null ? _bundledFor(s) : null;
+    if (bundled != null) {
+      // Jalur cepat: hentikan bunyi sebelumnya tanpa menunggu, lalu putar klip yang sudah dimuat.
+      unawaited(stop());
+      try {
+        final clip = await _clipPlayer(bundled);
+        if (clip != null) {
+          _activeClip = clip;
+          await clip.resume().timeout(Limits.pluginTimeout);
+          return;
+        }
+      } catch (e, st) {
+        ErrorLog.record('speech:clip', e, st);
+      }
+    }
     await stop();
     try {
-      final source = _sourceFor(s, byParent: byParent);
-      if (source != null) {
-        await _player?.play(source).timeout(Limits.pluginTimeout);
+      if (family != null) {
+        _mainBusy = true;
+        await _player?.play(DeviceFileSource(family)).timeout(Limits.pluginTimeout);
         return;
       }
     } catch (e, st) {
@@ -126,11 +166,61 @@ class SpeechService {
     await speakText(s.labelSpeech, byParent: byParent, stopFirst: false);
   }
 
+  /// Pemutar SoundPool untuk satu aset klip; dibuat dan dimuat sekali, lalu dipakai ulang.
+  Future<AudioPlayer?> _clipPlayer(String asset) async {
+    final cached = _clipPlayers.remove(asset);
+    if (cached != null) {
+      _clipPlayers[asset] = cached;
+      return cached;
+    }
+    if (_player == null) return null;
+    final p = AudioPlayer();
+    try {
+      await p.setPlayerMode(PlayerMode.lowLatency).timeout(Limits.pluginTimeout);
+      await p.setReleaseMode(ReleaseMode.stop).timeout(Limits.pluginTimeout);
+      await p.setSource(AssetSource(asset.substring('assets/'.length))).timeout(Limits.pluginTimeout);
+    } catch (e) {
+      unawaited(p.dispose());
+      rethrow;
+    }
+    // Pemanggil lain mungkin memuat aset yang sama bersamaan; simpan satu saja.
+    final raced = _clipPlayers.remove(asset);
+    if (raced != null) {
+      unawaited(p.dispose());
+      _clipPlayers[asset] = raced;
+      return raced;
+    }
+    _clipPlayers[asset] = p;
+    while (_clipPlayers.length > maxClipPlayers) {
+      final oldest = _clipPlayers.keys.first;
+      final evicted = _clipPlayers.remove(oldest)!;
+      if (evicted != _activeClip) unawaited(evicted.dispose());
+    }
+    return p;
+  }
+
+  /// Muat klip kata-kata ini sebelum diketuk (kata inti saat bootstrap, halaman kategori saat dibuka).
+  /// Berurutan dan diam-diam: gagal memuat berarti ketukan nanti memuat sendiri.
+  Future<void> preload(Iterable<WordSymbol?> words) async {
+    for (final w in words) {
+      if (w == null) continue;
+      final asset = _bundledFor(w);
+      if (asset == null || _clipPlayers.containsKey(asset)) continue;
+      try {
+        await _clipPlayer(asset);
+      } catch (e, st) {
+        ErrorLog.record('speech:preload', e, st);
+        return;
+      }
+    }
+  }
+
   /// Bunyikan teks lewat TTS dengan nada anak (1,3) atau pendamping (1,0).
   Future<void> speakText(String text, {required bool byParent, bool stopFirst = true}) async {
     final tts = _tts;
     if (tts == null || text.trim().isEmpty) return;
     if (stopFirst) await stop();
+    _mainBusy = true;
     await _guard('setPitch', () => tts.setPitch(byParent ? parentPitch : childPitch));
     if (firstUtteranceLatencyMs == null) _pendingLatency = Stopwatch()..start();
     await _guard('speak', () => tts.speak(text));
@@ -147,6 +237,7 @@ class SpeechService {
       return;
     }
     final generation = _generation;
+    _mainBusy = true;
     try {
       for (final source in sources) {
         if (generation != _generation) return;
@@ -166,5 +257,9 @@ class SpeechService {
   Future<void> dispose() async {
     await stop();
     await _player?.dispose();
+    for (final p in _clipPlayers.values) {
+      await p.dispose();
+    }
+    _clipPlayers.clear();
   }
 }

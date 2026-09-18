@@ -73,13 +73,30 @@ class _BoardScreenState extends State<BoardScreen> {
     _app = AppScope.of(context);
     if (!_started) {
       _started = true;
+      _app.boardOpen = true;
       _app.startBoardSession();
       if (widget.childMode) LockTask.start();
+      WidgetsBinding.instance.addPostFrameCallback((_) => _precacheBoard());
+    }
+  }
+
+  /// Sesudah frame pertama: dekode gambar halaman yang terbuka dulu, lalu halaman lain, supaya pindah tab tidak
+  /// menampilkan sel kosong sesaat. Semua 120 simbol ± 30 MB, di bawah batas cache gambar (main.dart).
+  Future<void> _precacheBoard() async {
+    final order = [
+      _page,
+      for (final p in _app.pages)
+        if (p.page != _page) p.page,
+    ];
+    for (final p in order) {
+      if (!mounted) return;
+      await precacheSymbols(context, _app.cellsForPage(p), keepGoing: () => mounted);
     }
   }
 
   @override
   void dispose() {
+    _app.boardOpen = false;
     _utterance.dispose();
     _parentTurn.dispose();
     _suggestedPage.dispose();
@@ -114,6 +131,7 @@ class _BoardScreenState extends State<BoardScreen> {
   void _openPage(int p) {
     _suggestedPage.value = null;
     setState(() => _page = p);
+    _app.speech.preload(_app.cellsForPage(p));
   }
 
   void _onDelete() {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
@@ -68,6 +70,10 @@ class AppState extends ChangeNotifier {
 
   DateTime? _lastParentTap;
 
+  /// Papan sedang terbuka. Sinkron berkala di beranda menunggu sampai papan ditutup, supaya HTTP dan
+  /// kueri DB tidak berebut CPU dengan ketukan di HP berspesifikasi rendah.
+  bool boardOpen = false;
+
   /// Buka DB → muat CSV bila perlu → muat anak dan simbol → siapkan suara. Aman dipanggil ulang.
   Future<void> bootstrap() async {
     _ready = false;
@@ -90,6 +96,8 @@ class AppState extends ChangeNotifier {
     }
     speech.voiceSet = prefs.getString(PrefKeys.voiceSet) ?? SpeechService.voiceSets.first;
     await speech.init();
+    // Klip kata inti dimuat di latar supaya ketukan pertama di papan langsung berbunyi.
+    unawaited(speech.preload(cellsForPage(0)));
     _ready = true;
     _bump();
   }
@@ -260,6 +268,7 @@ class AppState extends ChangeNotifier {
   Future<void> setVoiceSet(String set) async {
     if (!SpeechService.voiceSets.contains(set)) return;
     speech.voiceSet = set;
+    unawaited(speech.preload(cellsForPage(0)));
     await prefs.setString(PrefKeys.voiceSet, set);
     _bump();
   }

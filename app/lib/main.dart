@@ -22,6 +22,8 @@ void main() {
   ErrorWidget.builder = (details) => ReadableError(details: details);
 
   WidgetsFlutterBinding.ensureInitialized();
+  // HP RAM 2 GB: batasi cache gambar (bawaan 100 MB). 120 simbol pada 256 px ± 30 MB tetap muat seluruhnya.
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 48 << 20;
   final state = AppState();
   // AppScope DI ATAS MaterialApp: rute Navigator.push ikut menemukannya.
   runApp(AppScope(state: state, child: const NyambungApp()));

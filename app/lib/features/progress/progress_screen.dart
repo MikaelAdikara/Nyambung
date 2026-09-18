@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants.dart';
 import '../../core/time.dart';
 import '../../data/models.dart';
+import '../board/symbol_cell.dart';
 import '../coach/companion_controller.dart';
 import '../coach/companion_widgets.dart';
 import '../coach/mission_rules.dart';
@@ -175,7 +176,7 @@ class _WordChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (symbol != null)
-            Image.asset(symbol.symbolPath, width: 28, height: 28, cacheWidth: 84, errorBuilder: (_, _, _) => const SizedBox.shrink()),
+            Image(image: symbolImage(symbol.symbolPath), width: 28, height: 28, errorBuilder: (_, _, _) => const SizedBox.shrink()),
           const SizedBox(width: 6),
           Text(symbol?.labelDisplay ?? word.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w800)),
         ],

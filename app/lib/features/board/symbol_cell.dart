@@ -83,7 +83,6 @@ class SymbolFace extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = PosStyle.of(symbol.pos);
-    final dpr = MediaQuery.devicePixelRatioOf(context);
     final imageSize = height * 0.62;
     final letter = symbol.labelDisplay.isEmpty ? '?' : symbol.labelDisplay.characters.first;
     final fallback = Center(
@@ -109,9 +108,8 @@ class SymbolFace extends StatelessWidget {
                 SizedBox(
                   height: imageSize - (compact ? 6 : 12),
                   width: double.infinity,
-                  child: Image.asset(
-                    symbol.symbolPath,
-                    cacheWidth: (imageSize * dpr).round(),
+                  child: Image(
+                    image: symbolImage(symbol.symbolPath),
                     fit: BoxFit.contain,
                     gaplessPlayback: true,
                     errorBuilder: (_, _, _) => fallback,
@@ -141,5 +139,24 @@ class SymbolFace extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Lebar dekode gambar simbol: sama dengan PNG sumber (256 px), jadi tidak pernah membesar.
+const symbolDecodeWidth = 256;
+
+/// Satu kunci cache per simbol untuk papan, bilah ujaran, dan pratinjau: tiap gambar didekode sekali
+/// (± 256 KB) lalu dipakai ulang di semua ukuran, termasuk oleh [precacheSymbols].
+ImageProvider symbolImage(String path) => ResizeImage(AssetImage(path), width: symbolDecodeWidth);
+
+/// Dekode gambar simbol sebelum halamannya dibuka, satu per satu supaya tidak berebut dengan frame yang sedang
+/// digambar. Berhenti bila [keepGoing] mengembalikan false (mis. papan sudah ditutup). Gambar yang belum ada
+/// (sel huruf pertama) dilewati diam-diam.
+Future<void> precacheSymbols(BuildContext context, Iterable<WordSymbol?> symbols, {required bool Function() keepGoing}) async {
+  final seen = <String>{};
+  for (final s in symbols) {
+    if (s == null || !seen.add(s.symbolPath)) continue;
+    if (!keepGoing() || !context.mounted) return;
+    await precacheImage(symbolImage(s.symbolPath), context, onError: (_, _) {});
   }
 }

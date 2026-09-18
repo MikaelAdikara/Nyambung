@@ -8,6 +8,7 @@ import 'package:record/record.dart';
 import '../../core/app_state.dart';
 import '../../core/error_log.dart';
 import '../../data/models.dart';
+import '../board/symbol_cell.dart';
 import '../coach/companion_widgets.dart';
 
 /// C4 Suara keluarga: daftar 12 kata inti (halaman 0) dengan status rekaman. Satu perekam dan satu pemutar
@@ -144,7 +145,7 @@ class _FamilyVoiceScreenState extends State<FamilyVoiceScreen> {
         children: [
           Row(
             children: [
-              Image.asset(s.symbolPath, width: 40, height: 40, cacheWidth: 120, errorBuilder: (_, _, _) => const SizedBox(width: 40)),
+              Image(image: symbolImage(s.symbolPath), width: 40, height: 40, errorBuilder: (_, _, _) => const SizedBox(width: 40)),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(s.labelDisplay, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),

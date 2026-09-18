@@ -1,10 +1,19 @@
 # Status jalur 1 — Papan
-Diperbarui: 11:20
+Diperbarui: 12:00
 
 **Mulai 11:20 semua jalur bekerja langsung di `main`** (tidak ada lagi kerja paralel; branch jalur sudah tergabung).
 
 ## Sedang dikerjakan
-1.7 Pengerasan: tinggal uji HP fisik + RAM 2 GB (butuh perangkat). j1-suara ditahan: rekaman suara sedang dibuat manusia
+Paket HP kentang + UX (18 Sep siang): 1) optimasi O1–O3 ✔, 2) tab halaman di kiri + nama tab baru + keadaan tekan,
+3) geser urutan bilah ujaran, 4) animasi layar orang tua, 5) O4–O6 + ukur ulang. j1-suara ditahan: belum didengar manusia.
+
+## Optimasi HP kentang (diukur di emulator arm64 Android 16, `-memory 2048 -cores 2`, APK rilis; **perkiraan, bukan HP fisik**)
+- O1 klip kata tunggal lewat SoundPool (`PlayerMode.lowLatency`, satu pemutar per klip, LRU 40), kata inti dimuat saat
+  bootstrap, halaman kategori saat tab dibuka. UCAPKAN dan rekaman keluarga tetap MediaPlayer. Jeda dari perintah stop
+  sampai audio mulai (logcat AudioFocus → AppOps): **median 98 ms → 21 ms** (12 ketukan MAU/BANTU tiap versi)
+- O2 sinkron berkala di beranda dilewati saat papan terbuka (`AppState.boardOpen`) dan saat aplikasi di latar belakang
+- O3 satu kunci cache gambar per simbol (256 px) untuk papan, bilah, pratinjau; semua halaman didekode di latar sesudah
+  frame pertama papan; cache gambar dibatasi 48 MB (120 simbol ± 30 MB)
 
 ## Tonggak selesai (tag)
 - j1-kerangka: app terbuka, AppScope di atas MaterialApp, AppState + DAO nyata, DB terbuka, 120 kata termuat

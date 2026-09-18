@@ -24,8 +24,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
-  /// Selama beranda terpasang (termasuk saat papan dibuka di atasnya), catatan dicoba kirim berkala dan
-  /// usulan terapis ditarik. Tanpa jaringan percobaan ini gagal diam-diam; luring tetap keadaan biasa.
+  /// Selama beranda terpasang, catatan dicoba kirim berkala dan usulan terapis ditarik. Tanpa jaringan percobaan
+  /// ini gagal diam-diam; luring tetap keadaan biasa. Dilewati saat papan terbuka (dikirim begitu papan ditutup)
+  /// dan saat aplikasi di latar belakang (dikirim saat kembali aktif).
   static const _autoSyncEvery = Duration(seconds: 20);
 
   CompanionController? _controller;
@@ -36,13 +37,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _ticker = Timer.periodic(_autoSyncEvery, (_) => _controller?.autoSync());
+    _ticker = Timer.periodic(_autoSyncEvery, (_) {
+      final active = WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+      if (active && _app?.boardOpen != true) _controller?.autoSync();
+    });
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Kembali ke aplikasi (mis. setelah mode pesawat dimatikan): coba kirim segera.
-    if (state == AppLifecycleState.resumed) _controller?.autoSync();
+    if (state == AppLifecycleState.resumed && _app?.boardOpen != true) _controller?.autoSync();
   }
 
   @override

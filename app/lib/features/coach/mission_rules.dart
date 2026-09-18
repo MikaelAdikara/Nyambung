@@ -29,6 +29,14 @@ String formatTanggal(String iso) {
   return '${t.day} ${_bulan[t.month - 1]} ${t.year}';
 }
 
+/// Jadwal lokal tanpa zona dari terapis: `2026-09-23T15:30` → `23 September, 15.30`; `2026-09-23` → `23 September 2026`.
+String formatJadwal(String local) {
+  final t = DateTime.tryParse(local);
+  if (t == null) return local;
+  if (!local.contains('T')) return '${t.day} ${_bulan[t.month - 1]} ${t.year}';
+  return '${t.day} ${_bulan[t.month - 1]}, ${t.hour.toString().padLeft(2, '0')}.${t.minute.toString().padLeft(2, '0')}';
+}
+
 /// Waktu singkat untuk kartu catatan: `hari ini 10.20`, `kemarin 18.05`, atau `16 September 18.05`.
 String formatWaktuSingkat(String iso, {DateTime? now}) {
   final t = DateTime.tryParse(iso)?.toLocal();

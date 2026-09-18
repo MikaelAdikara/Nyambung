@@ -7,6 +7,10 @@ Diperbarui: 13:55
 Layar mockup A–C lengkap (18 Sep siang). Belum dibuka di emulator: C3, C5 baru, C6 baru, kartu B1, A5/A6 baru.
 
 ## Tonggak selesai (tag)
+- (13:55, tanpa tag) C5: kartu profil terapis + lama terhubung, usulan menunggu, daftar dibagikan (kotak) vs tidak
+  pernah dikirim (belah ketupat), ringkasan sesi dari terapis (ditarik saat sinkron), catatan UU PDP 27/2022, Cabut akses.
+  C6 ditata ulang: susunan sel, Kunci mode anak (screen pinning, bawaan aktif), suara papan, tahan, rutinitas,
+  pintasan C4/C2, ukuran data, ekspor, hapus semua, Batas produk, atribusi Mulberry. **Belum dicek di emulator**
 - (13:55, tanpa tag) A5 merekam 6 kata yang paling sering dicontohkan (kata berikutnya terpilih sendiri, Lewati
   setara). A6 "Buka misi hari ini" / "Lihat papan dulu", dijalankan sekali oleh beranda. **Belum dicek di emulator**
 - (13:55, tanpa tag) B1 kartu "Sepekan ini" (kata berbeda pekan ini, batang 7 pekan, titik misi 7 hari isi/garis) dan

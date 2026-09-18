@@ -21,22 +21,29 @@ pembuka dan penutup, klinis di tengah. Sebut sumber, sebut batas, jangan melebih
 |---|---|---|---|
 | 0:00–0:10 | Judul *(manual)* | Perkenalan tim | 4 |
 | 0:10–0:20 | 1 | Hook: pertanyaan | 1 |
-| 0:20–0:45 | 2 | Hook: Ethan | 1 |
-| 0:45–1:08 | 3 | Masalah dan data | **1** |
-| 1:08–1:22 | 4 | Celah di antara fitur | 1 |
-| 1:22–1:42 | 5 | Nyambung: satu loop, bukan sekadar AAC | **1** |
-| 1:42–2:10 | 6 | Yang kami ciptakan untuk anak dan keluarga | 1, 2 |
-| 2:10–2:25 | 7 | Kenapa misinya dirancang begini (riset) | 1 |
-| 2:25–2:47 | 8 | Yang kami ciptakan untuk terapis | 1, 2 |
-| 2:47–3:17 | 9 | Ketepatan teknologi dan arsitektur | **2** |
-| 3:17–3:32 | 10 | Basis ilmiah dan opini FORMAPI UB | 1, 2 |
-| 3:32–3:42 | 11 | Asal aset | 2 |
-| 3:42–4:10 | 12 | Kelayakan: teknis, biaya, model bisnis, penerapan | **3** |
-| 4:10–4:35 | 13 | Dampak dan metrik | **3** |
-| 4:35–4:48 | 14 | Penutup | 4 |
-| 4:48–5:00 | | Cadangan 12 detik | |
+| 0:20–0:43 | 2 | Hook: Ethan | 1 |
+| 0:43–1:03 | 3 | Masalah dan data | **1** |
+| 1:03–1:15 | 4 | Celah di antara fitur | 1 |
+| 1:15–1:32 | 5 | Nyambung: satu loop, bukan sekadar AAC | **1** |
+| 1:32–1:50 | 6 | Yang kami ciptakan untuk anak dan keluarga | 1, 2 |
+| 1:50–2:02 | 7 | Kenapa misinya dirancang begini (riset) | 1 |
+| 2:02–2:22 | 8 | **Fitur unggulan 1: suara keluarga (tiruan suara)** | 1, 2 |
+| 2:22–2:42 | 9 | **Fitur unggulan 2: papan dari foto dengan AI** | 1, 2 |
+| 2:42–3:02 | 10 | Yang kami ciptakan untuk terapis | 1, 2 |
+| 3:02–3:27 | 11 | Ketepatan teknologi, arsitektur, dan keamanan | **2** |
+| 3:27–3:40 | 12 | Basis ilmiah, opini FORMAPI UB, asal aset | 1, 2 |
+| 3:40–4:05 | 13 | Kelayakan: teknis, biaya, model bisnis, penerapan | **3** |
+| 4:05–4:27 | 14 | Dampak dan metrik | **3** |
+| 4:27–4:40 | 15 | Penutup | 4 |
+| 4:40–5:00 | | Cadangan 20 detik | |
 
-Slide 15–17 adalah **lampiran Q&A** (12 kata inti, batasan dan roadmap, ringkasan `PERUBAHAN.md`). Jangan ditampilkan
+**Benang merah cerita:** Ethan berhasil karena lingkungannya belajar menjawab → banyak anak tidak punya lingkungan itu
+(masalah) → alat yang ada tidak menyambungkan orang-orangnya (celah) → Nyambung menyambungkan anak, keluarga, dan
+terapis (loop) → untuk keluarga: papan dan misi yang berbasis riset → dua fitur yang membuat papan terasa milik
+keluarga: suaranya sendiri dan foto rumahnya sendiri → semua itu sampai ke terapis sebagai konteks → teknologinya
+dipilih untuk kondisi itu dan dijaga keamanannya → bukti, kelayakan, dampak → kembali ke Ethan.
+
+Slide 16–19 adalah **lampiran Q&A** (asal aset, 12 kata inti, batasan dan roadmap, ringkasan `PERUBAHAN.md`). Jangan ditampilkan
 saat pitch.
 
 ---
@@ -52,7 +59,7 @@ saat pitch.
 
 `[Diam 2 detik sebelum pindah slide.]`
 
-## 0:20–0:45 · Slide 2 — Ethan
+## 0:20–0:43 · Slide 2 — Ethan
 
 > "Ini Ethan, lima tahun, dari Inggris. Ethan autis dan tidak berbicara. Dulu, caranya meminta sesuatu adalah
 > menarik tangan orang dewasa ke arah yang ia mau.
@@ -65,7 +72,7 @@ saat pitch.
 *Sumber: kisah Laura dan Ethan, National Autistic Society (autism.org.uk), dimuat di majalah Your Autism. Foto Ethan
 tidak dipakai tanpa izin; slide memakai bingkai ilustrasi.*
 
-## 0:45–1:08 · Slide 3 — Masalah
+## 0:43–1:03 · Slide 3 — Masalah
 
 > "Datanya menjawab. **25 sampai 30 persen anak autis tetap minimally verbal setelah usia lima tahun.** AAC sudah
 > ada, tapi **29,3 persen alat bantu ditinggalkan sepenuhnya**, paling banyak di tahun pertama. Menurut survei 275
@@ -73,42 +80,57 @@ tidak dipakai tanpa izin; slide memakai bingkai ilustrasi.*
 > Di Indonesia tantangannya bertumpuk: alat berbahasa Inggris, mahal, butuh internet, orang tua tidak pernah dilatih,
 > dan terapis tidak tahu apa yang terjadi di rumah di antara sesi."
 
-## 1:08–1:22 · Slide 4 — Celah
+## 1:03–1:15 · Slide 4 — Celah
 
 > "Solusi yang ada kuat di bagiannya masing-masing: bahasa Indonesia, luring, kustomisasi, atau laporan.
 > **Tapi celahnya bukan di satu fitur. Celahnya ada di antara fitur**: belum ada yang menyatukan anak, keluarga,
 > dan terapis dalam satu alur."
 
-## 1:22–1:42 · Slide 5 — Nyambung
+## 1:15–1:32 · Slide 5 — Nyambung
 
 > "Maka kami membangun **Nyambung**. Nyambung bukan sekadar papan AAC. **Nyambung mengubah AAC dari alat milik anak
 > menjadi bahasa bersama satu rumah**: anak berbicara lewat papan, orang tua belajar menjawab lewat misi harian,
 > dan terapis melihat apa yang terjadi di rumah lalu mengirim usulan kembali. Satu loop, luring-pertama.
 > **Suara anak, sampai.**"
 
-## 1:42–2:10 · Slide 6 — Yang kami ciptakan untuk anak dan keluarga
+## 1:32–1:50 · Slide 6 — Yang kami ciptakan untuk anak dan keluarga
 
-> "Untuk anak, papan bicara yang **tetap hidup tanpa internet**: dua belas kata inti di posisi tetap, 120 kata
-> bersimbol, dan papan dari foto rumahnya sendiri.
-> Suaranya berlapis: suara papan yang sama di semua HP, rekaman Ibu atau Ayah yang tetap di HP, dan tiruan suara
-> keluarga **hanya dengan persetujuan eksplisit**.
+> "Untuk anak, papan bicara yang **tetap hidup tanpa internet**: dua belas kata inti di posisi tetap dan 120 kata
+> bersimbol, dengan layar anak yang terkunci dari pengaturan orang tua.
 > Untuk orang tua, **satu pelajaran 60 detik dan satu misi di bawah lima menit sehari**, menempel pada rutinitas.
 > Penghitungnya terisi sendiri dari ketukan. Tanpa streak, tanpa rasa bersalah, tanpa formulir."
 
-## 2:10–2:25 · Slide 7 — Kenapa misinya dirancang begini
+## 1:50–2:02 · Slide 7 — Kenapa misinya dirancang begini
 
-> "Desain misinya tidak kami karang. **Intervensi yang dijalankan orang tua dan disisipkan di rutinitas termasuk
+> "Dan misi itu tidak kami karang. **Intervensi yang dijalankan orang tua dan disisipkan di rutinitas termasuk
 > praktik berbasis bukti** menurut tinjauan 972 studi. Melewatkan satu hari tidak merusak pembentukan kebiasaan, jadi
 > kami tidak menghukum hari yang terlewat. Yang belum teruji, seperti pelajaran 60 detik, kami tandai untuk pilot."
 
-## 2:25–2:47 · Slide 8 — Yang kami ciptakan untuk terapis
+## 2:02–2:22 · Slide 8 — Fitur unggulan 1: suara keluarga
 
-> "Untuk terapis, kami tidak memberi tumpukan data. Dasbor menandai anak yang perlu ditinjau, **selalu dengan
+> "Dua fitur unggulan kami membuat papan ini terasa milik keluarganya sendiri. **Pertama: suara keluarga.** Setelah
+> orang tua menyetujui empat butir dan membaca tiga kalimat, Nyambung bisa membuat kalimat baru dengan suara orang
+> tuanya. Misalnya guru ingin anak mendengar *"Jangan nyontek"* dengan suara ibunya. Klipnya dibuat sekali, disimpan
+> di HP, dan diputar tanpa internet; kalimat dari guru atau terapis tetap usulan yang boleh ditolak.
+> Pengamannya kami bangun sejak awal: **server tidak menyimpan rekaman, hanya ID suara; nama anak tidak dikirim; dan
+> satu tombol mencabut serta menghapus suara di penyedia.**"
+
+## 2:22–2:42 · Slide 9 — Fitur unggulan 2: papan dari foto dengan AI
+
+> "**Kedua: papan dari foto.** Satu foto dari rumah, misalnya meja makan, menjadi papan bicara dengan sampai enam area.
+> Ini berbasis bukti: sintesis 12 studi menilai *visual scene display* sebagai praktik berbasis bukti untuk anak autis
+> usia 3 sampai 8 tahun; **37 dari 42 peserta menunjukkan efek positif.**
+> **AI hanya membuat draf**, dan hanya bila pendamping menyetujui pengiriman foto itu. Foto tidak disimpan server, dan
+> keluarga wajib memeriksa sebelum menyimpan. Setelah tersimpan, papannya dipakai tanpa internet."
+
+## 2:42–3:02 · Slide 10 — Yang kami ciptakan untuk terapis
+
+> "Semua yang terjadi di rumah itu sampai ke terapis. Tapi kami tidak memberi tumpukan data. Dasbor menandai anak yang perlu ditinjau, **selalu dengan
 > alasannya**, lalu menyusun ringkasan rumah sebelum sesi. Terapis mengusulkan kata atau frasa bersuara, dan
 > keluarga memilih **Terima atau Tolak, tanpa perlu alasan**.
 > **Aturan tetap, alasan tertulis, keputusan tetap di tangan manusia.**"
 
-## 2:47–3:17 · Slide 9 — Ketepatan teknologi
+## 3:02–3:27 · Slide 11 — Ketepatan teknologi dan keamanan
 
 > "Setiap pilihan teknologi berangkat dari kondisi pengguna kami.
 > Karena sinyal tidak bisa diandalkan, **data utama tinggal di HP**: setiap ketukan ditulis ke log yang tidak bisa
@@ -117,21 +139,18 @@ tidak dipakai tanpa izin; slide memakai bingkai ilustrasi.*
 > hasilnya identik.
 > Karena HP keluarga sederhana, aplikasinya **Flutter untuk Android 8 dengan RAM 2 GB**. Server-nya ringan, FastAPI
 > dan SQLite, cukup untuk pilot satu klinik.
-> Dan **AI hanya dipakai di server saat membuat konten**, yaitu frasa, tiruan suara, atau draf papan foto. Hasilnya
-> diputar luring. Tidak ada model di dalam aplikasi, dan triase terapis memakai aturan yang bisa diperiksa."
+> Keamanannya juga tidak kami tunda: **kode undangan sekali pakai yang kedaluwarsa tujuh hari, sesi terapis yang
+> kedaluwarsa, kata sandi dan token yang hanya disimpan sebagai hash, dan PIN orang tua.** AI hanya dipakai server saat
+> membuat konten; triase terapis memakai aturan yang bisa diperiksa."
 
-## 3:17–3:32 · Slide 10 — Basis ilmiah dan validasi
+## 3:27–3:40 · Slide 12 — Basis ilmiah, validasi, dan aset
 
 > "Kami tidak mengklaim Nyambung sudah terbukti efektif; kami merakit praktik yang sudah terbukti. Kami juga meminta
 > pendapat **[A], Ketua Umum FORMAPI Universitas Brawijaya**, yang berpengalaman mendampingi anak berkebutuhan khusus:
-> *'[kutipan singkat asli dari A]'*. **Validasi klinis bersama terapis wicara adalah bagian dari pilot kami.**"
+> *'[kutipan singkat asli dari A]'*. **Validasi klinis bersama terapis wicara adalah bagian dari pilot kami.**
+> Semua aset, dari simbol Mulberry CC BY-SA 4.0 sampai suara, tercatat asal-usulnya; rinciannya di lampiran."
 
-## 3:32–3:42 · Slide 11 — Asal aset
-
-> "Semua aset punya asal yang jelas: **simbol dari Mulberry Symbols karya Steve Lee, berlisensi CC BY-SA 4.0**,
-> kata tanpa padanan digambar tim dengan gaya yang sama, dan semua berkas tercatat lengkap dengan hash-nya."
-
-## 3:42–4:10 · Slide 12 — Kelayakan
+## 3:40–4:05 · Slide 13 — Kelayakan
 
 > "Apakah layak? Ini sudah berjalan, dibangun dalam 24 jam, dengan **113 tes otomatis lulus**.
 > Model bisnisnya: **keluarga gratis selamanya**, karena suara anak tidak boleh dikunci langganan. Biaya per keluarga
@@ -140,7 +159,7 @@ tidak dipakai tanpa izin; slide memakai bingkai ilustrasi.*
 > terapis: **setiap kode undangan adalah satu keluarga baru**.
 > Batasannya kami tulis terbuka: belum HTTPS, dan [belum diuji di HP fisik 2 GB — perbarui bila sudah]."
 
-## 4:10–4:35 · Slide 13 — Dampak
+## 4:05–4:27 · Slide 14 — Dampak
 
 > "Dampaknya kami ukur dengan jujur. Masalah intinya alat ditinggalkan, jadi **metrik utama pilot adalah retensi hari
 > ke-14, minimal 60 persen**, didukung hari misi terlaksana, usulan yang dijawab keluarga, dan waktu tinjauan terapis
@@ -148,7 +167,7 @@ tidak dipakai tanpa izin; slide memakai bingkai ilustrasi.*
 > Kalau tinjauan cukup lima menit per anak, satu jam terapis memantau dua belas keluarga. **Itu asumsi, dan pilot yang
 > akan mengujinya.**"
 
-## 4:35–4:48 · Slide 14 — Penutup
+## 4:27–4:40 · Slide 15 — Penutup
 
 > "Ethan punya suara karena orang di sekitarnya belajar menjawab. Nyambung ingin hal yang sama terjadi di setiap rumah
 > di Indonesia.
@@ -161,13 +180,13 @@ tidak dipakai tanpa izin; slide memakai bingkai ilustrasi.*
 
 ## Yang harus diisi tim sebelum tampil
 
-1. **Slide 10:** nama A, jabatan, dan satu kutipan asli (≤ 25 kata) dari A, dengan izin A. **Jangan mengarang
+1. **Slide 12:** nama A, jabatan, dan satu kutipan asli (≤ 25 kata) dari A, dengan izin A. **Jangan mengarang
    kutipan.** A adalah praktisi pendamping ABK dari forum mahasiswa, jadi sebut "masukan praktisi", bukan "validasi
    klinis".
 2. **Slide 2:** kalau ingin memakai foto Ethan, minta izin ke National Autistic Society. Tanpa izin, pakai bingkai
    ilustrasi yang sudah ada.
 3. **Slide 4:** klaim fitur kompetitor belum dicek ke situs resmi masing-masing.
-4. **Slide 12:** status uji HP fisik; hipotesis harga (Rp150–250 rb per terapis per bulan) adalah tingkat D.
+4. **Slide 13:** status uji HP fisik; hipotesis harga (Rp150–250 rb per terapis per bulan) adalah tingkat D.
 
 ---
 
@@ -189,11 +208,16 @@ tidak dipakai tanpa izin; slide memakai bingkai ilustrasi.*
 | AAC bikin anak malas bicara? | Tidak. Tinjauan 23 studi: AAC tidak menghambat dan bisa menambah produksi bicara (Millar 2006). |
 | Simbolnya dari mana? | Mulberry Symbols © Steve Lee, CC BY-SA 4.0. Kata tanpa padanan digambar tim; simbol tim belum diuji pada anak. |
 | Apakah menggantikan terapis? | Tidak. Nyambung memindahkan beban mengumpulkan informasi, bukan penilaian klinisnya. |
+| Bagaimana kalau kode undangan bocor atau ditebak? | Kode 8 karakter tanpa huruf yang mirip, sekali pakai, kedaluwarsa 7 hari; perangkat mendapat token sendiri yang bisa dicabut. Yang **belum** ada: pembatasan laju tebakan kode dan HTTPS. |
 | Data anak, persetujuannya? | Data keluar HP hanya setelah orang tua menebus kode undangan (UU PDP Pasal 25). Hanya ketukan simbol; tidak ada audio ruangan, video, atau lokasi. Belum: HTTPS dan enkripsi di perangkat. |
 
 ---
 
 ## Yang diubah dari naskah sebelumnya
+
+0. **(22:30) Dua slide fitur unggulan** (suara keluarga, papan dari foto dengan AI), masing-masing dengan alur,
+   bukti, pengaman yang sudah dibangun, dan batas jujur. Slide teknologi kini memuat keamanan (undangan kedaluwarsa,
+   sesi, hash, PIN). Slide aset pindah ke lampiran dan disebut satu kalimat di slide validasi.
 
 1. **Tanpa demo langsung.** Video demo sudah memperagakan alur; waktu pitch dipindah ke aspek penilaian.
    Slide solusi kini menjelaskan apa yang diciptakan dan kenapa teknologinya tepat.
@@ -225,4 +249,7 @@ tidak dipakai tanpa izin; slide memakai bingkai ilustrasi.*
 | Retensi hari ke-14 ≥ 60% | `03-basis-ilmiah.md` §6 |
 | 12 keluarga per jam terapis | **asumsi**, diuji di pilot |
 | 99 simbol Mulberry, 21 simbol tim | `PERUBAHAN.md` entri 18 (85 + 14 padanan Mulberry) |
+| 37 dari 42 peserta, 12 studi *visual scene display* | Patenaude, McNaughton & Liang (2024), *J. Special Education Technology* 40(1) |
+| Undangan 8 karakter, 7 hari; sesi 30 hari; scrypt | `server/app/auth.py` |
+| Batas papan foto: 2 MiB, 1280 px, 10 per hari, 30 detik | `server/app/routes/scene_ai.py` |
 | Riset lain | `deck/riset-pendukung.md` |

@@ -1,5 +1,5 @@
 # Status jalur 4 — Dasbor
-Diperbarui: 22:02
+Diperbarui: 22:35
 
 **Mulai 11:20 semua jalur bekerja langsung di `main`** (tidak ada lagi kerja paralel; branch jalur sudah tergabung).
 
@@ -10,6 +10,7 @@ ciptakan (keluarga, terapis), riset misi, ketepatan teknologi, validasi, aset, k
 `model-bisnis.md`), dampak, penutup. Fitur malam masuk (papan foto, frasa bersuara, tiruan suara dengan persetujuan);
 Q&A "voice cloning belum" sudah diperbaiki. Tangkapan layar dasbor desain baru. Angka: 64 pytest (dijalankan 21:45)
 + 49 tes aplikasi (status jalur 1).
+(22:35) Ditambah 2 slide fitur unggulan (suara keluarga, papan foto AI) dengan pengaman + batas jujur; slide teknologi memuat keamanan (undangan 7 hari, sesi 30 hari, hash, PIN); aset ke lampiran. 15 slide pitch, 4:40.
 Menunggu: nama + kutipan asli Ketum FORMAPI UB, cek fitur kompetitor, status uji HP fisik. Slide judul tetap manual.
 (20:55) `deck/model-bisnis.md`: isi slide "Nilai bisnis", model B2I/B2B2C, biaya per keluarga dari harga ElevenLabs
 dan OpenAI yang dicek hari ini, unit ekonomi, skalabilitas, Q&A. Slide belum dimasukkan ke `.pptx`. Q&A "Voice

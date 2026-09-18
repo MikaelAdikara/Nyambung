@@ -30,6 +30,17 @@ eksperimental atau observasional terbatas · **C** standar atau konvensi praktik
 adalah sinyal awal, bukan bukti kebiasaan terbentuk. Pilot 6 pekan (42 hari) belum menjangkau median 59–66 hari;
 sebut ini jujur bila ditanya.
 
+## 1b. Kenapa papan dari foto (visual scene display)
+
+| Klaim | Bukti | Tingkat | Batas jujur |
+|---|---|---|---|
+| *Visual scene display* (VSD) termasuk praktik berbasis bukti untuk komunikasi anak autis/IDD usia 3–8 tahun dalam kegiatan sosial | Sintesis 14 artikel, 12 memenuhi indikator mutu CEC; 42 peserta (34 autis); 37 efek positif, 5 tanpa efek, 0 negatif (Patenaude, McNaughton & Liang, 2024, *J. Special Education Technology* 40(1)) | A | Draf area dari AI di Nyambung belum diukur akurasinya |
+
+## 1c. Suara keluarga (tiruan suara)
+
+Belum ada riset yang cukup kuat dan terverifikasi bahwa suara orang tua yang ditiru meningkatkan pemakaian AAC pada
+anak autis. Di deck, manfaatnya ditandai **hipotesis tim (D)** dan diuji di pilot.
+
 ## 2. AAC tidak menghambat bicara (pertanyaan orang tua yang sering muncul)
 
 | Klaim | Bukti | Tingkat |
@@ -67,4 +78,5 @@ simbol lebih cepat (Wilkinson dkk., 2008, sudah di `03` §4, B).
 - Mizuko, M. (1987). Transparency and ease of learning of symbols represented by Blissymbols, PCS, and Picsyms. *Augmentative and Alternative Communication*, 3(3), 129–136. https://doi.org/10.1080/07434618712331274409
 - Mulberry Symbols. https://mulberrysymbols.org · lisensi CC BY-SA 4.0
 - Steinbrenner, J. R., Hume, K., Odom, S. L., Morin, K. L., Nowell, S. W., Tomaszewski, B., Szendrey, S., McIntyre, N. S., Yücesoy-Özkan, S., & Savage, M. N. (2020). *Evidence-based practices for children, youth, and young adults with autism*. FPG Child Development Institute, University of North Carolina, National Clearinghouse on Autism Evidence and Practice. https://eric.ed.gov/?id=ED609029
+- Patenaude, D., McNaughton, D., & Liang, Z. (2024). Using visual scene displays with young children: An evidence-based practice synthesis. *Journal of Special Education Technology*, 40(1). https://doi.org/10.1177/01626434241263061
 - Wetherby, A. M., Guthrie, W., Woods, J., Schatschneider, C., Holland, R. D., Morgan, L., & Lord, C. (2014). Parent-implemented social intervention for toddlers with autism: An RCT. *Pediatrics*, 134(6), 1084–1093. https://publications.aap.org/pediatrics/article-abstract/134/6/1084/33191/

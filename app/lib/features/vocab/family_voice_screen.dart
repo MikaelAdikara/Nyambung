@@ -10,6 +10,7 @@ import '../../core/error_log.dart';
 import '../../core/motion.dart';
 import '../../core/theme.dart';
 import '../../data/models.dart';
+import '../../data/phrase.dart';
 import '../board/symbol_cell.dart';
 import '../coach/companion_widgets.dart';
 
@@ -114,7 +115,7 @@ class _FamilyVoiceScreenState extends State<FamilyVoiceScreen> {
   @override
   Widget build(BuildContext context) {
     final core = _app.symbolsForPage(0);
-    final personal = _app.allSymbols.where((s) => s.isCustom && !s.isHidden).toList();
+    final personal = _app.allSymbols.where((s) => s.isCustom && !s.isHidden && !isPhraseWordId(s.wordId)).toList();
     final all = [...core, ...personal];
     final recorded = all.where((s) => s.familyAudio != null).length;
     final sections = [

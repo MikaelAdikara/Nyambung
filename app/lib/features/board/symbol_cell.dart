@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../core/motion.dart';
 import '../../core/theme.dart';
 import '../../data/models.dart';
+import '../../data/phrase.dart';
 
 /// Satu sel papan: gambar, label kapital, warna per `pos`, dan penanda bentuk di sudut kanan atas.
 ///
@@ -124,6 +125,7 @@ class SymbolFace extends StatelessWidget {
         style: TextStyle(fontSize: imageSize * 0.6, fontWeight: FontWeight.w800, color: style.text),
       ),
     );
+    final phrase = isPhraseWordId(symbol.wordId);
     return AnimatedContainer(
       duration: Motion.of(context, const Duration(milliseconds: 100)),
       width: width,
@@ -135,46 +137,69 @@ class SymbolFace extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          Padding(
-            padding: EdgeInsets.all(compact ? 3 : 6),
-            child: Column(
-              children: [
-                SizedBox(
-                  height: imageSize - (compact ? 6 : 12),
-                  width: double.infinity,
-                  child: symbol.isCustom
-                      // Foto kartu personal: memenuhi kotak gambar dengan sudut membulat, bukan dikecilkan.
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(compact ? 4 : 8),
-                          child: Image(
-                            image: symbolImage(symbol.symbolPath),
-                            fit: BoxFit.cover,
-                            gaplessPlayback: true,
-                            errorBuilder: (_, _, _) => fallback,
-                          ),
-                        )
-                      : Image(
-                          image: symbolImage(symbol.symbolPath),
-                          fit: BoxFit.contain,
-                          gaplessPlayback: true,
-                          errorBuilder: (_, _, _) => fallback,
-                        ),
-                ),
-                Expanded(
-                  child: Center(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
+          if (phrase)
+            // Kartu frasa: ikon gelembung bicara + kalimat hingga tiga baris, bukan gambar simbol.
+            Padding(
+              padding: EdgeInsets.all(compact ? 3 : 8),
+              child: Column(
+                children: [
+                  Icon(Icons.chat_bubble_rounded, size: compact ? 14 : height * 0.22, color: style.text.withValues(alpha: 0.8)),
+                  SizedBox(height: compact ? 1 : 4),
+                  Expanded(
+                    child: Center(
                       child: Text(
                         symbol.labelDisplay,
-                        maxLines: 1,
-                        style: TextStyle(fontSize: compact ? 13 : 18, fontWeight: FontWeight.w800, color: style.text),
+                        textAlign: TextAlign.center,
+                        maxLines: compact ? 2 : 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: compact ? 10 : 15, height: 1.15, fontWeight: FontWeight.w800, color: style.text),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
+            )
+          else
+            Padding(
+              padding: EdgeInsets.all(compact ? 3 : 6),
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: imageSize - (compact ? 6 : 12),
+                    width: double.infinity,
+                    child: symbol.isCustom
+                        // Foto kartu personal: memenuhi kotak gambar dengan sudut membulat, bukan dikecilkan.
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(compact ? 4 : 8),
+                            child: Image(
+                              image: symbolImage(symbol.symbolPath),
+                              fit: BoxFit.cover,
+                              gaplessPlayback: true,
+                              errorBuilder: (_, _, _) => fallback,
+                            ),
+                          )
+                        : Image(
+                            image: symbolImage(symbol.symbolPath),
+                            fit: BoxFit.contain,
+                            gaplessPlayback: true,
+                            errorBuilder: (_, _, _) => fallback,
+                          ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          symbol.labelDisplay,
+                          maxLines: 1,
+                          style: TextStyle(fontSize: compact ? 13 : 18, fontWeight: FontWeight.w800, color: style.text),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
           if (!compact)
             Positioned(
               top: 5,

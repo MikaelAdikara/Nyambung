@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
@@ -109,8 +110,17 @@ class SpeechService {
     return null;
   }
 
+  /// Klip kartu frasa: berkas di folder aplikasi (jalur mutlak), diputar untuk anak maupun pendamping.
+  String? _deviceClipFor(WordSymbol s) {
+    final path = s.audioPath;
+    if (path == null || !path.startsWith('/')) return null;
+    return File(path).existsSync() ? path : null;
+  }
+
   Source? _sourceFor(WordSymbol s, {required bool byParent}) {
     if (byParent && s.familyAudio != null) return DeviceFileSource(s.familyAudio!);
+    final clip = _deviceClipFor(s);
+    if (clip != null) return DeviceFileSource(clip);
     final bundled = _bundledFor(s);
     return bundled == null ? null : AssetSource(bundled.substring('assets/'.length));
   }
@@ -138,7 +148,8 @@ class SpeechService {
   /// Bunyikan satu kata sesuai siapa yang menekan.
   Future<void> speakWord(WordSymbol s, {required bool byParent}) async {
     final family = byParent ? s.familyAudio : null;
-    final bundled = family == null ? _bundledFor(s) : null;
+    final deviceClip = family == null ? _deviceClipFor(s) : null;
+    final bundled = family == null && deviceClip == null ? _bundledFor(s) : null;
     if (bundled != null) {
       // Jalur cepat: hentikan bunyi sebelumnya tanpa menunggu, lalu putar klip yang sudah dimuat.
       unawaited(stop());
@@ -155,9 +166,10 @@ class SpeechService {
     }
     await stop();
     try {
-      if (family != null) {
+      final file = family ?? deviceClip;
+      if (file != null && _player != null) {
         _mainBusy = true;
-        await _player?.play(DeviceFileSource(family)).timeout(Limits.pluginTimeout);
+        await _player!.play(DeviceFileSource(file)).timeout(Limits.pluginTimeout);
         return;
       }
     } catch (e, st) {

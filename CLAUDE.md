@@ -42,7 +42,8 @@ Aliran balik: usulan terapis → perangkat menarik target → keluarga terima/to
 2. Sumber kebenaran di perangkat; server hanya cermin.
 3. Log peristiwa append-only: tanpa UPDATE isi, tanpa DELETE. Sinkron idempoten berdasarkan `event_id`.
 4. Pola outbox: peristiwa ditulis ke antrean dalam transaksi yang sama dengan log.
-5. Tidak ada model yang dilatih dan tidak ada dependensi ML saat runtime.
+5. Tidak ada model yang dilatih dan tidak ada dependensi ML di aplikasi. Server boleh memanggil model suara hanya saat
+   frasa dibuat (PERUBAHAN #16); klipnya diputar luring.
 6. Aplikasi hanya mengirim peristiwa mentah, tidak pernah angka agregat. Ringkasan dihitung server.
 7. Sasaran Android 8 (minSdk 26), RAM 2 GB, layar 7 inci.
 
@@ -62,7 +63,8 @@ Aliran balik: usulan terapis → perangkat menarik target → keluarga terima/to
 
 **Privasi**
 17. Tidak pernah merekam audio ruangan, video, atau lokasi.
-18. Rekaman suara keluarga tidak pernah meninggalkan perangkat.
+18. Rekaman suara keluarga tidak pernah meninggalkan perangkat, kecuali orang tua mengaktifkan tiruan suara dengan
+    persetujuan eksplisit (PERUBAHAN #17). Server tidak menyimpan rekamannya, hanya `voice_id`.
 19. Target dari terapis berstatus usulan yang boleh ditolak tanpa alasan.
 20. Bukan alat diagnosis: tidak menyimpan diagnosis, skor klinis, atau penilaian kemampuan.
 
@@ -95,7 +97,7 @@ Aliran balik: usulan terapis → perangkat menarik target → keluarga terima/to
 | `HAP` | hapus satu langkah di bilah ujaran | `word_id` | idem |
 | `UCP` | tekan UCAPKAN | `word_id` dipisah spasi | idem |
 | `MIS` | konfirmasi misi harian | `selesai` \| `belum_sempat` | `mission_id` |
-| `TGT` | jawaban atas usulan terapis | `diterima` \| `ditolak` | `target_id` |
+| `TGT` | jawaban atas usulan terapis (kata atau frasa) | `diterima` \| `ditolak` | `target_id` atau `phrase_id` |
 
 `actor`: mode anak selalu `anak`; papan misi mengikuti tombol giliran; `MIS`/`TGT` selalu `pendamping`.
 `prompt_level`: ketukan pendamping = `terpancing`; ketukan anak = `terpancing` bila ada ketukan pendamping

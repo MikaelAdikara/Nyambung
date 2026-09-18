@@ -216,3 +216,32 @@ Format entri:
   atau gamifikasi. Gerak di papan belum diuji dengan anak autis; bila terapis menilai mengganggu, cukup set durasi
   di `board_screen.dart` dan `symbol_cell.dart` ke nol.
 
+
+## 16. Frasa bersuara lewat server (14:45)
+- **Kondisi di proposal:** Papan hanya memakai 120 kata dengan klip bundel dan kartu foto. Kalimat khas keluarga atau
+  sekolah ("Jangan nyontek") tidak punya suara selain TTS perangkat. Invarian 5: tidak ada dependensi ML saat runtime.
+- **Yang diubah:** Orang tua (Pengaturan → Frasa bersuara) dan terapis/guru (dasbor) bisa mengetik frasa ≤ 60 karakter.
+  Server membuat klipnya sekali dengan OpenAI TTS (suara papan cowo/cewe yang sama dengan klip bundel), perangkat
+  mengunduhnya ke folder aplikasi, lalu kartu frasa (`word_id` `frs-…`, peristiwa `PRS`) diputar tanpa internet.
+  Frasa dari terapis/guru berstatus usulan dan dijawab keluarga dengan dua tombol setara (peristiwa `TGT`,
+  context = phrase_id). Batas 30 frasa per anak per hari.
+- **Alasan:** permintaan tim. Kalimat pendek yang akrab membantu anak memahami instruksi di rumah dan di sekolah.
+- **Dampak terhadap masalah inti:** Invarian 5 dilonggarkan: server (bukan aplikasi) memanggil model suara saat frasa
+  **dibuat**. Papan, suara, misi, dan pencatatan tetap luring penuh (invarian 1). Membuat frasa baru butuh internet
+  dan tautan terapis. Tanpa `OPENAI_API_KEY`, fitur ini tampil "belum aktif". Suara sintetis, bukan rekaman manusia.
+
+## 17. Tiruan suara keluarga (ElevenLabs), hanya dengan persetujuan orang tua (14:45)
+- **Kondisi di proposal:** Invarian 18: rekaman suara keluarga tidak pernah meninggalkan perangkat. Suara keluarga
+  hanya dari rekaman per kata.
+- **Yang diubah:** Orang tua bisa mengaktifkan "Suara keluarga": menyetujui empat butir (suaranya sendiri; rekaman
+  dikirim ke ElevenLabs; terapis/guru bisa membuat frasa dengan suara ini sebagai usulan; bisa dicabut), menulis
+  pemilik suara, lalu membaca tiga kalimat (≥ 8 detik masing-masing). Server meneruskan rekaman ke ElevenLabs Instant
+  Voice Cloning dari memori, tanpa menulisnya ke disk, dan hanya menyimpan `voice_id`. Nama anak tidak dikirim.
+  Rekaman contoh di HP dihapus setelah terkirim atau saat layar ditutup. Mencabut menghapus suara di ElevenLabs.
+  Terapis/guru yang tertaut bisa membuat frasa dengan suara ini; frasanya tetap usulan yang boleh ditolak.
+- **Alasan:** permintaan tim. Contoh kasus: guru ingin anak mendengar "Jangan nyontek" dengan suara orang tuanya,
+  karena anak sudah terbiasa dengan suara itu.
+- **Dampak terhadap masalah inti:** Invarian 18 kini berbunyi "tidak pernah meninggalkan perangkat **kecuali orang tua
+  mengaktifkan tiruan suara**". Rekaman per kata (C4) tetap tidak pernah dikirim. Risiko yang kami akui: suara
+  tiruan disimpan penyedia pihak ketiga selama belum dicabut, dan kemiripannya belum diuji dengan anak. Butuh
+  `ELEVENLABS_API_KEY` (paket berbayar ElevenLabs); tanpa kunci, fitur tampil "belum aktif".

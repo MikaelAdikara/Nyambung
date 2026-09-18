@@ -160,6 +160,56 @@ class SharedSummaryOut(BaseModel):
     shared_at: str
 
 
+PhraseVoice = Literal["cowo", "cewe", "keluarga"]
+
+
+class PhraseIn(StrictModel):
+    text: str = Field(min_length=1, max_length=60)
+    voice: PhraseVoice
+
+    @field_validator("text")
+    @classmethod
+    def _clean(cls, v: str) -> str:
+        cleaned = " ".join(v.split())
+        if not cleaned:
+            raise ValueError("frasa tidak boleh kosong")
+        return cleaned
+
+
+class PhraseOut(BaseModel):
+    phrase_id: str
+    child_id: str
+    text: str
+    voice: str
+    word_id: str
+    created_by: str
+    created_at: str
+    status: Literal["usulan", "diterima", "ditolak"]
+    answered_at: Optional[str]
+    used_count: int
+
+
+class VoiceStatusOut(BaseModel):
+    openai: bool
+    elevenlabs: bool
+    clone_active: bool
+    clone_consent_by: Optional[str]
+    clone_consent_at: Optional[str]
+
+
+class CloneSample(StrictModel):
+    filename: str = Field(min_length=1, max_length=80, pattern=r"^[\w.-]+\.(m4a|mp3|wav|ogg|aac)$")
+    # ± 4 MB audio per sampel setelah base64.
+    data_b64: str = Field(min_length=100, max_length=5_600_000)
+
+
+class CloneIn(StrictModel):
+    # Persetujuan eksplisit orang tua; nilai selain true ditolak 422.
+    consent: Literal[True]
+    consent_by: str = Field(min_length=1, max_length=60)
+    samples: list[CloneSample] = Field(min_length=1, max_length=5)
+
+
 class ReviewTimeIn(StrictModel):
     child_id: str = Field(min_length=1, max_length=64)
     seconds: int = Field(ge=5, le=3600)

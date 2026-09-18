@@ -15,6 +15,7 @@ import '../coach/companion_widgets.dart';
 import '../coach/mission_rules.dart';
 import '../vocab/family_voice_screen.dart';
 import '../vocab/manage_vocab_screen.dart';
+import '../vocab/phrase_screen.dart';
 import 'export_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -243,6 +244,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             tint: CompanionColors.coralTint,
             iconColor: CompanionColors.coralText,
             onTap: () => _open(const FamilyVoiceScreen()),
+          ),
+          const SizedBox(height: 10),
+          NavRow(
+            icon: Icons.graphic_eq_rounded,
+            title: 'Frasa bersuara',
+            subtitle: 'Kalimat pendek jadi kartu, suara papan atau suara keluarga',
+            tint: CompanionColors.lavenderTint,
+            iconColor: CompanionColors.lavenderDeep,
+            onTap: () => _open(const PhraseScreen()),
           ),
           const SizedBox(height: 10),
           NavRow(

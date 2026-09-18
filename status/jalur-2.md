@@ -1,5 +1,5 @@
 # Status jalur 2 — Pendamping
-Diperbarui: 13:55
+Diperbarui: 14:45
 
 **Mulai 11:20 semua jalur bekerja langsung di `main`** (tidak ada lagi kerja paralel; branch jalur sudah tergabung).
 
@@ -7,6 +7,9 @@ Diperbarui: 13:55
 Layar mockup A–C lengkap (18 Sep siang). Belum dibuka di emulator: C3, C5 baru, C6 baru, kartu B1, A5/A6 baru.
 
 ## Tonggak selesai (tag)
+- (14:45, tanpa tag) Frasa bersuara: layar Pengaturan → Frasa bersuara (buat frasa, taruh di papan, jawab usulan
+  terapis), layar Suara keluarga (persetujuan 4 butir, rekam 3 kalimat, aktifkan/cabut klon ElevenLabs), kartu usulan
+  frasa di beranda, tarik frasa + unduh klip saat sinkron. Belum dibuka di emulator.
 - (13:55, tanpa tag) C5: kartu profil terapis + lama terhubung, usulan menunggu, daftar dibagikan (kotak) vs tidak
   pernah dikirim (belah ketupat), ringkasan sesi dari terapis (ditarik saat sinkron), catatan UU PDP 27/2022, Cabut akses.
   C6 ditata ulang: susunan sel, Kunci mode anak (screen pinning, bawaan aktif), suara papan, tahan, rutinitas,

@@ -28,3 +28,6 @@ tools/.sim/
 
 # Keluaran pembuat audio (wav mentah, sampel); hanya klip terpilih yang disalin ke app/assets
 tools/audio_out/
+
+# Klip frasa hasil OpenAI/ElevenLabs di server lokal
+server/data/phrases/

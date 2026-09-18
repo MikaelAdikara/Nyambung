@@ -7,6 +7,7 @@ import '../../core/constants.dart';
 import '../../core/time.dart';
 import '../../data/models.dart';
 import 'link_service.dart';
+import 'phrase_service.dart';
 
 enum SyncState { notLinked, offline, linkedRevoked, complete }
 
@@ -27,7 +28,10 @@ class SyncService {
   final AppState app;
   final http.Client _client;
 
-  String get _baseUrl {
+  String get _baseUrl => serverBaseUrl(app);
+
+  /// Alamat server dari pengaturan; `localhost` diganti `127.0.0.1` (di Windows `localhost` mencoba IPv6 dulu).
+  static String serverBaseUrl(AppState app) {
     final saved = app.prefs.getString(PrefKeys.serverUrl)?.trim();
     final value = saved == null || saved.isEmpty ? 'http://127.0.0.1:8000' : saved;
     final normalized = value.replaceFirst('://localhost', '://127.0.0.1');
@@ -91,6 +95,7 @@ class SyncService {
     }
     await pullTargets(childId, token: token);
     await pullSummaries(childId, token: token);
+    await PhraseService(app, client: _client).pull(childId);
     app.markDataChanged();
     return SyncReport(SyncState.complete, accepted: accepted, duplicates: duplicates);
   }

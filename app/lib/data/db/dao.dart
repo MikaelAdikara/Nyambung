@@ -7,6 +7,7 @@ import 'package:sqflite/sqflite.dart';
 
 import '../../core/constants.dart';
 import '../models.dart';
+import '../phrase.dart';
 
 class ChildDao {
   ChildDao(this.db);
@@ -53,6 +54,10 @@ class SymbolDao {
 
   /// Kartu personal (C3). Gagal bila posisi di halaman itu sudah terisi (`UNIQUE (page, position_index)`).
   Future<void> insertCustom(WordSymbol s) => db.insert('symbol', s.toRow(), conflictAlgorithm: ConflictAlgorithm.abort);
+
+  /// Klip kartu frasa setelah terunduh (jalur berkas lokal).
+  Future<void> setAudioPath(String wordId, String path) =>
+      db.update('symbol', {'audio_path': path}, where: 'word_id = ?', whereArgs: [wordId]);
 
   /// Rekaman keluarga, jalur berkas lokal. Tidak pernah disinkronkan (invarian 18).
   Future<void> setFamilyAudio(String wordId, String? path) =>
@@ -291,4 +296,37 @@ class SummaryDao {
 
   /// Simpan ringkasan dari server; kiriman ulang dari terapis menimpa baris yang sama.
   Future<void> upsert(TherapistSummary s) => db.insert('therapist_summary', s.toRow(), conflictAlgorithm: ConflictAlgorithm.replace);
+}
+
+class PhraseDao {
+  PhraseDao(this.db);
+  final Database db;
+
+  Future<List<Phrase>> all() async {
+    final rows = await db.query('phrase', orderBy: 'created_at DESC');
+    return rows.map(Phrase.fromRow).toList();
+  }
+
+  Future<Phrase?> byId(String phraseId) async {
+    final rows = await db.query('phrase', where: 'phrase_id = ?', whereArgs: [phraseId]);
+    return rows.isEmpty ? null : Phrase.fromRow(rows.first);
+  }
+
+  /// Simpan frasa dari server. Seperti target: jawaban lokal (`diterima`/`ditolak`) tidak ditimpa `usulan`
+  /// dari server yang belum menerima peristiwa TGT, dan jalur klip lokal dipertahankan.
+  Future<void> upsertFromServer(Phrase p) async {
+    final existing = await byId(p.phraseId);
+    if (existing == null) {
+      await db.insert('phrase', p.toRow());
+      return;
+    }
+    final status = existing.status == PhraseStatus.usulan ? p.status : existing.status;
+    await db.update('phrase', {'status': status}, where: 'phrase_id = ?', whereArgs: [p.phraseId]);
+  }
+
+  Future<void> setStatus(String phraseId, String status) =>
+      db.update('phrase', {'status': status}, where: 'phrase_id = ?', whereArgs: [phraseId]);
+
+  Future<void> setAudio(String phraseId, String path) =>
+      db.update('phrase', {'audio_path': path}, where: 'phrase_id = ?', whereArgs: [phraseId]);
 }

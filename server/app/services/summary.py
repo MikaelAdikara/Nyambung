@@ -144,6 +144,39 @@ def target_rows(conn: sqlite3.Connection, child_id: str, evs: Optional[list[Ev]]
     return out
 
 
+def phrase_rows(conn: sqlite3.Connection, child_id: str, evs: Optional[list[Ev]] = None) -> list[dict]:
+    """Frasa anak, terbaru dulu. Frasa buatan keluarga langsung `diterima`; frasa dari terapis `usulan` sampai ada
+    peristiwa TGT dengan context = phrase_id. `used_count` = ketukan kartu frasa (semua actor)."""
+    from .voice import phrase_word_id
+
+    evs = evs if evs is not None else _events(conn, child_id)
+    rows = conn.execute("SELECT * FROM phrase WHERE child_id = ? ORDER BY created_at DESC, phrase_id DESC", (child_id,)).fetchall()
+    out = []
+    for r in rows:
+        word_id = phrase_word_id(r["text"], r["phrase_id"])
+        status, answered_at = ("diterima", r["created_at"]) if r["created_by"] == "keluarga" else ("usulan", None)
+        answers = [e for e in evs if e.method == "TGT" and e.context == r["phrase_id"]]
+        if answers and r["created_by"] != "keluarga":
+            last = answers[-1]
+            status = last.content if last.content in ("diterima", "ditolak") else "usulan"
+            answered_at = last.ts_utc
+        out.append(
+            {
+                "phrase_id": r["phrase_id"],
+                "child_id": r["child_id"],
+                "text": r["text"],
+                "voice": r["voice"],
+                "word_id": word_id,
+                "created_by": r["created_by"],
+                "created_at": r["created_at"],
+                "status": status,
+                "answered_at": answered_at,
+                "used_count": sum(1 for e in evs if e.method in TAP_METHODS and e.content == word_id),
+            }
+        )
+    return out
+
+
 def linked_weeks(conn: sqlite3.Connection, child_id: str, now: datetime, therapist: Optional[str] = None) -> Optional[int]:
     q = "SELECT MIN(linked_at) AS t FROM therapist_link WHERE child_id = ? AND revoked_at IS NULL"
     args: list = [child_id]

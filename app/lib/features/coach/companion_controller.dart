@@ -6,6 +6,7 @@ import '../../core/app_state.dart';
 import '../../core/constants.dart';
 import '../../core/time.dart';
 import '../../data/models.dart';
+import '../../data/phrase.dart';
 import '../../data/sync/link_service.dart';
 import '../../data/sync/sync_service.dart';
 import '../progress/usage_stats.dart';
@@ -47,6 +48,12 @@ class CompanionController extends ChangeNotifier {
   int outboxCount = 0;
   TherapistLink? activeLink;
   List<VocabTarget> targets = const [];
+
+  /// Frasa bersuara (buatan keluarga dan usulan terapis), terbaru dulu.
+  List<Phrase> phrases = const [];
+
+  /// Frasa dari terapis yang belum dijawab keluarga.
+  List<Phrase> get pendingPhrases => phrases.where((p) => p.status == PhraseStatus.usulan).toList(growable: false);
 
   /// Ringkasan sesi dari terapis (C5), terbaru dulu.
   List<TherapistSummary> summaries = const [];
@@ -118,6 +125,7 @@ class CompanionController extends ChangeNotifier {
     currentWeek = week;
     targets = await app.targetDao.all();
     summaries = await app.summaryDao.all();
+    phrases = await app.phraseDao.all();
     final accepted = targets.where((target) {
       final eligibleWeek = target.weekIndex == null || target.weekIndex! >= week;
       return target.status == TargetStatus.diterima && target.words.isNotEmpty && eligibleWeek;

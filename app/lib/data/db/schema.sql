@@ -91,6 +91,18 @@ CREATE TABLE IF NOT EXISTS therapist_summary (
   shared_at    TEXT NOT NULL
 );
 
+-- Frasa bersuara: teks bebas + klip yang dibuat sekali di server (OpenAI atau klon suara keluarga), diunduh ke
+-- folder aplikasi `phrases/`, lalu diputar luring. Frasa dari terapis berstatus usulan sampai keluarga menjawab (TGT).
+CREATE TABLE IF NOT EXISTS phrase (
+  phrase_id  TEXT PRIMARY KEY,
+  text       TEXT NOT NULL,
+  voice      TEXT NOT NULL,            -- cowo | cewe | keluarga
+  created_by TEXT NOT NULL,            -- keluarga | nama terapis
+  created_at TEXT NOT NULL,
+  status     TEXT NOT NULL,            -- usulan | diterima | ditolak
+  audio_path TEXT                      -- null sampai klip terunduh
+);
+
 -- Penegakan invarian 3: isi peristiwa tidak berubah, tidak dihapus.
 CREATE TRIGGER IF NOT EXISTS utterance_no_update BEFORE UPDATE OF
   event_id, child_id, ts_device, content, method, actor, prompt_level, context, session_id

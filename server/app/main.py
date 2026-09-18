@@ -5,6 +5,9 @@ Jalankan:  NYAMBUNG_THERAPIST_TOKENS="<token≥16>:Bu Rina (ilustratif)" python 
 
 from __future__ import annotations
 
+import asyncio
+import base64
+import binascii
 import json
 import os
 import sqlite3
@@ -15,14 +18,18 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 from . import auth
-from .db import connect, now_utc, parse_utc, transaction, utc_iso
+from .db import connect, db_path as default_db_path, now_utc, parse_utc, transaction, utc_iso
 from .schemas import (
+    CloneIn,
     InviteOut,
     LoginIn,
     LoginOut,
     MeOut,
+    PhraseIn,
+    PhraseOut,
     RedeemIn,
     RedeemOut,
     ReviewTimeIn,
@@ -34,13 +41,24 @@ from .schemas import (
     SyncOut,
     TargetIn,
     TargetOut,
+    VoiceStatusOut,
     parse_device_ts,
 )
 from .services import summary as agg
+from .services.voice import HttpVoiceProvider, VoiceError, VoiceProvider
+
+# Batas pembuatan frasa per anak per hari: menahan biaya penyedia suara bila ada klien yang berulang.
+PHRASES_PER_DAY = 30
 
 
-def create_app(db_path: Optional[Path | str] = None, therapist_tokens: Optional[str] = None) -> FastAPI:
+def create_app(
+    db_path: Optional[Path | str] = None, therapist_tokens: Optional[str] = None, voice: Optional[VoiceProvider] = None
+) -> FastAPI:
     conn: sqlite3.Connection = connect(db_path)
+    voices: VoiceProvider = voice or HttpVoiceProvider()
+    # Klip frasa disimpan di samping berkas basis data (server/data/phrases/), tidak di-commit.
+    phrase_dir = Path(db_path if db_path is not None else default_db_path()).parent / "phrases"
+    phrase_dir.mkdir(parents=True, exist_ok=True)
     auth.seed_therapists(conn, therapist_tokens if therapist_tokens is not None else os.environ.get("NYAMBUNG_THERAPIST_TOKENS"))
 
     app = FastAPI(title="Nyambung", version="1.0")
@@ -265,6 +283,135 @@ def create_app(db_path: Optional[Path | str] = None, therapist_tokens: Optional[
         if p.child_id != child_id:
             raise HTTPException(403, "token perangkat untuk anak lain")
         return agg.shared_summary_rows(conn, child_id)
+
+    # ---------- suara & frasa ----------
+
+    def _child_access(request: Request, child_id: str) -> auth.Principal:
+        """Perangkat milik anak ini, atau terapis yang tertaut dengannya."""
+        p = auth.resolve(conn, request)
+        if p.kind == "device":
+            if p.child_id != child_id:
+                raise HTTPException(403, "token perangkat untuk anak lain")
+        elif not auth.therapist_sees_child(conn, p.therapist, child_id):
+            raise HTTPException(404, "anak tidak ditemukan")
+        return p
+
+    def _active_clone(child_id: str) -> Optional[sqlite3.Row]:
+        return conn.execute(
+            "SELECT * FROM voice_clone WHERE child_id = ? AND revoked_at IS NULL AND voice_id IS NOT NULL", (child_id,)
+        ).fetchone()
+
+    def _voice_status(child_id: str) -> dict:
+        clone = _active_clone(child_id)
+        return {
+            **voices.available(),
+            "clone_active": clone is not None,
+            "clone_consent_by": clone["consent_by"] if clone else None,
+            "clone_consent_at": clone["consent_at"] if clone else None,
+        }
+
+    async def _call(fn, *args):
+        """Panggilan penyedia di thread lain supaya server tetap melayani permintaan lain selama menunggu."""
+        try:
+            return await asyncio.to_thread(fn, *args)
+        except VoiceError as e:
+            raise HTTPException(e.status, str(e)) from e
+
+    @app.get("/v1/children/{child_id}/voice", response_model=VoiceStatusOut)
+    async def voice_status(child_id: str, request: Request) -> dict:
+        _child_access(request, child_id)
+        return _voice_status(child_id)
+
+    @app.post("/v1/children/{child_id}/voice/clone", response_model=VoiceStatusOut)
+    async def create_clone(child_id: str, body: CloneIn, request: Request) -> dict:
+        """Hanya perangkat keluarga, dengan persetujuan eksplisit. Sampel diteruskan dari memori, tidak disimpan."""
+        p = auth.require_device(conn, request)
+        if p.child_id != child_id:
+            raise HTTPException(403, "token perangkat untuk anak lain")
+        try:
+            samples = [(s.filename, base64.b64decode(s.data_b64, validate=True)) for s in body.samples]
+        except (binascii.Error, ValueError) as e:
+            raise HTTPException(422, "sampel suara bukan base64 yang sah") from e
+        # Nama di ElevenLabs tidak memuat nama anak.
+        voice_id = await _call(voices.clone, f"Nyambung keluarga {child_id.replace('-', '')[:8]}", samples)
+        old = _active_clone(child_id)
+        with transaction(conn):
+            conn.execute(
+                "INSERT INTO voice_clone (child_id, voice_id, consent_by, consent_at, revoked_at) VALUES (?, ?, ?, ?, NULL) "
+                "ON CONFLICT(child_id) DO UPDATE SET voice_id = excluded.voice_id, consent_by = excluded.consent_by, "
+                "consent_at = excluded.consent_at, revoked_at = NULL",
+                (child_id, voice_id, body.consent_by.strip(), utc_iso(now_utc())),
+            )
+        if old and old["voice_id"] != voice_id:
+            try:
+                await asyncio.to_thread(voices.delete_clone, old["voice_id"])
+            except VoiceError:
+                pass  # suara lama tetap tidak dipakai lagi; penghapusan bisa diulang dari ElevenLabs
+        return _voice_status(child_id)
+
+    @app.delete("/v1/children/{child_id}/voice/clone", response_model=VoiceStatusOut)
+    async def revoke_clone(child_id: str, request: Request) -> dict:
+        """Orang tua mencabut klon: suara dihapus di ElevenLabs, lalu frasa baru dengan suara keluarga ditolak.
+        Klip yang sudah diunduh ke perangkat tetap di perangkat dan dikelola keluarga."""
+        p = auth.require_device(conn, request)
+        if p.child_id != child_id:
+            raise HTTPException(403, "token perangkat untuk anak lain")
+        clone = _active_clone(child_id)
+        if clone:
+            await _call(voices.delete_clone, clone["voice_id"])
+            with transaction(conn):
+                conn.execute(
+                    "UPDATE voice_clone SET voice_id = NULL, revoked_at = ? WHERE child_id = ?", (utc_iso(now_utc()), child_id)
+                )
+        return _voice_status(child_id)
+
+    @app.get("/v1/children/{child_id}/phrases", response_model=list[PhraseOut])
+    async def list_phrases(child_id: str, request: Request) -> list[dict]:
+        _child_access(request, child_id)
+        return agg.phrase_rows(conn, child_id)
+
+    @app.post("/v1/children/{child_id}/phrases", status_code=201, response_model=PhraseOut)
+    async def create_phrase(child_id: str, body: PhraseIn, request: Request) -> dict:
+        p = _child_access(request, child_id)
+        since = utc_iso(now_utc() - timedelta(days=1))
+        made = conn.execute("SELECT COUNT(*) FROM phrase WHERE child_id = ? AND created_at >= ?", (child_id, since)).fetchone()[0]
+        if made >= PHRASES_PER_DAY:
+            raise HTTPException(429, f"batas {PHRASES_PER_DAY} frasa per hari untuk anak ini tercapai")
+        if body.voice == "keluarga":
+            clone = _active_clone(child_id)
+            if not clone:
+                raise HTTPException(409, "suara keluarga belum diaktifkan orang tua")
+            audio = await _call(voices.clone_tts, clone["voice_id"], body.text)
+        else:
+            audio = await _call(voices.openai_tts, body.text, body.voice)
+        if len(audio) < 100:
+            raise HTTPException(502, "penyedia suara mengembalikan audio kosong")
+        phrase_id = str(uuid.uuid4())
+        audio_file = f"{phrase_id}.mp3"
+        (phrase_dir / audio_file).write_bytes(audio)
+        with transaction(conn):
+            conn.execute(
+                "INSERT INTO phrase (phrase_id, child_id, text, voice, created_by, created_at, audio_file) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (
+                    phrase_id,
+                    child_id,
+                    body.text,
+                    body.voice,
+                    "keluarga" if p.kind == "device" else p.therapist,
+                    utc_iso(now_utc()),
+                    audio_file,
+                ),
+            )
+        return next(r for r in agg.phrase_rows(conn, child_id) if r["phrase_id"] == phrase_id)
+
+    @app.get("/v1/children/{child_id}/phrases/{phrase_id}/audio")
+    async def phrase_audio(child_id: str, phrase_id: str, request: Request) -> FileResponse:
+        _child_access(request, child_id)
+        row = conn.execute("SELECT audio_file FROM phrase WHERE phrase_id = ? AND child_id = ?", (phrase_id, child_id)).fetchone()
+        path = phrase_dir / row["audio_file"] if row else None
+        if not path or not path.is_file():
+            raise HTTPException(404, "klip frasa tidak ditemukan")
+        return FileResponse(path, media_type="audio/mpeg")
 
     # ---------- waktu tinjauan (D1) ----------
 

@@ -1,10 +1,13 @@
 # Status jalur 3 — Server
-Diperbarui: 13:55
+Diperbarui: 14:45
 
 ## Sedang dikerjakan
 3.7 APK rilis: tanda tangan siap (keystore baru 18 Sep, jalur 1 menambah signingConfig). Tag j3-apk menunggu int-1-hp-ke-d2 (HP fisik)
 
 ## Tonggak selesai (tag)
+- (14:45, tanpa tag) Frasa bersuara: tabel `phrase` + `voice_clone`, `GET/POST /v1/children/{id}/phrases`,
+  `GET .../phrases/{pid}/audio`, `GET .../voice`, `POST/DELETE .../voice/clone`. OpenAI TTS + ElevenLabs lewat urllib,
+  kunci dari env/.env. 54 tes pytest lulus (penyedia suara tiruan).
 - (13:55, tanpa tag) Catatan sesi D4: tabel `session_note`, `GET/POST/PUT /v1/children/{id}/sessions`,
   `POST .../sessions/{note_id}/share` (hanya `family_text` sampai ke keluarga), `GET /v1/children/{id}/shared-summaries`
   untuk perangkat. Waktu tinjauan D1: tabel `review_log`, `POST /v1/review-time`, rerata 30 hari di `/v1/children`.

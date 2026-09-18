@@ -12,6 +12,7 @@ import '../data/db/app_database.dart';
 import '../data/db/dao.dart';
 import '../data/models.dart';
 import '../data/personal_card.dart';
+import '../data/phrase.dart';
 import '../data/repo/vocab_loader.dart';
 import 'constants.dart';
 import 'error_log.dart';
@@ -45,6 +46,7 @@ class AppState extends ChangeNotifier {
   late TargetDao targetDao;
   late LinkDao linkDao;
   late SummaryDao summaryDao;
+  late PhraseDao phraseDao;
   late SharedPreferences prefs;
 
   bool _ready = false;
@@ -89,6 +91,7 @@ class AppState extends ChangeNotifier {
     targetDao = TargetDao(_db);
     linkDao = LinkDao(_db);
     summaryDao = SummaryDao(_db);
+    phraseDao = PhraseDao(_db);
     final loader = VocabLoader(symbolDao, _bundle);
     await loader.ensureLoaded();
     pages = await loader.loadPages();
@@ -169,6 +172,58 @@ class AppState extends ChangeNotifier {
     }
     await reloadSymbols();
     return card;
+  }
+
+  /// Halaman bawaan kartu frasa: TANYA & SAPA bila ada, selain itu halaman kategori pertama.
+  int? get defaultPhrasePage {
+    final pages = this.pages.where((p) => p.page != 0).toList();
+    if (pages.isEmpty) return null;
+    return pages.firstWhere((p) => p.tabLabel.startsWith('TANYA'), orElse: () => pages.first).page;
+  }
+
+  /// Kartu frasa di papan, atau null bila frasa itu belum ditaruh.
+  WordSymbol? phraseCard(Phrase p) => _byId[p.wordId];
+
+  /// Taruh frasa (yang klipnya sudah terunduh) sebagai kartu di slot kosong berikutnya di [page]. Kartu yang
+  /// sudah ada tidak digandakan. Sel lain tidak bergeser (invarian 8).
+  Future<WordSymbol> addPhraseCard(Phrase p, {int? page}) async {
+    final existing = phraseCard(p);
+    if (existing != null) return existing;
+    final target = page ?? defaultPhrasePage;
+    if (target == null || target == 0) throw ArgumentError('halaman kategori tidak ada');
+    final card = WordSymbol(
+      wordId: p.wordId,
+      labelDisplay: p.text.toUpperCase(),
+      labelSpeech: p.text,
+      pos: 'sosial',
+      category: 'frasa',
+      page: target,
+      positionIndex: nextCardSlot(target),
+      symbolPath: '',
+      audioPath: p.audioPath,
+      isCustom: true,
+    );
+    await symbolDao.insertCustom(card);
+    await reloadSymbols();
+    return card;
+  }
+
+  /// Jawaban keluarga atas frasa dari terapis: status lokal + peristiwa `TGT` (context = phrase_id), sama seperti
+  /// usulan kata. Diterima → kartu ditaruh di papan. Menolak tidak butuh alasan (invarian 19).
+  Future<void> answerPhrase(Phrase p, bool accepted, {int? page}) async {
+    final c = _child;
+    if (c == null) return;
+    if (accepted) await addPhraseCard(p, page: page);
+    final status = accepted ? PhraseStatus.diterima : PhraseStatus.ditolak;
+    await phraseDao.setStatus(p.phraseId, status);
+    await _append(
+      content: status,
+      method: Method.tgt,
+      actor: Actor.pendamping,
+      level: PromptLevel.terpancing,
+      context: p.phraseId,
+      at: DateTime.now(),
+    );
   }
 
   /// Tujuan yang dipilih di A6; beranda membukanya sekali setelah pemasangan, lalu mengosongkannya.

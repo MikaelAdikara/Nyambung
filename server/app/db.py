@@ -131,6 +131,30 @@ CREATE TABLE IF NOT EXISTS review_log (
   recorded_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_review_therapist ON review_log(therapist, recorded_at);
+
+-- Klon suara keluarga (ElevenLabs). Hanya `voice_id` yang disimpan; rekaman sampel tidak pernah ditulis ke disk.
+-- Dicabut orang tua → voice_id dihapus di ElevenLabs dan di sini (revoked_at terisi).
+CREATE TABLE IF NOT EXISTS voice_clone (
+  child_id   TEXT PRIMARY KEY REFERENCES child(child_id),
+  voice_id   TEXT,
+  consent_by TEXT NOT NULL,
+  consent_at TEXT NOT NULL,
+  revoked_at TEXT
+);
+
+-- Frasa: teks bebas + klip suara yang dibuat sekali di server, lalu diunduh dan diputar luring di perangkat.
+-- `created_by` = 'keluarga' atau nama terapis. Frasa dari terapis berstatus usulan; statusnya diturunkan dari
+-- peristiwa TGT dengan context = phrase_id, sama seperti target kosakata.
+CREATE TABLE IF NOT EXISTS phrase (
+  phrase_id  TEXT PRIMARY KEY,
+  child_id   TEXT NOT NULL REFERENCES child(child_id),
+  text       TEXT NOT NULL,
+  voice      TEXT NOT NULL,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  audio_file TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_phrase_child ON phrase(child_id, created_at);
 """
 
 

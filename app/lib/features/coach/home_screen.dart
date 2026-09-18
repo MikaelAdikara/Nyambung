@@ -10,6 +10,7 @@ import '../board/board_screen.dart';
 import '../progress/progress_screen.dart';
 import '../settings/settings_screen.dart';
 import '../settings/therapist_screen.dart';
+import '../vocab/phrase_screen.dart';
 import 'companion_controller.dart';
 import 'companion_widgets.dart';
 import 'home_cards.dart';
@@ -168,6 +169,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       PrimaryButton(label: 'Buka Papan Bicara untuk anak', icon: Icons.grid_view_rounded, onPressed: () => _openBoard(controller)),
       _MissionCard(state: controller),
       if (controller.pendingTargets.isNotEmpty) _ProposalCard(state: controller, onOpen: () => _openTab(2)),
+      if (controller.pendingPhrases.isNotEmpty)
+        _PhraseProposalCard(
+          count: controller.pendingPhrases.length,
+          from: controller.pendingPhrases.first.createdBy,
+          onOpen: () async {
+            await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const PhraseScreen()));
+            await controller.load();
+          },
+        ),
       WeekCard(state: controller),
       NavRow(
         icon: Icons.view_column_rounded,
@@ -328,6 +338,35 @@ class _ProposalCard extends StatelessWidget {
           ),
         ),
         const Icon(Icons.chevron_right_rounded, color: CompanionColors.sunText),
+      ],
+    ),
+  );
+}
+
+/// Frasa bersuara dari terapis/guru yang menunggu jawaban keluarga.
+class _PhraseProposalCard extends StatelessWidget {
+  const _PhraseProposalCard({required this.count, required this.from, required this.onOpen});
+
+  final int count;
+  final String from;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) => TapCard(
+    onTap: onOpen,
+    color: CompanionColors.lavenderTint,
+    borderColor: CompanionColors.lavenderTint,
+    child: Row(
+      children: [
+        const IconBadge(icon: Icons.graphic_eq_rounded, tint: Colors.white, color: CompanionColors.lavenderDeep),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            count == 1 ? 'Frasa bersuara dari $from menunggu jawaban' : '$count frasa bersuara menunggu jawaban',
+            style: AppText.bodyStrong.copyWith(color: CompanionColors.lavenderDeep),
+          ),
+        ),
+        const Icon(Icons.chevron_right_rounded, color: CompanionColors.lavenderDeep),
       ],
     ),
   );

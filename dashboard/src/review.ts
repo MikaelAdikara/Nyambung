@@ -10,7 +10,7 @@ const IDLE_MS = 120_000
 const MIN_SECONDS = 5
 
 function childOf(route: Route): string | null {
-  return route.page === 'D2' || route.page === 'D3' || route.page === 'D4' ? route.childId : null
+  return route.page === 'D2' || route.page === 'D3' || route.page === 'D4' || route.page === 'D5' ? route.childId : null
 }
 
 export function useReviewTimer(route: Route, source: DataSource): void {

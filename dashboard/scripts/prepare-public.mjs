@@ -27,10 +27,17 @@ const customFiles = readdirSync(custom).filter((f) => f.endsWith('.png'))
 for (const f of customFiles) cpSync(join(custom, f), join(symbols, 'custom', f))
 
 cpSync(join(root, 'assets', 'vocab', 'core_vocab_id.csv'), join(pub, 'core_vocab_id.csv'))
+
+// Font dan logo yang sama dengan aplikasi (Fredoka + Nunito, OFL), supaya dasbor tampil tanpa internet.
+const appAssets = join(root, 'app', 'assets')
+mkdirSync(join(pub, 'fonts'), { recursive: true })
+for (const f of ['Fredoka.ttf', 'Nunito.ttf', 'OFL-Fredoka.txt', 'OFL-Nunito.txt']) cpSync(join(appAssets, 'fonts', f), join(pub, 'fonts', f))
+mkdirSync(join(pub, 'brand'), { recursive: true })
+cpSync(join(appAssets, 'brand', 'logo_mark.png'), join(pub, 'brand', 'logo_mark.png'))
 cpSync(demoSource, join(pub, 'demo_events.json'))
 
 const pngCount = readdirSync(png).filter((f) => f.endsWith('.png')).length
 console.log(
-  `prepare-public: ${pngCount} simbol png, ${customFiles.length} simbol custom, core_vocab_id.csv, ` +
+  `prepare-public: ${pngCount} simbol png, ${customFiles.length} simbol custom, core_vocab_id.csv, font, logo, ` +
     `demo_events.json dari ${demoSource === seed ? 'seed/' : 'mock/'}`,
 )

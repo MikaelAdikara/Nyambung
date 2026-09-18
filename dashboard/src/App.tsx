@@ -10,15 +10,17 @@ import {
   serverReachable,
   type DataSource,
 } from './data'
-import { href, useRoute } from './route'
+import { href, useRoute, type Route } from './route'
 import { useReviewTimer } from './review'
 import type { VocabWord } from './types'
 import { Ctx, useApp } from './ctx'
-import { Ribbon } from './ui'
+import { Icon, type IconName } from './icons'
+import { Avatar, Ribbon } from './ui'
 import { D1 } from './pages/D1'
 import { D2 } from './pages/D2'
 import { D3 } from './pages/D3'
 import { D4 } from './pages/D4'
+import { D5 } from './pages/D5'
 
 type Boot =
   | { state: 'loading' }
@@ -35,9 +37,12 @@ function withSource(demo: boolean): string {
   return url.toString()
 }
 
+const LOGO = `${import.meta.env.BASE_URL}brand/logo_mark.png`
+
 export default function App() {
   const [boot, setBoot] = useState<Boot>({ state: 'loading' })
   const [vocabList, setVocabList] = useState<VocabWord[]>([])
+  const [query, setQuery] = useState('')
 
   const startDemo = useCallback(async (reason: string | null) => {
     try {
@@ -59,21 +64,21 @@ export default function App() {
     })()
   }, [startDemo])
 
-  // Nama terapis di bilah atas, terikat ke sumber yang memintanya supaya tidak tertinggal setelah keluar.
-  const [named, setNamed] = useState<{ source: DataSource; name: string } | null>(null)
+  // Nama terapis, terikat ke sumber yang memintanya supaya tidak tertinggal setelah keluar.
+  const [named, setNamed] = useState<{ source: DataSource; name: string; email: string | null } | null>(null)
   const apiSource = boot.state === 'ready' && boot.source instanceof ApiSource ? boot.source : null
   useEffect(() => {
     if (!apiSource) return
     let live = true
     apiSource.me().then(
-      (m) => live && setNamed({ source: apiSource, name: m.therapist }),
+      (m) => live && setNamed({ source: apiSource, name: m.therapist, email: m.email }),
       () => {},
     )
     return () => {
       live = false
     }
   }, [apiSource])
-  const therapist = named && apiSource && named.source === apiSource ? named.name : null
+  const me = named && apiSource && named.source === apiSource ? named : null
 
   const signIn = async (cred: Credentials) => {
     try {
@@ -96,18 +101,37 @@ export default function App() {
     setBoot({ state: 'gate', error: 'Sesi berakhir atau token tidak berlaku. Masuk lagi.' })
   }, [])
 
+  const signOut = () => {
+    if (boot.state === 'ready' && boot.source instanceof ApiSource) void boot.source.logout()
+    saveToken(null)
+    setBoot({ state: 'gate' })
+  }
+
   const ctx = useMemo(
     () =>
       boot.state === 'ready'
-        ? { source: boot.source, vocab: new Map(vocabList.map((w) => [w.word_id, w])), vocabList, onUnauthorized }
+        ? {
+            source: boot.source,
+            vocab: new Map(vocabList.map((w) => [w.word_id, w])),
+            vocabList,
+            onUnauthorized,
+            therapist: me?.name ?? null,
+            query,
+            setQuery,
+          }
         : null,
-    [boot, vocabList, onUnauthorized],
+    [boot, vocabList, onUnauthorized, me, query],
   )
 
-  if (boot.state === 'loading') return <main className="page muted">Memuat…</main>
+  if (boot.state === 'loading')
+    return (
+      <main className="boot" aria-busy="true">
+        <img src={LOGO} alt="" width={56} height={56} />
+      </main>
+    )
   if (boot.state === 'failed')
     return (
-      <main className="page">
+      <main className="boot">
         <div className="card error">{boot.error}</div>
       </main>
     )
@@ -116,53 +140,122 @@ export default function App() {
   const demo = boot.source.kind === 'demo'
   return (
     <Ctx.Provider value={ctx}>
-      {demo && <Ribbon reason={boot.reason} />}
-      <header className="topbar">
-        <a className="brand" href={href.d1()}>
-          <span className="brand-dot teal" aria-hidden="true" />
-          <span className="brand-dot coral" aria-hidden="true" />
-          Nyambung <span className="muted">· papan pantau terapis</span>
-        </a>
-        {demo ? (
-          <a href={withSource(false)}>Masuk sebagai terapis</a>
-        ) : (
-          <span className="account">
-            {therapist && <span className="muted">{therapist}</span>}
-            <button
-              className="link"
-              onClick={() => {
-                if (boot.source instanceof ApiSource) void boot.source.logout()
-                saveToken(null)
-                setBoot({ state: 'gate' })
-              }}
-            >
-              Keluar
-            </button>
-          </span>
-        )}
-      </header>
-      <Routes />
+      <Shell demo={demo} reason={boot.reason} me={me} onSignOut={signOut} />
     </Ctx.Provider>
   )
 }
 
-function Routes() {
+function Shell({
+  demo,
+  reason,
+  me,
+  onSignOut,
+}: {
+  demo: boolean
+  reason: string | null
+  me: { name: string; email: string | null } | null
+  onSignOut: () => void
+}) {
   const route = useRoute()
-  useReviewTimer(route, useApp().source)
+  const { source, query, setQuery } = useApp()
+  useReviewTimer(route, source)
+  const childId = 'childId' in route ? route.childId : null
+
+  // Pindah halaman: gulir ke atas, seperti aplikasi multi-halaman.
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [route.page, childId])
+
+  const name = me?.name ?? (demo ? 'Mode demo' : 'Terapis')
   return (
-    <main className="page">
-      {route.page === 'D1' && <D1 />}
-      {route.page === 'D2' && <D2 childId={route.childId} />}
-      {route.page === 'D3' && <D3 childId={route.childId} />}
-      {route.page === 'D4' && <D4 childId={route.childId} />}
-      {route.page === 'unknown' && (
+    <div className="shell">
+      <aside className="sidebar" aria-label="Navigasi">
+        <a className="sidebar-logo" href={href.d1()} title="Nyambung · papan pantau terapis">
+          <img src={LOGO} alt="Nyambung" width={30} height={30} />
+        </a>
+        <nav className="sidebar-nav">
+          <NavItem icon="home" label="Keluarga binaan" to={href.d1()} active={route.page === 'D1'} />
+          {childId && (
+            <>
+              <span className="sidebar-sep" aria-hidden="true" />
+              <NavItem icon="chart" label="Ringkasan anak" to={href.d2(childId)} active={route.page === 'D2'} />
+              <NavItem icon="target" label="Usulkan kata" to={href.d3(childId)} active={route.page === 'D3'} />
+              <NavItem icon="wave" label="Frasa bersuara" to={href.d5(childId)} active={route.page === 'D5'} />
+              <NavItem icon="note" label="Catatan sesi" to={href.d4(childId)} active={route.page === 'D4'} />
+            </>
+          )}
+        </nav>
+        {demo ? (
+          <a className="nav-item" href={withSource(false)} title="Masuk sebagai terapis" aria-label="Masuk sebagai terapis">
+            <Icon name="link" />
+          </a>
+        ) : (
+          <button className="nav-item" onClick={onSignOut} title="Keluar" aria-label="Keluar">
+            <Icon name="logout" />
+          </button>
+        )}
+      </aside>
+
+      <div className="workspace">
+        {demo && <Ribbon reason={reason} />}
+        <header className="topbar">
+          <label className="search">
+            <Icon name="search" size={18} />
+            <span className="sr-only">Cari anak</span>
+            <input
+              type="search"
+              value={query}
+              placeholder="Cari anak"
+              onChange={(e) => {
+                setQuery(e.target.value)
+                if (route.page !== 'D1') window.location.hash = href.d1()
+              }}
+            />
+          </label>
+          <div className="account">
+            <Avatar name={name} size={40} tone="teal" />
+            <div className="account-text">
+              <strong>{name}</strong>
+              <span>{me?.email ?? (demo ? 'data ilustratif' : 'papan pantau terapis')}</span>
+            </div>
+          </div>
+        </header>
+        <main className="page">
+          <Page route={route} />
+        </main>
+      </div>
+    </div>
+  )
+}
+
+function NavItem({ icon, label, to, active }: { icon: IconName; label: string; to: string; active: boolean }) {
+  return (
+    <a className={`nav-item${active ? ' active' : ''}`} href={to} aria-current={active ? 'page' : undefined} title={label} aria-label={label}>
+      <Icon name={icon} />
+    </a>
+  )
+}
+
+function Page({ route }: { route: Route }) {
+  switch (route.page) {
+    case 'D1':
+      return <D1 />
+    case 'D2':
+      return <D2 childId={route.childId} />
+    case 'D3':
+      return <D3 childId={route.childId} />
+    case 'D4':
+      return <D4 childId={route.childId} />
+    case 'D5':
+      return <D5 childId={route.childId} />
+    default:
+      return (
         <section className="card">
           <p>Halaman tidak ditemukan.</p>
           <a href={href.d1()}>Kembali ke Keluarga binaan</a>
         </section>
-      )}
-    </main>
-  )
+      )
+  }
 }
 
 type Credentials = { email: string; password: string } | { token: string }
@@ -184,7 +277,12 @@ function LoginGate({ error, onSubmit }: { error?: string; onSubmit: (cred: Crede
     setBusy(false)
   }
   return (
-    <main className="page gate">
+    <main className="gate">
+      <div className="gate-hero" aria-hidden="true">
+        <img src={LOGO} alt="" width={64} height={64} />
+        <p className="gate-hero-title">Nyambung</p>
+        <p>Papan pantau terapis: pola pemakaian dari rumah, usulan kata, frasa bersuara, dan catatan sesi.</p>
+      </div>
       <form className="card gate-card" onSubmit={submit}>
         <h1>Masuk sebagai terapis</h1>
         {useToken ? (

@@ -166,3 +166,28 @@ export interface VocabWord {
   position_index: number
   symbol_file: string
 }
+
+// Frasa bersuara: teks + klip yang dibuat server sekali (OpenAI atau tiruan suara keluarga), diputar luring di HP.
+export type PhraseVoice = 'cowo' | 'cewe' | 'keluarga'
+
+export interface PhraseOut {
+  phrase_id: string
+  child_id: string
+  text: string
+  voice: PhraseVoice
+  word_id: string
+  // 'keluarga' atau nama terapis
+  created_by: string
+  created_at: string
+  status: TargetStatus
+  answered_at: string | null
+  used_count: number
+}
+
+export interface VoiceStatus {
+  openai: boolean
+  elevenlabs: boolean
+  clone_active: boolean
+  clone_consent_by: string | null
+  clone_consent_at: string | null
+}

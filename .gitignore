@@ -19,6 +19,8 @@ __pycache__/
 dashboard/public/symbols/
 dashboard/public/demo_events.json
 dashboard/public/core_vocab_id.csv
+dashboard/public/fonts/
+dashboard/public/brand/
 
 # Catatan lokal per laptop
 CLAUDE.local.md

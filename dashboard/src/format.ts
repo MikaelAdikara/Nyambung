@@ -9,8 +9,16 @@ export function personalLabel(id: string): string | null {
   return m ? m[1].replace(/_/g, ' ').toUpperCase() : null
 }
 
+// Kartu frasa bersuara: `frs-<slug>-<8 hex phrase_id>` (rumus di server/app/services/voice.py).
+const PHRASE = /^frs-(.+)-[0-9a-z]{8}$/
+
+export function phraseLabel(id: string): string | null {
+  const m = PHRASE.exec(id)
+  return m ? `“${m[1].replace(/_/g, ' ')}”` : null
+}
+
 export function wordLabel(vocab: Map<string, VocabWord>, id: string): string {
-  return vocab.get(id)?.label_display ?? personalLabel(id) ?? id.toUpperCase()
+  return vocab.get(id)?.label_display ?? personalLabel(id) ?? phraseLabel(id) ?? id.toUpperCase()
 }
 
 // ---------- waktu ----------

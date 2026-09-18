@@ -1,8 +1,9 @@
 import { href } from '../route'
+import { Icon } from '../icons'
 import { useApp, useAsync } from '../ctx'
 import { fmtDate, pct, relTime, wordLabel } from '../format'
 import { attentionSignals } from '../attention'
-import { BarChart, ErrorBox, Loading, StatCard, TrendBadge, WordIcon } from '../ui'
+import { BarChart, ChildHeader, ErrorBox, Loading, Panel, StatCard, TrendBadge, WordIcon } from '../ui'
 
 const HOURS = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0'))
 const WEEKS = ['5 pk lalu', '4 pk lalu', '3 pk lalu', '2 pk lalu', 'pekan lalu', 'pekan ini']
@@ -19,7 +20,7 @@ export function D2({ childId }: { childId: string }) {
   if (res.state === 'error')
     return (
       <section>
-        <a href={href.d1()}>← Keluarga binaan</a>
+        <ChildHeader childId={childId} page="D2" name={null} />
         <ErrorBox error={res.error} />
       </section>
     )
@@ -32,19 +33,24 @@ export function D2({ childId }: { childId: string }) {
 
   return (
     <section>
-      <a href={href.d1()}>← Keluarga binaan</a>
-      <h1>
-        {s.nickname ?? '(tanpa nama)'}, {s.age_years ?? '–'} tahun · rutinitas {s.routine ?? '–'}
-      </h1>
-      <p className="muted meta">
-        Arah 3 pekan: <TrendBadge trend={s.trend_3w} /> · Sinkron terakhir: {relTime(s.last_sync)} ·{' '}
-        {s.linked_weeks === null ? 'Belum tertaut' : `Tertaut ${s.linked_weeks} pekan`}
-        {s.pending_targets > 0 && ` · ${s.pending_targets} usulan menunggu jawaban keluarga`}
-      </p>
+      <ChildHeader
+        childId={childId}
+        page="D2"
+        name={s.nickname}
+        meta={
+          <>
+            {s.age_years ?? '–'} tahun · rutinitas {s.routine ?? '–'} · arah 3 pekan <TrendBadge trend={s.trend_3w} /> · sinkron{' '}
+            {relTime(s.last_sync)} · {s.linked_weeks === null ? 'belum tertaut' : `tertaut ${s.linked_weeks} pekan`}
+            {s.pending_targets > 0 && ` · ${s.pending_targets} usulan menunggu jawaban keluarga`}
+          </>
+        }
+      />
 
       {signals.length > 0 && (
         <div className="card attention">
-          <h2>Perlu diperiksa</h2>
+          <h2>
+            <Icon name="alert" size={18} /> Perlu diperiksa
+          </h2>
           <ul>
             {signals.map((x) => (
               <li key={x}>{x}</li>
@@ -56,24 +62,29 @@ export function D2({ childId }: { childId: string }) {
 
       <div className="stats">
         <StatCard
+          icon="chart"
           label="Kata berbeda pekan ini"
           value={s.unique_words}
           sub={`pekan lalu ${s.unique_words_prev} (${diff > 0 ? '+' : ''}${diff})`}
           accent="teal"
         />
         <StatCard
+          icon="sync"
           label="Ketukan anak tanpa contoh ≤ 60 dtk"
           value={pct(s.spontaneous_ratio)}
           sub={`${s.spontaneous_taps} dari ${s.child_taps} ketukan anak`}
           accent="teal"
         />
         <StatCard
+          icon="calendar"
           label="Hari misi selesai"
           value={`${s.missions_done} dari ${s.missions_total}`}
           sub={`belum sempat ${s.missions_skipped} hari`}
           accent="coral"
         />
         <StatCard
+          icon="target"
+          accent="lavender"
           label="Total ketukan pekan ini"
           value={s.total_taps}
           sub={`${s.child_taps} ketukan anak, termasuk ${s.parent_taps} ketukan orang tua saat modeling`}
@@ -94,8 +105,7 @@ export function D2({ childId }: { childId: string }) {
         </div>
       </div>
 
-      <div className="card">
-        <h2>Kata yang paling sering</h2>
+      <Panel title="Kata yang paling sering" icon="target" className="section-gap">
         <p className="muted">
           Hitungan ketukan anak dalam 7 hari terakhir ({s.child_taps} ketukan anak, {s.parent_taps} ketukan pendamping tidak
           dihitung di sini).
@@ -114,7 +124,7 @@ export function D2({ childId }: { childId: string }) {
             ))}
           </ol>
         )}
-      </div>
+      </Panel>
 
       {acceptedTargets.length > 0 && (
         <div className="card">
@@ -142,6 +152,9 @@ export function D2({ childId }: { childId: string }) {
       <nav className="actions">
         <a className="button" href={href.d3(childId)}>
           Usulkan kata
+        </a>
+        <a className="button secondary" href={href.d5(childId)}>
+          Kirim frasa bersuara
         </a>
         <a className="button secondary" href={href.d4(childId)}>
           Catatan sesi

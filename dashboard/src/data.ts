@@ -2,7 +2,20 @@
 //  - api : server jalur 3 dengan Bearer token terapis (sessionStorage, tidak pernah localStorage)
 //  - demo: ?source=demo, atau otomatis bila server tidak terjangkau; dihitung di browser oleh aggregate.ts
 import { DemoAggregator } from './aggregate'
-import type { ChildrenOverview, DemoFile, InviteOut, SessionNote, SessionNoteIn, Summary, TargetIn, TargetOut, VocabWord } from './types'
+import type {
+  ChildrenOverview,
+  DemoFile,
+  InviteOut,
+  PhraseOut,
+  PhraseVoice,
+  SessionNote,
+  SessionNoteIn,
+  Summary,
+  TargetIn,
+  TargetOut,
+  VocabWord,
+  VoiceStatus,
+} from './types'
 
 export const API_BASE: string = (import.meta.env.VITE_API_BASE as string | undefined) ?? 'http://127.0.0.1:8000'
 const TOKEN_KEY = 'nyambung.therapistToken'
@@ -27,6 +40,12 @@ export interface DataSource {
   shareSession(childId: string, noteId: string, familyText: string): Promise<SessionNote>
   // Waktu tinjauan D1. Terbaik-usaha: gagal kirim tidak pernah mengganggu terapis.
   recordReview(childId: string, seconds: number): void
+  // Frasa bersuara. Frasa dari terapis sampai ke keluarga sebagai usulan.
+  phrases(childId: string): Promise<PhraseOut[]>
+  voiceStatus(childId: string): Promise<VoiceStatus>
+  createPhrase(childId: string, text: string, voice: PhraseVoice): Promise<PhraseOut>
+  // URL objek untuk <audio>; null bila klip tidak tersedia (mode demo).
+  phraseAudio(childId: string, phraseId: string): Promise<string | null>
 }
 
 export function readToken(): string | null {
@@ -137,6 +156,27 @@ export class ApiSource implements DataSource {
   me() {
     return this.req<{ therapist: string; email: string | null }>('GET', '/v1/auth/me')
   }
+  phrases(childId: string) {
+    return this.req<PhraseOut[]>('GET', `/v1/children/${encodeURIComponent(childId)}/phrases`)
+  }
+  voiceStatus(childId: string) {
+    return this.req<VoiceStatus>('GET', `/v1/children/${encodeURIComponent(childId)}/voice`)
+  }
+  createPhrase(childId: string, text: string, voice: PhraseVoice) {
+    return this.req<PhraseOut>('POST', `/v1/children/${encodeURIComponent(childId)}/phrases`, { text, voice })
+  }
+  async phraseAudio(childId: string, phraseId: string): Promise<string | null> {
+    // <audio src> tidak bisa membawa Bearer, jadi klip diambil lewat fetch lalu dijadikan URL objek.
+    try {
+      const res = await fetch(
+        `${API_BASE}/v1/children/${encodeURIComponent(childId)}/phrases/${encodeURIComponent(phraseId)}/audio`,
+        { headers: { Authorization: `Bearer ${this.token}` } },
+      )
+      return res.ok ? URL.createObjectURL(await res.blob()) : null
+    } catch {
+      return null
+    }
+  }
   // Mencabut sesi di server. Token env tidak bisa dicabut dari sini (403), cukup dilupakan di browser.
   async logout(): Promise<void> {
     try {
@@ -184,6 +224,27 @@ export class DemoSource implements DataSource {
   }
   recordReview() {
     // mode demo tidak mengukur waktu tinjauan
+  }
+  async phrases(childId: string): Promise<PhraseOut[]> {
+    const child = this.agg.child(childId)
+    if (!child) throw new ApiError(404, 'anak tidak ditemukan')
+    // Contoh ilustratif, sama untuk setiap anak demo.
+    const day = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString().replace(/\.\d+Z$/, 'Z')
+    const base = { child_id: childId, answered_at: null as string | null }
+    return [
+      { ...base, phrase_id: `demo-1-${childId}`, text: 'Ayo cuci tangan dulu', voice: 'cewe', word_id: 'frs-ayo_cuci_tangan_dulu-demo0001', created_by: 'Bu Rina (ilustratif)', created_at: day(1), status: 'usulan', used_count: 0 },
+      { ...base, phrase_id: `demo-2-${childId}`, text: 'Jangan nyontek', voice: 'keluarga', word_id: 'frs-jangan_nyontek-demo0002', created_by: 'Bu Rina (ilustratif)', created_at: day(6), status: 'diterima', answered_at: day(5), used_count: 4 },
+      { ...base, phrase_id: `demo-3-${childId}`, text: 'Mau main di luar', voice: 'cowo', word_id: 'frs-mau_main_di_luar-demo0003', created_by: 'keluarga', created_at: day(9), status: 'diterima', answered_at: day(9), used_count: 11 },
+    ]
+  }
+  async voiceStatus(): Promise<VoiceStatus> {
+    return { openai: false, elevenlabs: false, clone_active: false, clone_consent_by: null, clone_consent_at: null }
+  }
+  async createPhrase(): Promise<PhraseOut> {
+    throw new ApiError(0, 'Mode demo tidak membuat suara.')
+  }
+  async phraseAudio(): Promise<string | null> {
+    return null
   }
 }
 

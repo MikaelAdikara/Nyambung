@@ -1,11 +1,123 @@
 import { useState, type ReactNode } from 'react'
 import { useApp } from './ctx'
 import { ApiError } from './data'
-import { personalLabel } from './format'
+import { personalLabel, phraseLabel } from './format'
+import { Icon, type IconName } from './icons'
+import { href, type Route } from './route'
 import type { Trend } from './types'
 
 export function Loading() {
-  return <p className="muted">Memuat…</p>
+  return (
+    <div className="loading" role="status">
+      <span className="loading-dot" />
+      <span className="loading-dot" />
+      <span className="loading-dot" />
+      <span className="sr-only">Memuat…</span>
+    </div>
+  )
+}
+
+// ---------- avatar huruf awal (tanpa foto: dasbor tidak pernah menerima foto keluarga) ----------
+
+const TONES = ['teal', 'coral', 'sky', 'lavender', 'sun', 'leaf'] as const
+export type Tone = (typeof TONES)[number]
+
+export function toneFor(key: string): Tone {
+  let h = 0
+  for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) >>> 0
+  return TONES[h % TONES.length]
+}
+
+export function Avatar({ name, size = 36, tone }: { name: string; size?: number; tone?: Tone }) {
+  const letters = name
+    .replace(/\(.*?\)/g, '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join('')
+  return (
+    <span className={`avatar tone-${tone ?? toneFor(name)}`} style={{ width: size, height: size, fontSize: size * 0.4 }} aria-hidden="true">
+      {letters || '?'}
+    </span>
+  )
+}
+
+// ---------- kepala halaman seorang anak + tab D2–D5 ----------
+
+const CHILD_TABS: { page: Route['page']; label: string; icon: IconName; to: (id: string) => string }[] = [
+  { page: 'D2', label: 'Ringkasan', icon: 'chart', to: href.d2 },
+  { page: 'D3', label: 'Usulkan kata', icon: 'target', to: href.d3 },
+  { page: 'D5', label: 'Frasa bersuara', icon: 'wave', to: href.d5 },
+  { page: 'D4', label: 'Catatan sesi', icon: 'note', to: href.d4 },
+]
+
+export function ChildHeader({
+  childId,
+  page,
+  name,
+  meta,
+}: {
+  childId: string
+  page: Route['page']
+  name: string | null
+  meta?: ReactNode
+}) {
+  return (
+    <header className="child-head">
+      <a className="back" href={href.d1()}>
+        <Icon name="back" size={16} /> Keluarga binaan
+      </a>
+      <div className="child-title">
+        <Avatar name={name ?? '?'} size={52} tone={toneFor(childId)} />
+        <div>
+          <h1>{name ?? '(tanpa nama)'}</h1>
+          {meta && <div className="child-meta">{meta}</div>}
+        </div>
+      </div>
+      <nav className="tabs" aria-label="Bagian">
+        {CHILD_TABS.map((t) => (
+          <a key={t.page} href={t.to(childId)} className={`tab${t.page === page ? ' active' : ''}`} aria-current={t.page === page ? 'page' : undefined}>
+            <Icon name={t.icon} size={17} />
+            {t.label}
+          </a>
+        ))}
+      </nav>
+    </header>
+  )
+}
+
+// ---------- panel berjudul (kartu utama halaman) ----------
+
+export function Panel({
+  title,
+  icon,
+  tone = 'teal',
+  actions,
+  children,
+  className,
+}: {
+  title: ReactNode
+  icon?: IconName
+  tone?: Tone
+  actions?: ReactNode
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <section className={`panel${className ? ` ${className}` : ''}`}>
+      <header className="panel-head">
+        {icon && (
+          <span className={`panel-icon tone-${tone}`}>
+            <Icon name={icon} size={18} />
+          </span>
+        )}
+        <h2>{title}</h2>
+        {actions && <div className="panel-actions">{actions}</div>}
+      </header>
+      {children}
+    </section>
+  )
 }
 
 export function ErrorBox({ error }: { error: Error }) {
@@ -30,13 +142,63 @@ export function Ribbon({ reason }: { reason?: string | null }) {
 
 // ---------- kartu angka ----------
 
-export function StatCard({ label, value, sub, accent }: { label: string; value: ReactNode; sub?: ReactNode; accent?: 'teal' | 'coral' }) {
+export function StatCard({
+  label,
+  value,
+  sub,
+  accent,
+  icon,
+  to,
+  onClick,
+}: {
+  label: string
+  value: ReactNode
+  sub?: ReactNode
+  accent?: Tone
+  icon?: IconName
+  to?: string
+  onClick?: () => void
+}) {
+  const body = (
+    <>
+      {icon && (
+        <span className={`stat-icon tone-${accent ?? 'teal'}`}>
+          <Icon name={icon} size={22} />
+        </span>
+      )}
+      <div className="stat-body">
+        <div className="stat-label">{label}</div>
+        <div className="stat-value">{value}</div>
+        {sub && <div className="stat-sub">{sub}</div>}
+      </div>
+      {(to || onClick) && <Icon name="arrow" size={20} className="stat-arrow" />}
+    </>
+  )
+  if (onClick)
+    return (
+      <button type="button" className={`stat stat-link${accent ? ` stat-${accent}` : ''}`} onClick={onClick}>
+        {body}
+      </button>
+    )
+  return to ? (
+    <a className={`stat stat-link${accent ? ` stat-${accent}` : ''}`} href={to}>
+      {body}
+    </a>
+  ) : (
+    <div className={`stat${accent ? ` stat-${accent}` : ''}`}>{body}</div>
+  )
+}
+
+// ---------- status pil: ikon + teks, bukan warna saja ----------
+
+export function StatusPill({ status }: { status: 'usulan' | 'diterima' | 'ditolak' }) {
+  const t = { usulan: ['clock', 'Menunggu'], diterima: ['check', 'Diterima'], ditolak: ['back', 'Tidak dipakai'] } as const
+  const [icon, text] = t[status]
   return (
-    <div className={`card stat${accent ? ` stat-${accent}` : ''}`}>
-      <div className="stat-label">{label}</div>
-      <div className="stat-value">{value}</div>
-      {sub && <div className="stat-sub">{sub}</div>}
-    </div>
+    <span className={`pill pill-${status}`}>
+      <Icon name={icon} size={13} />
+      {text}
+    </span>
   )
 }
 
@@ -117,28 +279,34 @@ export function BarChart({
 // ---------- ikon kata (simbol Mulberry / gambar tim) ----------
 
 // Warna jenis kata (02 §2)
+// Sama dengan warna sel papan di aplikasi (app/lib/core/theme.dart PosStyle).
 const POS_FILL: Record<string, string> = {
-  pengatur: '#ECEAE5',
-  ganti: '#F1E6C8',
-  kerja: '#DDE8DD',
-  sifat: '#DCE6F1',
-  tanya: '#E6DDF0',
-  benda: '#F6E7CF',
-  sosial: '#F2DEE6',
+  pengatur: '#E8F6F5',
+  ganti: '#FCDE9E',
+  kerja: '#E1F4E7',
+  sifat: '#DEF3FC',
+  tanya: '#EDECFB',
+  benda: '#FBE3D2',
+  sosial: '#FDE1E2',
 }
 
 export function WordIcon({ id, size = 40 }: { id: string; size?: number }) {
   const { vocab } = useApp()
   const w = vocab.get(id)
   const [failed, setFailed] = useState(false)
-  const fill = POS_FILL[w?.pos ?? 'benda'] ?? POS_FILL.benda
+  const phrase = phraseLabel(id)
+  const fill = POS_FILL[w?.pos ?? (phrase ? 'sosial' : 'benda')] ?? POS_FILL.benda
   return (
     <span
       className="word-icon"
       style={{ width: size, height: size, background: fill }}
-      title={personalLabel(id) ? 'Kartu personal dari foto keluarga (fotonya tidak dikirim)' : undefined}
+      title={
+        personalLabel(id) ? 'Kartu personal dari foto keluarga (fotonya tidak dikirim)' : phrase ? 'Kartu frasa bersuara' : undefined
+      }
     >
-      {w && !failed ? (
+      {phrase ? (
+        <Icon name="wave" size={Math.round(size * 0.5)} />
+      ) : w && !failed ? (
         <img
           src={`${import.meta.env.BASE_URL}symbols/${w.symbol_file}`}
           alt=""

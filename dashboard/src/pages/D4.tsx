@@ -1,9 +1,8 @@
 import { useState, type FormEvent } from 'react'
-import { href } from '../route'
 import { useApp, useAsync } from '../ctx'
 import { fmtDate, pct, sessionText, wordLabel } from '../format'
 import type { SessionNote, Summary, TargetOut, VocabWord } from '../types'
-import { ErrorBox, Loading } from '../ui'
+import { ChildHeader, ErrorBox, Loading } from '../ui'
 
 const MAX_NOTE = 4000
 const MAX_FAMILY = 1000
@@ -86,7 +85,7 @@ export function D4({ childId }: { childId: string }) {
   if (res.state === 'error')
     return (
       <section>
-        <a href={href.d1()}>← Keluarga binaan</a>
+        <ChildHeader childId={childId} page="D4" name={null} />
         <ErrorBox error={res.error} />
       </section>
     )
@@ -162,13 +161,11 @@ export function D4({ childId }: { childId: string }) {
 
   return (
     <section>
-      <a href={href.d2(childId)}>← {s.nickname ?? 'Ringkasan anak'}</a>
-      <h1>Catatan sesi {name}</h1>
-      <p className="muted meta">Sesi tatap muka · catatan ini milik terapis, tidak terlihat oleh keluarga</p>
+      <ChildHeader childId={childId} page="D4" name={s.nickname} meta="Catatan sesi tatap muka. Catatan ini milik terapis dan tidak terlihat oleh keluarga." />
 
       <div className="grid-2 session-grid">
         <div className="card">
-          <h2 className="eyebrow">Sebelum sesi, dari data rumah</h2>
+          <h2>Sebelum sesi, dari data rumah</h2>
           <ul className="home-bullets">
             {bullets.map((b) => (
               <li key={b}>{b}</li>
@@ -191,7 +188,7 @@ export function D4({ childId }: { childId: string }) {
         </div>
 
         <form className="card session-form" onSubmit={save}>
-          <h2 className="eyebrow">{editing ? `Ubah catatan sesi ${fmtLocal(date)}` : `Catatan sesi ${fmtLocal(date)}`}</h2>
+          <h2>{editing ? `Ubah catatan sesi ${fmtLocal(date)}` : `Catatan sesi ${fmtLocal(date)}`}</h2>
           <label htmlFor="date">Tanggal sesi</label>
           <input id="date" type="date" value={date} max={today()} onChange={(e) => setDate(e.target.value)} disabled={demo} />
           <label htmlFor="note">Catatan terapis</label>
@@ -257,7 +254,7 @@ export function D4({ childId }: { childId: string }) {
       </div>
 
       <div className="card">
-        <h2 className="eyebrow">Sesi sebelumnya</h2>
+        <h2>Sesi sebelumnya</h2>
         {res.data.sessions.length === 0 ? (
           <p className="muted">Belum ada catatan sesi untuk {name}.</p>
         ) : (

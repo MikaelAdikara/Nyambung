@@ -9,6 +9,11 @@ export interface AppCtx {
   vocab: Map<string, VocabWord>
   vocabList: VocabWord[]
   onUnauthorized: () => void
+  // Nama terapis dari server (null di mode demo atau sebelum termuat), untuk sapaan D1.
+  therapist: string | null
+  // Pencarian anak di bilah atas; D1 menyaring tabel keluarga dengan ini.
+  query: string
+  setQuery: (q: string) => void
 }
 
 export const Ctx = createContext<AppCtx | null>(null)

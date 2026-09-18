@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 
-// Hash routing tangan sendiri (jalur 4 §4.1): #/ D1, #/anak/:id D2, #/anak/:id/target D3, #/anak/:id/sesi D4.
+// Hash routing tangan sendiri (jalur 4 §4.1): #/ D1, #/anak/:id D2, #/anak/:id/target D3, #/anak/:id/sesi D4,
+// #/anak/:id/frasa D5 (frasa bersuara).
 export type Route =
   | { page: 'D1' }
   | { page: 'D2'; childId: string }
   | { page: 'D3'; childId: string }
   | { page: 'D4'; childId: string }
+  | { page: 'D5'; childId: string }
   | { page: 'unknown'; hash: string }
 
 export function parseHash(hash: string): Route {
@@ -17,6 +19,7 @@ export function parseHash(hash: string): Route {
     if (parts.length === 2) return { page: 'D2', childId }
     if (parts.length === 3 && parts[2] === 'target') return { page: 'D3', childId }
     if (parts.length === 3 && parts[2] === 'sesi') return { page: 'D4', childId }
+    if (parts.length === 3 && parts[2] === 'frasa') return { page: 'D5', childId }
   }
   return { page: 'unknown', hash }
 }
@@ -26,6 +29,7 @@ export const href = {
   d2: (childId: string) => `#/anak/${encodeURIComponent(childId)}`,
   d3: (childId: string) => `#/anak/${encodeURIComponent(childId)}/target`,
   d4: (childId: string) => `#/anak/${encodeURIComponent(childId)}/sesi`,
+  d5: (childId: string) => `#/anak/${encodeURIComponent(childId)}/frasa`,
 }
 
 export function useRoute(): Route {

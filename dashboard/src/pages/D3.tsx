@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { href } from '../route'
-import type { Routine, TargetOut } from '../types'
+import type { Routine } from '../types'
 import { useApp, useAsync } from '../ctx'
 import { fmtDate, wordLabel } from '../format'
-import { ErrorBox, Loading, WordIcon } from '../ui'
+import { ChildHeader, ErrorBox, Loading, StatusPill, WordIcon } from '../ui'
 
 const MAX_WORDS = 5
 // Saran rancangan: paling banyak tiga kata per pekan supaya keluarga tidak kewalahan
 const SUGGESTED_WORDS = 3
 const MAX_NOTE = 600
-const STATUS_TEXT: Record<TargetOut['status'], string> = { usulan: 'Menunggu', diterima: 'Diterima', ditolak: 'Ditolak' }
 
 // Draf usulan per anak, hanya di browser ini (localStorage bisa diblokir: gagal diam-diam)
 interface Draft {
@@ -80,7 +78,7 @@ export function D3({ childId }: { childId: string }) {
   if (res.state === 'error')
     return (
       <section>
-        <a href={href.d1()}>← Keluarga binaan</a>
+        <ChildHeader childId={childId} page="D3" name={null} />
         <ErrorBox error={res.error} />
       </section>
     )
@@ -119,9 +117,7 @@ export function D3({ childId }: { childId: string }) {
 
   return (
     <section>
-      <a href={href.d2(childId)}>← {s.nickname ?? 'Ringkasan anak'}</a>
-      <h1>Usulkan kata untuk pekan ini</h1>
-      <p className="muted">Keluarga dapat menerima atau menolak tanpa alasan.</p>
+      <ChildHeader childId={childId} page="D3" name={s.nickname} meta="Usulkan kata untuk pekan ini. Keluarga dapat menerima atau menolak tanpa alasan." />
 
       <form className="card" onSubmit={submit}>
         <div className="picked" aria-live="polite">
@@ -228,7 +224,7 @@ export function D3({ childId }: { childId: string }) {
                     {t.note && <div className="muted small">{t.note}</div>}
                   </td>
                   <td>
-                    <span className={`status status-${t.status}`}>{STATUS_TEXT[t.status]}</span>
+                    <StatusPill status={t.status} />
                   </td>
                   <td>{fmtDate(t.answered_at ?? t.created_at)}</td>
                   <td>{t.status === 'diterima' ? `dipakai ${t.used_count_since_accept} kali sejak diterima` : '–'}</td>

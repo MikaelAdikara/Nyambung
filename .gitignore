@@ -21,3 +21,6 @@ dashboard/public/core_vocab_id.csv
 
 # Catatan lokal per laptop
 CLAUDE.local.md
+
+# Perangkat tiruan simulator
+tools/.sim/

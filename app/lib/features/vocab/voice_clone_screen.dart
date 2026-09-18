@@ -11,6 +11,7 @@ import '../../core/error_log.dart';
 import '../../core/theme.dart';
 import '../../data/sync/phrase_service.dart';
 import '../coach/companion_widgets.dart';
+import '../settings/link_required.dart';
 
 /// Naskah contoh untuk klon suara: kalimat sehari-hari, ± 15 detik dibaca santai.
 const cloneScripts = [
@@ -87,6 +88,7 @@ class _VoiceCloneScreenState extends State<VoiceCloneScreen> {
       if (mounted) setState(() => _status = s);
     } on PhraseException catch (e) {
       if (mounted) setState(() => _error = e.message);
+      if (e.needsLink && mounted) unawaited(showLinkRequiredDialog(context, feature: 'Suara keluarga'));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

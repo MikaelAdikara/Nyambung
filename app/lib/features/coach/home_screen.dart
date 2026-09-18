@@ -9,9 +9,12 @@ import '../../core/theme.dart';
 import '../board/board_screen.dart';
 import '../board/symbol_cell.dart';
 import '../progress/progress_screen.dart';
+import '../scenes/scene_library_screen.dart';
+import '../settings/link_required.dart';
 import '../settings/settings_screen.dart';
 import '../settings/therapist_screen.dart';
 import '../vocab/phrase_screen.dart';
+import '../vocab/voice_clone_screen.dart';
 import 'companion_controller.dart';
 import 'companion_widgets.dart';
 import 'home_cards.dart';
@@ -46,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    openTherapistTab.addListener(_onOpenTherapistTab);
     _ticker = Timer.periodic(_autoSyncEvery, (_) {
       final active = WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
       if (active && _app?.boardOpen != true) _controller?.autoSync();
@@ -98,6 +102,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    openTherapistTab.removeListener(_onOpenTherapistTab);
     _ticker?.cancel();
     _controller?.dispose();
     super.dispose();
@@ -108,6 +113,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _tab = 0;
 
   void _openTab(int i) => setState(() => _tab = i);
+
+  void _onOpenTherapistTab() {
+    if (mounted) _openTab(2);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -172,6 +181,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final sections = <Widget>[
       PrimaryButton(label: 'Buka Papan Bicara untuk anak', icon: Icons.grid_view_rounded, onPressed: () => _openBoard(controller)),
       _MissionCard(state: controller),
+      _FeaturedSection(onReturn: controller.load),
       if (controller.pendingTargets.isNotEmpty) _ProposalCard(state: controller, onOpen: () => _openTab(2)),
       if (controller.pendingPhrases.isNotEmpty)
         _PhraseProposalCard(
@@ -445,4 +455,119 @@ class _SyncCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Fitur unggulan di beranda, tidak tersembunyi di Atur: papan dari foto dengan bantuan AI, suara keluarga, dan
+/// frasa bersuara. Ketiganya dibuat daring sekali, lalu dipakai anak tanpa internet.
+class _FeaturedSection extends StatelessWidget {
+  const _FeaturedSection({required this.onReturn});
+
+  final Future<void> Function() onReturn;
+
+  Future<void> _push(BuildContext context, Widget screen) async {
+    await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
+    await onReturn();
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const Padding(padding: EdgeInsets.only(left: 4, bottom: 8), child: Eyebrow('Fitur unggulan')),
+      _FeatureCard(
+        icon: Icons.photo_camera_back_outlined,
+        badge: 'AI',
+        title: 'Papan dari foto',
+        subtitle: 'Foto kegiatan nyata. AI memberi keterangan tiap benda dan mengusulkan katanya.',
+        tint: CompanionColors.skyTint,
+        iconColor: CompanionColors.skyText,
+        onTap: () => _push(context, const SceneLibraryScreen()),
+      ),
+      const SizedBox(height: 10),
+      _FeatureCard(
+        icon: Icons.record_voice_over_rounded,
+        badge: 'Klon suara',
+        title: 'Suara keluarga',
+        subtitle: 'Rekam tiga kalimat sekali. Frasa baru terdengar dengan suara Ibu atau Ayah.',
+        tint: CompanionColors.coralTint,
+        iconColor: CompanionColors.coralText,
+        onTap: () => _push(context, const VoiceCloneScreen()),
+      ),
+      const SizedBox(height: 10),
+      _FeatureCard(
+        icon: Icons.graphic_eq_rounded,
+        badge: 'Suara',
+        title: 'Frasa bersuara',
+        subtitle: 'Ketik kalimat pendek, jadi satu kartu bersuara di papan anak.',
+        tint: CompanionColors.lavenderTint,
+        iconColor: CompanionColors.lavenderDeep,
+        onTap: () => _push(context, const PhraseScreen()),
+      ),
+    ],
+  );
+}
+
+class _FeatureCard extends StatelessWidget {
+  const _FeatureCard({
+    required this.icon,
+    required this.badge,
+    required this.title,
+    required this.subtitle,
+    required this.tint,
+    required this.iconColor,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String badge;
+  final String title;
+  final String subtitle;
+  final Color tint;
+  final Color iconColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => TapCard(
+    onTap: onTap,
+    color: tint,
+    borderColor: tint,
+    child: Row(
+      children: [
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+          child: Icon(icon, size: 30, color: iconColor),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(title, style: AppText.h3),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(99)),
+                    child: Text(
+                      badge,
+                      style: AppText.cap.copyWith(color: iconColor, fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(subtitle, style: AppText.muted.copyWith(color: AppColors.ink)),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Icon(Icons.chevron_right_rounded, color: iconColor),
+      ],
+    ),
+  );
 }

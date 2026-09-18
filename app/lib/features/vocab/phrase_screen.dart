@@ -4,6 +4,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/app_state.dart';
+import '../settings/link_required.dart';
 import '../../core/error_log.dart';
 import '../../core/motion.dart';
 import '../../core/theme.dart';
@@ -77,6 +78,7 @@ class _PhraseScreenState extends State<PhraseScreen> {
       }
     } on PhraseException catch (e) {
       if (mounted) setState(() => _statusError = e.message);
+      if (e.needsLink && mounted) unawaited(showLinkRequiredDialog(context, feature: 'Frasa bersuara'));
     }
   }
 
@@ -106,6 +108,7 @@ class _PhraseScreenState extends State<PhraseScreen> {
       unawaited(_play(p));
     } on PhraseException catch (e) {
       if (mounted) setState(() => _error = e.message);
+      if (e.needsLink && mounted) unawaited(showLinkRequiredDialog(context, feature: 'Frasa bersuara'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

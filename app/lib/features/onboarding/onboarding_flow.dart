@@ -67,6 +67,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: AppColors.bg,
+    // Keyboard menutupi awan dan tombol bawah, bukan mendorongnya naik. Isi halaman tetap bisa digulir (lihat _OnboardingPage).
+    resizeToAvoidBottomInset: false,
     body: PageView(
       controller: _pages,
       physics: const NeverScrollableScrollPhysics(),
@@ -153,7 +155,13 @@ class _OnboardingPage extends StatelessWidget {
               ),
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                  // Ruang tambahan seukuran bagian keyboard yang melewati awan, supaya isian bawah tetap bisa digulir.
+                  padding: EdgeInsets.fromLTRB(
+                    24,
+                    16,
+                    24,
+                    16 + (MediaQuery.viewInsetsOf(context).bottom - footerHeight).clamp(0, double.infinity),
+                  ),
                   children: [for (var i = 0; i < children.length; i++) FadeSlideIn(index: i, child: children[i])],
                 ),
               ),

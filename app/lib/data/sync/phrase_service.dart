@@ -34,8 +34,11 @@ class VoiceStatus {
 
 /// Gagal menghubungi server atau server menolak. [message] siap ditampilkan ke orang tua.
 class PhraseException implements Exception {
-  const PhraseException(this.message);
+  const PhraseException(this.message, {this.needsLink = false});
   final String message;
+
+  /// Perangkat belum ditautkan lewat kode undangan terapis, jadi belum punya token perangkat.
+  final bool needsLink;
 
   @override
   String toString() => message;
@@ -60,7 +63,7 @@ class PhraseService {
     final child = app.child;
     final token = app.prefs.getString(PrefKeys.deviceToken);
     if (child == null || token == null || token.isEmpty || await app.linkDao.active() == null) {
-      throw const PhraseException('Frasa baru butuh sambungan ke terapis. Sambungkan dulu di Pengaturan.');
+      throw const PhraseException('Frasa baru butuh kode undangan dari terapis. Masukkan di tab Terapis.', needsLink: true);
     }
     return (child.childId, token);
   }

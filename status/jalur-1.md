@@ -1,9 +1,13 @@
 # Status jalur 1 — Papan
-Diperbarui: 15:30
+Diperbarui: 21:40
 
 **Mulai 11:20 semua jalur bekerja langsung di `main`** (tidak ada lagi kerja paralel; branch jalur sudah tergabung).
 
 ## Sedang dikerjakan
+- (21:40) Beranda orang tua punya bagian **Fitur unggulan**: Papan dari foto (AI), Suara keluarga (klon), Frasa bersuara.
+  Popup "Butuh kode dari terapis" (`features/settings/link_required.dart`) muncul di ketiga fitur bila perangkat belum
+  tertaut, dengan tombol ke tab Terapis. Onboarding: keyboard tidak lagi mendorong awan dan tombol Lanjut naik.
+  Analyzer bersih, 47 tes lulus; belum dibuka di emulator/HP.
 Paket HP kentang + UX (18 Sep siang): 1) optimasi O1–O3 ✔, 2) tab halaman di kiri + nama tab baru + keadaan tekan ✔,
 3) geser urutan bilah ujaran ✔, 4) animasi layar orang tua ✔, 5) O4–O6 + ukur ulang ✔. j1-suara ditahan: belum didengar manusia.
 

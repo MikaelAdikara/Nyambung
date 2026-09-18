@@ -10,6 +10,8 @@ from .schemas import StrictModel
 class AllowedSymbol(StrictModel):
     word_id: str = Field(min_length=1, max_length=100)
     label: str = Field(min_length=1, max_length=60)
+    pos: Optional[str] = Field(default=None, max_length=30)
+    category: Optional[str] = Field(default=None, max_length=30)
 
 
 class SceneAnalyzeIn(StrictModel):

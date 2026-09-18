@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import csv
 import binascii
 import io
 import json
@@ -9,6 +10,8 @@ import sqlite3
 import threading
 import uuid
 from datetime import timedelta
+from functools import lru_cache
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -24,6 +27,37 @@ MAX_BODY_BYTES = 4 * 1024 * 1024
 MAX_IMAGE_BYTES = 2 * 1024 * 1024
 MAX_PIXELS = 1_638_400
 MAX_REQUESTS_DAY = 10
+# Area yang lebih dari separuhnya tertutup area sebelumnya dibuang: tumpukan kotak besar tidak bisa diketuk anak.
+MAX_OVERLAP = 0.5
+
+
+VOCAB_CSV = Path(__file__).resolve().parents[3] / "assets" / "vocab" / "core_vocab_id.csv"
+
+
+@lru_cache(maxsize=1)
+def _vocab_info() -> dict[str, dict[str, str]]:
+    """pos dan category kata bawaan, dari CSV kosakata yang sama dengan aplikasi. Kosong bila berkas tidak ada."""
+    try:
+        with VOCAB_CSV.open(encoding="utf-8", newline="") as f:
+            return {row["word_id"]: {"pos": row["pos"], "category": row["category"]} for row in csv.DictReader(f)}
+    except (OSError, KeyError, csv.Error):
+        return {}
+
+
+def _with_vocab_info(symbol: dict) -> dict:
+    """Lengkapi pos/category dari CSV bila aplikasi tidak mengirimnya (kartu personal dan frasa tetap tanpa pos)."""
+    info = _vocab_info().get(symbol["word_id"])
+    return {**info, **symbol} if info else symbol
+
+
+def _overlap_ratio(a: tuple[float, float, float, float], b: tuple[float, float, float, float]) -> float:
+    """Luas irisan dibagi luas kotak yang lebih kecil. Kotak = (x0, y0, x1, y1)."""
+    w = min(a[2], b[2]) - max(a[0], b[0])
+    h = min(a[3], b[3]) - max(a[1], b[1])
+    if w <= 0 or h <= 0:
+        return 0.0
+    smaller = min((a[2] - a[0]) * (a[3] - a[1]), (b[2] - b[0]) * (b[3] - b[1]))
+    return (w * h) / smaller if smaller > 0 else 0.0
 
 
 def register_scene_ai_routes(app: FastAPI, conn: sqlite3.Connection, provider: SceneVisionProvider) -> None:
@@ -101,7 +135,7 @@ def register_scene_ai_routes(app: FastAPI, conn: sqlite3.Connection, provider: S
                     "INSERT INTO scene_ai_attempt(request_id, child_id, started_at) VALUES (?, ?, ?)",
                     (request_id, child_id, utc_iso(now_utc())),
                 )
-            symbols = [item.model_dump() for item in body.allowed_symbols]
+            symbols = [_with_vocab_info(item.model_dump(exclude_none=True)) for item in body.allowed_symbols]
             allowed_ids = {item["word_id"] for item in symbols}
             try:
                 raw = await asyncio.wait_for(asyncio.to_thread(provider.analyze, clean_bytes, symbols), timeout=30)
@@ -114,6 +148,8 @@ def register_scene_ai_routes(app: FastAPI, conn: sqlite3.Connection, provider: S
             if not isinstance(model, str) or not isinstance(candidates, list):
                 raise HTTPException(502, "respons provider vision tidak sah")
             output = []
+            kept_boxes: list[tuple[float, float, float, float]] = []
+            used_words: set[str] = set()
             for candidate in candidates[:MAX_HOTSPOTS]:
                 try:
                     label = str(candidate["observed_label"]).strip()[:60]
@@ -123,6 +159,14 @@ def register_scene_ai_routes(app: FastAPI, conn: sqlite3.Connection, provider: S
                     raise HTTPException(502, "kandidat provider vision tidak sah") from exc
                 if not label or (word_id is not None and word_id not in allowed_ids) or not (0 <= x0 < x1 <= 1000 and 0 <= y0 < y1 <= 1000):
                     raise HTTPException(502, "kandidat provider vision tidak sah")
+                box = (x0 / 1000, y0 / 1000, x1 / 1000, y1 / 1000)
+                if any(_overlap_ratio(box, kept) > MAX_OVERLAP for kept in kept_boxes):
+                    continue
+                kept_boxes.append(box)
+                if word_id is not None and word_id in used_words:
+                    word_id = None
+                if word_id is not None:
+                    used_words.add(word_id)
                 output.append(
                     {
                         "id": str(uuid.uuid4()),

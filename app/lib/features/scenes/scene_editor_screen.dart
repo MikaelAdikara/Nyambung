@@ -195,6 +195,8 @@ class _SceneEditorScreenState extends State<SceneEditorScreen> {
     ]);
   }
 
+  static const _functionPos = {'pengatur', 'tanya', 'sosial', 'ganti'};
+
   Future<void> _askAi() async {
     final imagePath = _imagePath;
     final child = _app.child;
@@ -228,7 +230,13 @@ class _SceneEditorScreenState extends State<SceneEditorScreen> {
       final result = await service.analyze(
         childId: child.childId,
         jpegBytes: await File(imagePath).readAsBytes(),
-        allowedSymbols: [for (final symbol in _app.visibleSymbols) (symbol.wordId, symbol.labelDisplay)],
+        // Kata fungsi (nanti, lagi, itu, apa, halo…) tidak pernah menamai benda di foto, jadi tidak ditawarkan ke AI.
+        // Pendamping tetap bisa memilihnya sendiri dari daftar di bawah foto. Hanya word_id + label yang dikirim,
+        // supaya server versi lama (yang menolak medan tak dikenal) tetap menerima; server melengkapi pos sendiri.
+        allowedSymbols: [
+          for (final symbol in _app.visibleSymbols)
+            if (!_functionPos.contains(symbol.pos)) (symbol.wordId, symbol.labelDisplay),
+        ],
       );
       if (mounted) {
         setState(() {

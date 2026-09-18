@@ -8,6 +8,8 @@ import '../../data/models.dart';
 import '../../data/scene.dart';
 import 'scene_geometry.dart';
 
+const _stripColumns = 3;
+
 class SceneCanvas extends StatelessWidget {
   const SceneCanvas({
     super.key,
@@ -57,16 +59,28 @@ class SceneCanvas extends StatelessWidget {
             },
           ),
         ),
-        // Jalan pintas untuk area yang kecil atau berdempetan di foto: kata yang sama, dalam tombol ≥ 10 mm.
+        // Kotak kata untuk area yang kecil atau berdempetan di foto: grid tetap tiga kolom (enam area = dua baris),
+        // tanpa gulir samping, setiap kotak ≥ 64 dp.
         if (spoken.isNotEmpty)
-          SizedBox(
-            height: 76,
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(0, 8, 0, 4),
-              scrollDirection: Axis.horizontal,
-              itemCount: spoken.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (_, index) => _HotspotButton(symbol: spoken[index], holdMs: holdMs, onSelect: onSelect, chip: true),
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: LayoutBuilder(
+              builder: (context, box) {
+                const gap = 8.0;
+                final width = (box.maxWidth - gap * (_stripColumns - 1)) / _stripColumns;
+                return Wrap(
+                  spacing: gap,
+                  runSpacing: gap,
+                  children: [
+                    for (final symbol in spoken)
+                      SizedBox(
+                        width: width,
+                        height: 64,
+                        child: _HotspotButton(symbol: symbol, holdMs: holdMs, onSelect: onSelect, chip: true),
+                      ),
+                  ],
+                );
+              },
             ),
           ),
       ],
@@ -126,8 +140,7 @@ class _HotspotButtonState extends State<_HotspotButton> {
       },
       child: widget.chip
           ? Container(
-              constraints: const BoxConstraints(minWidth: 112),
-              padding: const EdgeInsets.symmetric(horizontal: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: AppColors.tealTint,
@@ -136,8 +149,10 @@ class _HotspotButtonState extends State<_HotspotButton> {
               ),
               child: Text(
                 widget.symbol.labelDisplay,
-                maxLines: 1,
-                style: const TextStyle(fontSize: 18, color: AppColors.tealDeep, fontWeight: FontWeight.w900),
+                maxLines: 2,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 16, height: 1.1, color: AppColors.tealDeep, fontWeight: FontWeight.w900),
               ),
             )
           : DecoratedBox(

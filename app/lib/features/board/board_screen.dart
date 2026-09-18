@@ -250,8 +250,6 @@ class _BoardScreenState extends State<BoardScreen> {
                             key: ValueKey(_selectedScene?.sceneId ?? 'scene-picker'),
                             scenes: _scenes,
                             selected: _selectedScene,
-                            coreSymbols: _app.cellsForPage(0).take(6).toList(),
-                            gridCols: _app.child?.gridCols ?? 3,
                             symbolById: _app.symbolById,
                             holdMs: _app.holdMs,
                             onOpen: _openScene,
@@ -494,17 +492,6 @@ class _BoardGrid extends StatelessWidget {
   static const gap = 6.0;
   static const pad = 8.0;
 
-  /// Tinggi grid kata inti berisi [count] sel pada lebar [width], sama dengan hitungan di [build].
-  static double heightFor(double width, int cols, int count) {
-    final cellH = (width - pad * 2 - gap * (cols - 1)) / cols * 0.95;
-    final rows = (count / cols).ceil();
-    var height = pad * 2;
-    for (var r = 0; r < rows; r++) {
-      height += cellH + (r == 1 ? gap + 8 : gap);
-    }
-    return height;
-  }
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -582,8 +569,6 @@ class _SceneArea extends StatelessWidget {
     super.key,
     required this.scenes,
     required this.selected,
-    required this.coreSymbols,
-    required this.gridCols,
     required this.symbolById,
     required this.holdMs,
     required this.onOpen,
@@ -593,8 +578,6 @@ class _SceneArea extends StatelessWidget {
 
   final List<SceneBoard> scenes;
   final SceneBoard? selected;
-  final List<WordSymbol?> coreSymbols;
-  final int gridCols;
   final WordSymbol? Function(String) symbolById;
   final int holdMs;
   final ValueChanged<SceneBoard> onOpen;
@@ -711,44 +694,18 @@ class _SceneArea extends StatelessWidget {
             ],
           ),
         ),
+        // Papan foto memakai seluruh ruang: tanpa enam kata inti, foto dan kotak kata di bawahnya jadi lebih besar.
         Expanded(
-          child: LayoutBuilder(
-            builder: (context, box) {
-              final canvas = SceneCanvas(
-                imagePath: scene.imagePath,
-                imageSize: Size(scene.imageWidth.toDouble(), scene.imageHeight.toDouble()),
-                hotspots: scene.payload.hotspots,
-                symbolById: symbolById,
-                holdMs: holdMs,
-                onSelect: onSelect,
-              );
-              if (box.maxWidth >= 600) {
-                return Row(
-                  children: [
-                    Expanded(
-                      child: Padding(padding: const EdgeInsets.fromLTRB(8, 0, 4, 8), child: canvas),
-                    ),
-                    SizedBox(
-                      width: 210,
-                      child: _BoardGrid(cells: coreSymbols, gridCols: 2, isCorePage: true, holdMs: holdMs, onSelect: onSelect),
-                    ),
-                  ],
-                );
-              }
-              // Layar sempit: enam kata cermin di atas, dengan kolom dan ukuran sel yang sama seperti dua baris teratas
-              // halaman kategori, jadi letaknya tidak berubah saat anak pindah dari grid ke foto.
-              return Column(
-                children: [
-                  SizedBox(
-                    height: _BoardGrid.heightFor(box.maxWidth, gridCols, coreSymbols.length),
-                    child: _BoardGrid(cells: coreSymbols, gridCols: gridCols, isCorePage: true, holdMs: holdMs, onSelect: onSelect),
-                  ),
-                  Expanded(
-                    child: Padding(padding: const EdgeInsets.fromLTRB(8, 0, 8, 8), child: canvas),
-                  ),
-                ],
-              );
-            },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+            child: SceneCanvas(
+              imagePath: scene.imagePath,
+              imageSize: Size(scene.imageWidth.toDouble(), scene.imageHeight.toDouble()),
+              hotspots: scene.payload.hotspots,
+              symbolById: symbolById,
+              holdMs: holdMs,
+              onSelect: onSelect,
+            ),
           ),
         ),
       ],

@@ -351,3 +351,11 @@ Format entri:
 - **Dampak:** Tidak ada perubahan API server. Kata baru langsung masuk papan walau papan foto tidak jadi disimpan;
   orang tua bisa menghapusnya di Kelola kosakata. Kartu kata baru belum bergambar (tampil huruf pertama) dan dihitung
   dalam batas 30 frasa per hari.
+
+## 27. Papan foto tanpa enam kata inti, kotak kata dalam grid (18 Sep 2026)
+- **Kondisi sebelumnya:** Papan foto yang terbuka menampilkan enam kata inti (MAU, BERHENTI, BANTU, TIDAK, SELESAI,
+  SAKIT) di atas foto (PERUBAHAN #22), dan kata area di bawah foto berupa pita yang digulir ke samping.
+- **Yang diubah:** Enam kata inti tidak ditampilkan lagi di papan foto; foto memakai seluruh ruang. Kata area di bawah
+  foto menjadi grid tetap tiga kolom (enam area = dua baris), tanpa gulir, setiap kotak setinggi 64 dp.
+- **Alasan:** permintaan tim; kata inti mengecilkan foto di layar HP, dan pita samping menyembunyikan sebagian kata.
+- **Dampak:** Dari papan foto, anak kembali ke tab INTI untuk kata inti. Letak kotak kata tetap mengikuti urutan area.

@@ -48,9 +48,37 @@ class SymbolDao {
     });
   }
 
+  /// Perbarui `symbol_path` kata bawaan dari CSV dan pastikan kata bawaan tidak bertanda `is_custom`
+  /// (versi lama menandai kata bergambar tim sebagai kartu personal, sehingga ketukannya tercatat PRS).
+  Future<void> refreshBuiltIn(List<WordSymbol> fromCsv) async {
+    await db.transaction((txn) async {
+      final batch = txn.batch();
+      for (final s in fromCsv) {
+        batch.update('symbol', {'symbol_path': s.symbolPath, 'is_custom': 0}, where: 'word_id = ?', whereArgs: [s.wordId]);
+      }
+      await batch.commit(noResult: true);
+    });
+  }
+
   /// Menyembunyikan simbol tetap memegang posisinya (invarian 8): baris tidak dihapus, sel tampil kosong.
   Future<void> setHidden(String wordId, bool hidden) =>
       db.update('symbol', {'is_hidden': hidden ? 1 : 0}, where: 'word_id = ?', whereArgs: [wordId]);
+
+  /// Pindahkan simbol ke posisi lain di halamannya (keputusan orang tua di Kelola kosakata, bukan papan anak).
+  /// Bila posisi tujuan terisi, kedua simbol bertukar tempat. Satu transaksi; posisi sementara -1 menghindari
+  /// benturan `UNIQUE (page, position_index)`.
+  Future<void> moveWithinPage(int page, int from, int to) async {
+    if (from == to) return;
+    await db.transaction((txn) async {
+      await txn.update('symbol', {'position_index': -1}, where: 'page = ? AND position_index = ?', whereArgs: [page, from]);
+      await txn.update('symbol', {'position_index': from}, where: 'page = ? AND position_index = ?', whereArgs: [page, to]);
+      await txn.update('symbol', {'position_index': to}, where: 'page = ? AND position_index = -1', whereArgs: [page]);
+    });
+  }
+
+  /// Hapus kartu buatan keluarga (kartu foto `prs-` atau kartu frasa `frs-`). Kata bawaan tidak pernah dihapus,
+  /// hanya disembunyikan. Log peristiwa lama tetap utuh (invarian 3).
+  Future<void> deleteCustom(String wordId) => db.delete('symbol', where: 'word_id = ? AND is_custom = 1', whereArgs: [wordId]);
 
   /// Kartu personal (C3). Gagal bila posisi di halaman itu sudah terisi (`UNIQUE (page, position_index)`).
   Future<void> insertCustom(WordSymbol s) => db.insert('symbol', s.toRow(), conflictAlgorithm: ConflictAlgorithm.abort);

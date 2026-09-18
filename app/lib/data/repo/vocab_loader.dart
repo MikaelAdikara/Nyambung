@@ -82,7 +82,8 @@ WordSymbol symbolFromCsv(Map<String, String> r) {
     positionIndex: int.parse(r['position_index']!.trim()),
     symbolPath: symbolAssetPath(file),
     audioPath: audio.isEmpty ? null : 'assets/audio/core/$audio',
-    isCustom: file.startsWith('custom/'),
+    // Kata bawaan tidak pernah `is_custom`, walau gambarnya buatan tim (custom/): penanda itu khusus kartu personal
+    // dan frasa keluarga, yang ketukannya dicatat `PRS`.
   );
 }
 
@@ -117,7 +118,12 @@ class VocabLoader {
   final AssetBundle bundle;
 
   Future<void> ensureLoaded() async {
-    if (await symbols.count() > 0) return;
+    if (await symbols.count() > 0) {
+      // Perbarui gambar kata bawaan dari CSV terbaru (mis. simbol Mulberry baru). Posisi, sembunyi, dan rekaman
+      // keluarga tidak disentuh.
+      await symbols.refreshBuiltIn(parseVocab(await bundle.loadString(vocabCsvAsset)));
+      return;
+    }
     final parsed = parseVocab(await bundle.loadString(vocabCsvAsset));
     await symbols.insertAll(parsed);
     final prefs = await SharedPreferences.getInstance();

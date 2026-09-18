@@ -11,7 +11,7 @@ sha256sum -c assets/PROVENANCE.sha256        # Git Bash / Linux
 shasum -a 256 -c assets/PROVENANCE.sha256    # macOS
 ```
 
-Hasil yang benar: 175 baris `OK`, nol `FAILED`.
+Hasil yang benar: 245 baris `OK`, nol `FAILED` (175 berkas kit sebelum acara, ditambah simbol yang dibuat dan dirasterkan ulang 18 Sep 2026).
 
 ---
 
@@ -31,13 +31,19 @@ Kolom `therapist_ok` bernilai `belum` di semua baris karena daftar ini **belum d
 
 | Berkas | Jumlah | Cara dibuat | Sumber dan lisensi |
 |---|---|---|---|
-| `symbols/mulberry/{word_id}.svg` | 85 | SVG asli Mulberry, isi tidak diubah, hanya diganti nama menjadi `word_id` | Mulberry Symbols v3.6.1 © Steve Lee, **CC BY-SA 4.0**. Diunduh 13 Sep 2026 dari rilis resmi GitHub, `mulberry-symbols.zip`, SHA-256 `9da3f23a17bd71aec3c94eae9a3367e977e7b65d3d7feeaadb3f4690182aa05b` |
-| `symbols/png/{word_id}.png` | 85 | SVG di atas dirasterkan ke PNG 256 × 256, latar transparan | Sama dengan di atas. Rasterisasi bukan perubahan isi gambar. |
+| `symbols/mulberry/{word_id}.svg` | 99 | SVG asli Mulberry, isi tidak diubah, hanya diganti nama menjadi `word_id`. 85 berkas sebelum acara; 14 ditambahkan 18 Sep 2026 (lihat di bawah) | Mulberry Symbols v3.6.1 © Steve Lee, **CC BY-SA 4.0**. Diunduh 13 Sep 2026 dan diunduh ulang 18 Sep 2026 dari rilis resmi GitHub, `mulberry-symbols.zip`, SHA-256 keduanya `9da3f23a17bd71aec3c94eae9a3367e977e7b65d3d7feeaadb3f4690182aa05b` |
+| `symbols/png/{word_id}.png` | 99 | SVG di atas dirasterkan ke PNG 256 × 256, latar transparan. **Dirasterkan ulang 18 Sep 2026** lewat canvas peramban (Chromium): perasteran sebelum acara mengabaikan `<style>` di dalam SVG sehingga semua warna hilang menjadi siluet hitam | Sama dengan di atas. Rasterisasi bukan perubahan isi gambar. |
 | `symbols/LICENSE-mulberry.txt` | 1 | Teks lisensi dari rilis Mulberry | — |
 | `symbols/ATTRIBUTION.md` | 1 | Ditulis tim | — |
-| `symbols/custom/` | **0** | **Kosong.** 35 simbol gambar tim dibuat saat Hack Day (`05-kosakata-dan-simbol.md` §6) | CC BY-SA 4.0 saat dibuat |
+| `symbols/custom/{word_id}.svg` + `.png` | 21 | **Dibuat di dalam acara** (18 Sep 2026) sebagai SVG tangan mengikuti gaya `05` §6.1 (garis #1A1A1A 7 px, warna datar, tanpa teks), dirasterkan seperti PNG Mulberry | Karya tim, **CC BY-SA 4.0** (share-alike dengan Mulberry) |
 
 Pemetaan `word_id` ke nama berkas asli Mulberry ada di kolom `simbol` tabel `05-kosakata-dan-simbol.md` §3.
+
+Dari 35 kata yang semula direncanakan sebagai gambar tim, 14 ternyata punya padanan Mulberry yang jelas dan dipakai
+(18 Sep 2026): sakit=`headache`, ya=`correct`, tidak=`mistake_no_wrong`, dingin=`snow`, sayang=`heart_shape`,
+suka=`thumb`, sama=`same`, bisa=`strong`, teman=`hold_hands_,_to`, kita=`group_work`, angkot=`van`, warung=`shop`,
+buku=`notebook`, itu=`point_,_to`. 21 sisanya (aku, kamu, dia, ini, jangan, sudah, belum, boleh, ada, punya, banyak,
+sedikit, sini, dadah, makasih, maaf, tolong, pulang, pup, capek, berhenti) digambar tim. Simbol tim belum diuji pada anak.
 Kecocokan 85 nama itu dengan berkas di sini sudah diperiksa otomatis pada 17 Sep 2026: semua cocok, dan tidak ada
 PNG Mulberry untuk 35 kata yang ditandai gambar tim.
 
@@ -47,7 +53,7 @@ PNG Mulberry untuk 35 kata yang ditandai gambar tim.
 
 Klip suara papan **dibuat di dalam acara** (18 Sep 2026, ± 10:00–10:40 WIB) dengan skrip `tools/gen_audio.py`,
 lalu disimpan langsung di `app/assets/audio/core/`, bukan di folder ini. Karena itu klip tidak tercantum di
-`PROVENANCE.sha256` dan hitungan 175 `OK` di atas tidak berubah.
+`PROVENANCE.sha256`.
 
 | Berkas | Jumlah | Cara dibuat | Sumber dan lisensi |
 |---|---|---|---|

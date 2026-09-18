@@ -60,12 +60,12 @@ void main() {
     test('symbol_path menunjuk ke assets/symbols/png atau assets/symbols/custom', () {
       for (final s in symbols) {
         expect(s.symbolPath, anyOf(startsWith('assets/symbols/png/'), startsWith('assets/symbols/custom/')));
-        expect(s.isCustom, s.symbolPath.startsWith('assets/symbols/custom/'));
+        expect(s.isCustom, isFalse, reason: 'kata bawaan bukan kartu personal: ${s.wordId}');
       }
     });
 
     test('setiap simbol Mulberry punya berkas PNG di aset', () {
-      final missing = symbols.where((s) => !s.isCustom && !File(s.symbolPath).existsSync()).map((s) => s.wordId);
+      final missing = symbols.where((s) => !File(s.symbolPath).existsSync()).map((s) => s.wordId);
       expect(missing, isEmpty);
     });
 

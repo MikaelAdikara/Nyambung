@@ -118,6 +118,8 @@ class SymbolFace extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = PosStyle.of(symbol.pos);
     final imageSize = height * 0.62;
+    // Label ikut membesar pada kartu besar (Sekarang → Nanti, layar misi) supaya tidak mengambang di ruang kosong.
+    final labelSize = compact ? 13.0 : (height * 0.12).clamp(18.0, 44.0);
     final letter = symbol.labelDisplay.isEmpty ? '?' : symbol.labelDisplay.characters.first;
     final fallback = Center(
       child: Text(
@@ -192,7 +194,7 @@ class SymbolFace extends StatelessWidget {
                         child: Text(
                           symbol.labelDisplay,
                           maxLines: 1,
-                          style: TextStyle(fontSize: compact ? 13 : 18, fontWeight: FontWeight.w800, color: style.text),
+                          style: TextStyle(fontSize: labelSize, fontWeight: FontWeight.w800, color: style.text),
                         ),
                       ),
                     ),

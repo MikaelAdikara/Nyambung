@@ -1,2 +1,20 @@
+# Dokumen rencana hack day (bukan kode aplikasi), disimpan lokal di setiap laptop
 docs/
 .DS_Store
+
+.env
+*.db
+*.db-wal
+*.db-shm
+node_modules/
+dist/
+build/
+.dart_tool/
+app/android/key.properties
+*.jks
+.venv/
+__pycache__/
+.pytest_cache/
+dashboard/public/symbols/
+dashboard/public/demo_events.json
+dashboard/public/core_vocab_id.csv

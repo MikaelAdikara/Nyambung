@@ -1,0 +1,4 @@
+# Aset konten disimpan byte-per-byte supaya hash di assets/PROVENANCE.sha256 tetap cocok di Windows.
+assets/** -text
+app/assets/** -text
+*.sh text eol=lf

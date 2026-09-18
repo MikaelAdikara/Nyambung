@@ -38,7 +38,8 @@ def register_scene_ai_routes(app: FastAPI, conn: sqlite3.Connection, provider: S
     @app.get("/v1/children/{child_id}/scene-ai/status")
     async def scene_ai_status(child_id: str, request: Request) -> dict:
         require_child(request, child_id)
-        return {"available": provider.available(), "provider": "google", "max_hotspots": MAX_HOTSPOTS}
+        name = provider.name() if hasattr(provider, "name") else "google"
+        return {"available": provider.available(), "provider": name, "max_hotspots": MAX_HOTSPOTS}
 
     @app.post("/v1/children/{child_id}/scene-ai/analyze", response_model=SceneAnalyzeOut)
     async def analyze_scene(child_id: str, request: Request) -> dict:
@@ -132,7 +133,7 @@ def register_scene_ai_routes(app: FastAPI, conn: sqlite3.Connection, provider: S
                 )
             return {
                 "request_id": request_id,
-                "provider": "google",
+                "provider": raw.get("provider") if raw.get("provider") in ("google", "openai") else "google",
                 "model": model,
                 "image_width": width,
                 "image_height": height,

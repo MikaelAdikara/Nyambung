@@ -14,6 +14,7 @@ import '../../data/scene.dart';
 import '../../data/sync/scene_ai_service.dart';
 import '../coach/companion_widgets.dart';
 import 'scene_geometry.dart';
+import '../settings/link_required.dart';
 
 const _uuid = Uuid();
 
@@ -198,8 +199,10 @@ class _SceneEditorScreenState extends State<SceneEditorScreen> {
     final imagePath = _imagePath;
     final child = _app.child;
     final token = _app.prefs.getString(PrefKeys.deviceToken);
-    if (imagePath == null || child == null || token == null) {
-      setState(() => _error = 'Hubungkan keluarga ke terapis untuk memakai bantuan AI. Atur sendiri tetap tersedia.');
+    if (imagePath == null) return;
+    if (child == null || token == null) {
+      setState(() => _error = 'Bantuan AI butuh kode undangan dari terapis. Atur sendiri tetap tersedia.');
+      await showLinkRequiredDialog(context, feature: 'Bantuan AI papan foto');
       return;
     }
     final consent = await showDialog<bool>(
@@ -207,7 +210,7 @@ class _SceneEditorScreenState extends State<SceneEditorScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Kirim foto untuk dianalisis?'),
         content: const Text(
-          'Foto ini akan dikirim ke server Nyambung dan layanan AI Google untuk membuat usulan area bicara. Nama anak, riwayat ketukan, dan rekaman suara tidak ikut dikirim. Kamu bisa mengatur area sendiri tanpa mengirim foto.',
+          'Foto ini akan dikirim ke server Nyambung dan layanan AI (OpenAI atau Google, sesuai setelan server) untuk membuat usulan area bicara. Nama anak, riwayat ketukan, dan rekaman suara tidak ikut dikirim. Kamu bisa mengatur area sendiri tanpa mengirim foto.',
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Atur sendiri')),

@@ -1,10 +1,13 @@
 # Status jalur 3 — Server
-Diperbarui: 20:35
+Diperbarui: 21:10
 
 ## Sedang dikerjakan
 3.7 APK rilis: tanda tangan siap (keystore baru 18 Sep, jalur 1 menambah signingConfig). Tag j3-apk menunggu int-1-hp-ke-d2 (HP fisik)
 
 ## Tonggak selesai (tag)
+- (21:10, tanpa tag) Vision papan foto kini jalan dengan OpenAI (`gpt-5.4`) bila Gemini kosong; diuji langsung lewat
+  endpoint analyze (4/4 objek uji terpetakan ke kata yang benar, ± 3 detik). ElevenLabs sudah **Starter**: klon suara,
+  frasa suara keluarga, dan hapus klon diuji langsung dengan sampel sintetis (klon ± 4 detik). 64 tes pytest lulus.
 - (20:35, tanpa tag) Branch `codex/foto-jadi-papan` digabung ke `main` (papan dari foto + `/scene-ai/status` dan
   `/scene-ai/analyze`). Kunci ElevenLabs juga dibaca dari nama `ELEVEN_LABS`; `GEMINI_API_KEY` dan
   `NYAMBUNG_VISION_MODEL` kini dibaca dari `.env` seperti kunci suara. Diperiksa langsung ke penyedia (panggilan baca):

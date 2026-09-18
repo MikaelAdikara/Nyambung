@@ -62,8 +62,9 @@ export NYAMBUNG_THERAPIST_TOKENS="token-demo-panjang-2026:Bu Rina (ilustratif)"
 Cek: `http://127.0.0.1:8000/v1/health` harus menjawab `{"ok": true, ...}`. Contoh isi `.env` ada di `server/.env.example`.
 Basis data ada di `server/data/nyambung.db` (tidak di-commit; ubah dengan `NYAMBUNG_DB_PATH`).
 
-Bantuan AI papan foto bersifat opsional. Set `GEMINI_API_KEY` dan `NYAMBUNG_VISION_MODEL` di lingkungan server agar
-endpoint status menyatakan tersedia. Kunci hanya berada di server. Tanpa kedua variabel itu, editor manual tetap bekerja.
+Bantuan AI papan foto bersifat opsional. Cukup `OPENAI_API_KEY` (kunci yang sama dengan suara papan; model bawaan
+`gpt-5.4`, ubah lewat `NYAMBUNG_OPENAI_VISION_MODEL`). Bila `GEMINI_API_KEY` dan `NYAMBUNG_VISION_MODEL` diisi, Gemini
+yang dipakai. Kunci hanya berada di server. Tanpa kunci, editor manual tetap bekerja.
 Server menerima maksimal satu analisis aktif dan sepuluh percobaan per anak dalam 24 jam pada konfigurasi prototype.
 
 Akun login terapis (email + kata sandi) dibuat oleh pengelola, tidak ada pendaftaran terbuka:

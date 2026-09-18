@@ -43,7 +43,7 @@ class SceneCandidateOut(StrictModel):
 
 class SceneAnalyzeOut(StrictModel):
     request_id: str
-    provider: Literal["google"] = "google"
+    provider: Literal["google", "openai"] = "google"
     model: str
     image_width: int
     image_height: int

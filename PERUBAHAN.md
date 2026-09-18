@@ -302,3 +302,12 @@ Format entri:
 - **Dampak:** Klaim luring berlaku pada papan final dan komunikasi anak. Foto meninggalkan perangkat hanya pada alur
   bantuan AI yang disetujui; server tidak menyimpan foto. Fitur ini bukan pengenal maksud, emosi, hubungan keluarga,
   diagnosis, atau rekomendasi klinis.
+
+## 23. Bantuan AI papan foto memakai OpenAI bila Gemini tidak diatur (18 Sep 2026)
+- **Kondisi sebelumnya:** Draf area papan foto hanya bisa dibuat Gemini; kunci Gemini belum ada sehingga fitur selalu
+  "belum aktif".
+- **Yang diubah:** Server memakai OpenAI Responses API (model bawaan `gpt-5.4`, keluaran JSON ber-skema ketat,
+  `store: false`) dengan `OPENAI_API_KEY` yang sudah dipakai suara papan. Gemini tetap diutamakan bila kunci dan
+  modelnya diisi. Dialog persetujuan di aplikasi menyebut OpenAI atau Google sesuai setelan server.
+- **Dampak:** Aturan privasi tetap: foto hanya dikirim setelah persetujuan per permintaan, tidak disimpan server, dan
+  hasilnya tetap draf yang wajib diperiksa keluarga.

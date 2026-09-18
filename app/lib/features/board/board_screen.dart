@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/app_state.dart';
 import '../../core/constants.dart';
 import '../../core/error_log.dart';
+import '../../core/motion.dart';
 import '../../core/theme.dart';
 import '../../data/models.dart';
 import '../../data/repo/vocab_loader.dart';
@@ -31,7 +32,7 @@ const pageIcons = <int, IconData>{
 ///
 /// - **Mode anak** (`allowTurnToggle: false`): tanpa teks status, tanpa pengubah giliran, semua ketukan
 ///   `actor=anak`, tombol kunci TAHAN di kanan atas, tombol kembali Android ditahan. Buka dengan
-///   [BoardScreen.childRoute] (tanpa animasi, invarian 11).
+///   [BoardScreen.childRoute] (memudar singkat).
 /// - **Mode misi** (`allowTurnToggle: true`): dua tombol besar "Giliran pendamping" / "Giliran anak";
 ///   `context` peristiwa = [missionContext]. Buka dengan `MaterialPageRoute` biasa.
 class BoardScreen extends StatefulWidget {
@@ -43,11 +44,17 @@ class BoardScreen extends StatefulWidget {
 
   bool get childMode => !allowTurnToggle;
 
-  /// Rute papan anak: tanpa animasi masuk/keluar.
+  /// Rute papan anak: memudar masuk 200 ms (seketika bila "Hapus animasi" aktif).
   static Route<void> childRoute() => PageRouteBuilder<void>(
     pageBuilder: (_, _, _) => const BoardScreen(),
-    transitionDuration: Duration.zero,
-    reverseTransitionDuration: Duration.zero,
+    transitionDuration: const Duration(milliseconds: 200),
+    reverseTransitionDuration: const Duration(milliseconds: 160),
+    transitionsBuilder: (context, animation, _, child) => Motion.reduced(context)
+        ? child
+        : FadeTransition(
+            opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+            child: child,
+          ),
   );
 
   @override
@@ -173,7 +180,12 @@ class _BoardScreenState extends State<BoardScreen> {
             onSpeak: _onSpeak,
             leading: widget.childMode
                 ? null
-                : IconButton(tooltip: 'Kembali', icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.of(context).maybePop()),
+                : IconButton(
+                    tooltip: 'Kembali',
+                    iconSize: 28,
+                    icon: const Icon(Icons.arrow_back_rounded, color: AppColors.ink),
+                    onPressed: () => Navigator.of(context).maybePop(),
+                  ),
             trailing: widget.childMode ? HoldButton(onComplete: _exitChildMode) : null,
           ),
           Expanded(
@@ -186,13 +198,20 @@ class _BoardScreenState extends State<BoardScreen> {
                       _PageRail(pages: _app.pages, selected: _page, suggested: suggested, onSelect: _openPage),
                 ),
                 Expanded(
-                  child: _BoardGrid(
-                    key: ValueKey(_page),
-                    cells: _app.cellsForPage(_page),
-                    gridCols: _app.child?.gridCols ?? 3,
-                    isCorePage: _page == 0,
-                    holdMs: _app.holdMs,
-                    onSelect: _onSelect,
+                  // Pindah halaman: isi lama memudar ke isi baru (150 ms). Letak sel tidak bergeser.
+                  child: AnimatedSwitcher(
+                    duration: Motion.of(context, const Duration(milliseconds: 150)),
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeIn,
+                    layoutBuilder: (current, previous) => Stack(fit: StackFit.expand, children: [...previous, ?current]),
+                    child: _BoardGrid(
+                      key: ValueKey(_page),
+                      cells: _app.cellsForPage(_page),
+                      gridCols: _app.child?.gridCols ?? 3,
+                      isCorePage: _page == 0,
+                      holdMs: _app.holdMs,
+                      onSelect: _onSelect,
+                    ),
                   ),
                 ),
               ],
@@ -212,7 +231,7 @@ class _BoardScreenState extends State<BoardScreen> {
       },
       child: Theme(
         data: boardTheme(Theme.of(context)),
-        child: Scaffold(backgroundColor: AppColors.bg, body: body),
+        child: Scaffold(backgroundColor: AppColors.paperSoft, body: body),
       ),
     );
   }
@@ -303,8 +322,11 @@ class _SpeechBarState extends State<_SpeechBar> {
     final leading = widget.leading;
     final trailing = widget.trailing;
     return Container(
-      color: AppColors.panel,
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+      padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+      decoration: const BoxDecoration(
+        color: AppColors.panel,
+        border: Border(bottom: BorderSide(color: AppColors.line)),
+      ),
       child: Column(
         children: [
           SizedBox(
@@ -318,8 +340,8 @@ class _SpeechBarState extends State<_SpeechBar> {
                     padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
                       color: AppColors.bg,
-                      border: Border.all(color: AppColors.line, width: 2),
-                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.line, width: 1.5),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: ValueListenableBuilder<List<_Word>>(
                       valueListenable: widget.utterance,
@@ -332,7 +354,8 @@ class _SpeechBarState extends State<_SpeechBar> {
                         itemBuilder: (_, i) => Padding(
                           key: ObjectKey(words[i]),
                           padding: EdgeInsets.only(right: i == words.length - 1 ? 0 : 4),
-                          child: SymbolFace(symbol: words[i].symbol, width: 68, height: 80, compact: true),
+                          // Kata baru masuk dengan skala kecil ke penuh; kata yang sudah ada tidak bergerak lagi.
+                          child: QuickIn(child: SymbolFace(symbol: words[i].symbol, width: 68, height: 80, compact: true)),
                         ),
                       ),
                     ),
@@ -344,9 +367,18 @@ class _SpeechBarState extends State<_SpeechBar> {
                   label: 'Hapus',
                   child: Tooltip(
                     message: 'Hapus',
-                    child: InkResponse(
-                      onTap: widget.onDelete,
-                      child: const SizedBox(width: 64, height: 72, child: Icon(Icons.backspace_outlined, size: 32, color: AppColors.ink)),
+                    child: PressScale(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: widget.onDelete,
+                        child: Container(
+                          width: 64,
+                          height: 72,
+                          margin: const EdgeInsets.only(left: 2),
+                          decoration: BoxDecoration(color: AppColors.sand, borderRadius: BorderRadius.circular(16)),
+                          child: const Icon(Icons.backspace_outlined, size: 30, color: AppColors.ink),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -361,11 +393,18 @@ class _SpeechBarState extends State<_SpeechBar> {
               widthFactor: 0.4,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(minWidth: 140),
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(minimumSize: const Size(140, 64)),
-                  onPressed: widget.onSpeak,
-                  icon: const Icon(Icons.volume_up, size: 28),
-                  label: const FittedBox(fit: BoxFit.scaleDown, child: Text('UCAPKAN')),
+                child: PressScale(
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(140, 64),
+                      backgroundColor: AppColors.tealDeep,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                      textStyle: AppText.button.copyWith(fontSize: 20, letterSpacing: 0.5),
+                    ),
+                    onPressed: widget.onSpeak,
+                    icon: const Icon(Icons.volume_up_rounded, size: 28),
+                    label: const FittedBox(fit: BoxFit.scaleDown, child: Text('UCAPKAN')),
+                  ),
                 ),
               ),
             ),
@@ -439,8 +478,8 @@ class _BoardGrid extends StatelessWidget {
 }
 
 /// Rel tab halaman di kiri: satu kolom tetap (ikon + label), urutannya tidak pernah berubah sehingga tangan anak
-/// hafal letaknya. Tinggi tab 64 dp (≥ 10 mm). Tab [suggested] diberi garis toska tebal dan digulir ke tampilan
-/// tanpa animasi (invarian 11).
+/// hafal letaknya. Tinggi tab 64 dp (≥ 10 mm). Tab [suggested] diberi garis koral tebal dan digulir ke tampilan.
+/// Pergantian tab aktif berganti warna halus (160 ms).
 class _PageRail extends StatefulWidget {
   const _PageRail({required this.pages, required this.selected, required this.onSelect, this.suggested});
 
@@ -466,7 +505,9 @@ class _PageRailState extends State<_PageRail> {
     if (target != null && target != old.suggested) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final ctx = _keys[target]?.currentContext;
-        if (ctx != null && ctx.mounted) Scrollable.ensureVisible(ctx, alignment: 0.5);
+        if (ctx != null && ctx.mounted) {
+          Scrollable.ensureVisible(ctx, alignment: 0.5, duration: Motion.of(ctx, Motion.resize), curve: Curves.easeOutCubic);
+        }
       });
     }
   }
@@ -476,7 +517,7 @@ class _PageRailState extends State<_PageRail> {
     return Container(
       width: _PageRail.width,
       decoration: const BoxDecoration(
-        color: AppColors.sand,
+        color: AppColors.bg,
         border: Border(right: BorderSide(color: AppColors.line)),
       ),
       child: SingleChildScrollView(
@@ -502,26 +543,36 @@ class _PageRailState extends State<_PageRail> {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => widget.onSelect(p.page),
-        child: Container(
+        child: AnimatedContainer(
+          duration: Motion.of(context, const Duration(milliseconds: 160)),
+          curve: Curves.easeOut,
           width: double.infinity,
           constraints: const BoxConstraints(minHeight: 64),
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
           decoration: BoxDecoration(
-            color: active ? AppColors.navySoft : AppColors.panel,
+            color: active ? AppColors.tealTint : AppColors.panel,
             border: Border.all(
               color: active
-                  ? AppColors.navy
-                  : suggested
                   ? AppColors.teal
+                  : suggested
+                  ? AppColors.coral
                   : AppColors.line,
               width: active || suggested ? 3 : 1,
             ),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(pageIcons[p.page] ?? Icons.grid_view, color: suggested ? AppColors.teal : AppColors.navy, size: 24),
+              Icon(
+                pageIcons[p.page] ?? Icons.grid_view,
+                color: suggested
+                    ? AppColors.coralText
+                    : active
+                    ? AppColors.tealText
+                    : AppColors.muted,
+                size: 24,
+              ),
               const SizedBox(height: 4),
               Text(
                 p.tabLabel,
@@ -531,7 +582,7 @@ class _PageRailState extends State<_PageRail> {
                   fontSize: 12,
                   height: 1.15,
                   fontWeight: active || suggested ? FontWeight.w800 : FontWeight.w600,
-                  color: AppColors.ink,
+                  color: active ? AppColors.tealText : AppColors.ink,
                 ),
               ),
             ],
@@ -542,7 +593,7 @@ class _PageRailState extends State<_PageRail> {
   }
 }
 
-/// Dua tombol giliran di papan misi. Yang aktif bergaris navy 3 dp.
+/// Dua tombol giliran di papan misi. Yang aktif bergaris 3 dp dengan warna aksennya.
 class _TurnToggle extends StatelessWidget {
   const _TurnToggle({required this.parentTurn});
 
@@ -560,7 +611,7 @@ class _TurnToggle extends StatelessWidget {
               child: _TurnButton(
                 label: 'Giliran pendamping',
                 icon: Icons.record_voice_over,
-                accent: AppColors.coral,
+                accent: AppColors.coralText,
                 active: parent,
                 onTap: () => parentTurn.value = true,
               ),
@@ -570,7 +621,7 @@ class _TurnToggle extends StatelessWidget {
               child: _TurnButton(
                 label: 'Giliran anak',
                 icon: Icons.child_care,
-                accent: AppColors.teal,
+                accent: AppColors.tealText,
                 active: !parent,
                 onTap: () => parentTurn.value = false,
               ),
@@ -600,13 +651,14 @@ class _TurnButton extends StatelessWidget {
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,
-        child: Container(
+        child: AnimatedContainer(
+          duration: Motion.of(context, const Duration(milliseconds: 160)),
           height: 64,
           padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
-            color: active ? AppColors.navySoft : AppColors.panel,
-            border: Border.all(color: active ? AppColors.navy : AppColors.line, width: active ? 3 : 1),
-            borderRadius: BorderRadius.circular(14),
+            color: active ? Color.lerp(AppColors.panel, accent, 0.1) : AppColors.panel,
+            border: Border.all(color: active ? accent : AppColors.line, width: active ? 3 : 1),
+            borderRadius: BorderRadius.circular(18),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,

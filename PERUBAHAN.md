@@ -201,3 +201,18 @@ Format entri:
 - **Alasan:** Klaim "satu terapis, banyak keluarga" butuh angka yang teramati, bukan perkiraan.
 - **Dampak terhadap masalah inti:** M4 bisa dibuktikan dengan data pemakaian. Yang diukur adalah waktu terapis, bukan
   anak atau keluarga.
+
+## Desain ulang visual dan gerak halus, termasuk di papan anak (18 Sep, jalur 1)
+- **Kondisi di proposal:** palet navy–krem, font sistem; invarian 11: papan mode anak tanpa animasi sama sekali
+  (kecuali geser urutan bilah ujaran).
+- **Yang diubah:** seluruh aplikasi mengikuti desain ulang (mint + tosca, satu tombol utama lime, judul Fredoka dan isi
+  Nunito dibundel, kaki halaman awan, logo asli). Warna sel tujuh kelas kata mengikuti desain; teks sel tetap ≥ 4,5:1.
+  Salinan teks di layar orang tua dipangkas (keterangan panjang dan kalimat penafian dibuang; label "ilustratif",
+  batas produk, dan daftar yang dibagikan ke terapis tetap ada). Di papan anak ditambah gerak halus: sel mengecil
+  0,95 selama ditekan (100 ms), kata baru di bilah masuk 180 ms, isi halaman memudar 150 ms saat pindah tab, tab aktif
+  berganti warna 160 ms, dan papan memudar masuk 200 ms. Semua gerak nol bila setelan Android "Hapus animasi" aktif.
+- **Alasan:** permintaan tim setelah uji tampilan; gerak dibatasi pada umpan balik sentuh dan peralihan, di bawah 200 ms.
+- **Dampak terhadap masalah inti:** posisi simbol tetap tidak pernah berpindah (invarian 8); tanpa hadiah, suara latar,
+  atau gamifikasi. Gerak di papan belum diuji dengan anak autis; bila terapis menilai mengganggu, cukup set durasi
+  di `board_screen.dart` dan `symbol_cell.dart` ke nol.
+

@@ -1,11 +1,18 @@
 # Status jalur 1 — Papan
-Diperbarui: 13:55
+Diperbarui: 14:25
 
 **Mulai 11:20 semua jalur bekerja langsung di `main`** (tidak ada lagi kerja paralel; branch jalur sudah tergabung).
 
 ## Sedang dikerjakan
 Paket HP kentang + UX (18 Sep siang): 1) optimasi O1–O3 ✔, 2) tab halaman di kiri + nama tab baru + keadaan tekan ✔,
 3) geser urutan bilah ujaran ✔, 4) animasi layar orang tua ✔, 5) O4–O6 + ukur ulang ✔. j1-suara ditahan: belum didengar manusia.
+
+## Desain ulang (18 Sep 14:25)
+Semua layar mengikuti `nyambung-redesign.html`: token baru di `core/theme.dart` (`AppColors`, `AppText`), komponen merek di
+`core/brand.dart` (logo, awan, matahari, kartu hero), tombol utama lime di `companion_widgets.dart`. Font Fredoka + Nunito
+dibundel (`app/assets/fonts/`), ikon peluncur adaptif dari logo asli. Gerak halus baru: `PopIn`, `QuickIn`, `CountUp`,
+transisi FadeForwards; papan anak ikut bergerak halus (lihat PERUBAHAN.md). Dicek di emulator: A1–A6, beranda, misi,
+konfirmasi, papan anak + misi, Kembang, Terapis, Atur. 33 tes lulus, analyzer bersih.
 
 ## Optimasi HP kentang (diukur di emulator arm64 Android 16, `-memory 2048 -cores 2`, APK rilis; **perkiraan, bukan HP fisik**)
 - O1 klip kata tunggal lewat SoundPool (`PlayerMode.lowLatency`, satu pemutar per klip, LRU 40), kata inti dimuat saat

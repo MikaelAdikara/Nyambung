@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/motion.dart';
 import '../../core/theme.dart';
 import '../../data/models.dart';
 
@@ -28,8 +29,8 @@ class _SymbolCellState extends State<SymbolCell> {
   Timer? _timer;
   Offset _down = Offset.zero;
 
-  /// Jari sedang di atas sel. Ditampilkan seketika tanpa transisi (invarian 11): anak melihat sel mana yang
-  /// ia sentuh, tanpa gerakan.
+  /// Jari sedang di atas sel: sel sedikit mengecil dan menggelap (100 ms), lalu kembali saat dilepas. Posisi tidak
+  /// pernah berubah; ikut setelan "Hapus animasi" (lihat PERUBAHAN.md).
   bool _pressed = false;
 
   void _setPressed(bool v) {
@@ -49,7 +50,12 @@ class _SymbolCellState extends State<SymbolCell> {
 
   @override
   Widget build(BuildContext context) {
-    final face = SymbolFace(symbol: widget.symbol, width: widget.width, height: widget.height, pressed: _pressed);
+    final face = AnimatedScale(
+      scale: _pressed ? 0.95 : 1,
+      duration: Motion.of(context, _pressed ? const Duration(milliseconds: 100) : Motion.release),
+      curve: Curves.easeOut,
+      child: SymbolFace(symbol: widget.symbol, width: widget.width, height: widget.height, pressed: _pressed),
+    );
     final hold = widget.holdMs > 0;
     final Widget input = Listener(
       behavior: HitTestBehavior.opaque,
@@ -118,13 +124,14 @@ class SymbolFace extends StatelessWidget {
         style: TextStyle(fontSize: imageSize * 0.6, fontWeight: FontWeight.w800, color: style.text),
       ),
     );
-    return Container(
+    return AnimatedContainer(
+      duration: Motion.of(context, const Duration(milliseconds: 100)),
       width: width,
       height: height,
       decoration: BoxDecoration(
         color: pressed ? Color.lerp(style.fill, style.border, 0.45) : style.fill,
-        border: Border.all(color: pressed ? style.text : style.border, width: pressed ? 4 : 2),
-        borderRadius: BorderRadius.circular(compact ? 8 : 12),
+        border: Border.all(color: pressed ? style.text : style.border, width: pressed ? 3 : 2),
+        borderRadius: BorderRadius.circular(compact ? 10 : 14),
       ),
       child: Stack(
         children: [
@@ -172,7 +179,11 @@ class SymbolFace extends StatelessWidget {
             Positioned(
               top: 5,
               right: 5,
-              child: SizedBox(width: 13, height: 13, child: CustomPaint(painter: PosMarkerPainter(style.marker, style.border))),
+              child: SizedBox(
+                width: 13,
+                height: 13,
+                child: CustomPaint(painter: PosMarkerPainter(style.marker, style.text.withValues(alpha: 0.75))),
+              ),
             ),
         ],
       ),
@@ -202,7 +213,7 @@ class EmptySlot extends StatelessWidget {
   Widget build(BuildContext context) => SizedBox(
     width: width,
     height: height,
-    child: const CustomPaint(painter: _DashedBorderPainter(Color(0xFFCFC8B8))),
+    child: const CustomPaint(painter: _DashedBorderPainter(Color(0xFFC5DEDB))),
   );
 }
 
@@ -217,7 +228,7 @@ class _DashedBorderPainter extends CustomPainter {
       ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
-    final path = Path()..addRRect(RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(12)).deflate(1));
+    final path = Path()..addRRect(RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(14)).deflate(1));
     for (final metric in path.computeMetrics()) {
       for (var d = 0.0; d < metric.length; d += 12) {
         canvas.drawPath(metric.extractPath(d, d + 6), paint);

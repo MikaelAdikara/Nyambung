@@ -81,6 +81,7 @@ class MissionScreen extends StatelessWidget {
                       .push(MaterialPageRoute<void>(builder: (_) => BoardScreen(missionContext: mission.id, allowTurnToggle: true)));
                 }
                 await state.load();
+                await state.autoSync();
               },
             ),
             const SizedBox(height: 20),

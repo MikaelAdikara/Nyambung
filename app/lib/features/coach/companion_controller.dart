@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../core/app_state.dart';
@@ -53,9 +55,25 @@ class CompanionController extends ChangeNotifier {
   int currentWeek = 1;
   List<String> weeklyWords = const [];
   bool loading = false;
+  bool syncing = false;
   SyncReport? lastSyncReport;
+  String? lastSyncedAt;
+  DateTime? _lastAutoSync;
+
+  /// Usulan terapis yang belum dijawab keluarga.
+  List<VocabTarget> get pendingTargets =>
+      targets.where((t) => t.status == TargetStatus.usulan && t.words.isNotEmpty).toList(growable: false);
+
+  /// Keadaan luring hanya ditampilkan bila percobaan kirim terakhir memang tidak menjangkau server.
+  bool get lastAttemptOffline => lastSyncReport?.state == SyncState.offline;
 
   bool get linkedToTherapist => activeLink != null;
+
+  /// Pencabutan yang dilakukan saat luring dan belum diakui server; dikirim ulang pada sinkron berikutnya.
+  bool get hasPendingRevocation => app.prefs.getString(LinkService.pendingRevokeLinkKey) != null;
+
+  /// Ada yang perlu disampaikan ke server: catatan (bila tertaut) atau pencabutan tertunda.
+  bool get canSync => linkedToTherapist || hasPendingRevocation;
   String? get therapistName => activeLink?.therapist;
   String get routineLabel => routineDisplayLabel(mission.routine);
 
@@ -77,7 +95,7 @@ class CompanionController extends ChangeNotifier {
     loading = true;
     notifyListeners();
     final now = DateTime.now();
-    final week = missionWeek(DateTime.parse(currentChild.createdAt), now);
+    final week = missionWeek(DateTime.parse(currentChild.createdAt).toLocal(), now);
     currentWeek = week;
     targets = await app.targetDao.all();
     final accepted = targets.where((target) {
@@ -112,6 +130,7 @@ class CompanionController extends ChangeNotifier {
     );
     outboxCount = await app.eventDao.outboxCount();
     activeLink = await app.linkDao.active();
+    lastSyncedAt = await app.eventDao.lastSyncedAt();
     final weekStart = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
     final weeklyEvents = await app.eventDao.since(currentChild.childId, isoWithOffset(weekStart));
     final counts = <String, int>{};
@@ -145,6 +164,8 @@ class CompanionController extends ChangeNotifier {
   Future<void> logMission(String missionId, String status) async {
     await app.logMission(missionId, status);
     await load();
+    // Konfirmasi misi langsung dicoba kirim tanpa menahan layar B6.
+    unawaited(syncNow());
   }
 
   Future<void> logTargetAnswer(String targetId, bool accepted) async {
@@ -167,9 +188,25 @@ class CompanionController extends ChangeNotifier {
 
   Future<void> syncNow() async {
     final currentChild = child;
-    if (currentChild == null) return;
-    lastSyncReport = await sync.push(currentChild.childId);
+    if (currentChild == null || syncing) return;
+    syncing = true;
+    notifyListeners();
+    try {
+      lastSyncReport = await sync.push(currentChild.childId);
+    } finally {
+      syncing = false;
+    }
     await load();
+  }
+
+  /// Kirim diam-diam saat beranda dibuka atau kembali dari papan, paling sering sekali per 10 detik.
+  /// Tidak pernah menahan layar: status luring tetap keadaan biasa.
+  Future<void> autoSync() async {
+    if (!canSync || syncing) return;
+    final now = DateTime.now();
+    if (_lastAutoSync != null && now.difference(_lastAutoSync!) < const Duration(seconds: 10)) return;
+    _lastAutoSync = now;
+    await syncNow();
   }
 
   @override

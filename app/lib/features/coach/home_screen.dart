@@ -8,6 +8,7 @@ import '../settings/therapist_screen.dart';
 import 'companion_controller.dart';
 import 'companion_widgets.dart';
 import 'lesson_screen.dart';
+import 'mission_rules.dart';
 import 'mission_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -30,7 +31,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_app == app) return;
     _app = app;
     _controller?.dispose();
-    _controller = CompanionController(app)..load();
+    final controller = CompanionController(app);
+    _controller = controller;
+    controller.load().then((_) => controller.autoSync());
   }
 
   @override
@@ -73,10 +76,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       () async {
                         await Navigator.of(context).push(BoardScreen.childRoute());
                         await controller.load();
+                        await controller.autoSync();
                       },
                 ),
                 const SizedBox(height: 16),
                 _MissionCard(state: controller),
+                if (controller.pendingTargets.isNotEmpty) ...[const SizedBox(height: 16), _ProposalCard(state: controller)],
                 const SizedBox(height: 16),
                 CompanionCard(
                   child: Column(
@@ -201,6 +206,38 @@ class _MissionCard extends StatelessWidget {
   }
 }
 
+class _ProposalCard extends StatelessWidget {
+  const _ProposalCard({required this.state});
+
+  final CompanionController state;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    borderRadius: BorderRadius.circular(16),
+    onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => TherapistScreen(state: state))),
+    child: CompanionCard(
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${state.pendingTargets.length} usulan kata dari terapis menunggu jawaban',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 4),
+                const Text('Boleh diterima atau ditolak tanpa alasan.', style: companionMutedStyle),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right),
+        ],
+      ),
+    ),
+  );
+}
+
 class _SyncCard extends StatelessWidget {
   const _SyncCard({required this.state});
 
@@ -216,14 +253,16 @@ class _SyncCard extends StatelessWidget {
           !state.linkedToTherapist
               ? 'Belum terhubung ke terapis. Catatan tetap tersimpan di perangkat.'
               : state.outboxCount == 0
-              ? 'Semua catatan sudah sampai ke terapis.'
-              : 'Tidak ada jaringan saat ini. ${state.outboxCount} catatan tersimpan di perangkat dan akan terkirim nanti.',
+              ? 'Semua catatan sudah sampai ke terapis.${state.lastSyncedAt == null ? '' : ' Terakhir ${formatWaktuSingkat(state.lastSyncedAt!)}.'}'
+              : state.lastAttemptOffline
+              ? 'Tidak ada jaringan saat ini. ${state.outboxCount} catatan tersimpan di perangkat dan akan terkirim nanti.'
+              : '${state.outboxCount} catatan tersimpan di perangkat dan akan terkirim nanti.',
           style: companionBodyStyle,
         ),
         const SizedBox(height: 12),
         Align(
           alignment: Alignment.centerLeft,
-          child: TextButton(onPressed: state.linkedToTherapist ? state.syncNow : null, child: const Text('Kirim sekarang')),
+          child: TextButton(onPressed: state.canSync && !state.syncing ? state.syncNow : null, child: const Text('Kirim sekarang')),
         ),
       ],
     ),

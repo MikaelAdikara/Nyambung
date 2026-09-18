@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants.dart';
+import '../../data/models.dart';
 import '../../data/sync/link_service.dart';
 import '../coach/companion_controller.dart';
 import '../coach/companion_widgets.dart';
+import '../coach/mission_rules.dart';
 
 class TherapistScreen extends StatefulWidget {
   const TherapistScreen({super.key, required this.state});
@@ -29,6 +31,8 @@ class _TherapistScreenState extends State<TherapistScreen> {
     if (_code.text.trim().length != 8) return;
     setState(() => _busy = true);
     final result = await widget.state.connectTherapist(_code.text.trim().toUpperCase());
+    // Catatan yang sudah ada langsung dicoba kirim setelah keluarga setuju terhubung.
+    if (result == LinkResult.connected) await widget.state.syncNow();
     if (mounted) {
       setState(() {
         _busy = false;
@@ -41,6 +45,19 @@ class _TherapistScreenState extends State<TherapistScreen> {
         };
       });
     }
+  }
+
+  Future<void> _answer(VocabTarget target, bool accepted) async {
+    await widget.state.logTargetAnswer(target.targetId, accepted);
+    if (mounted) {
+      setState(() {
+        _connectionMessage = accepted
+            ? 'Diterima. Misi berganti ke ${target.words.first.toUpperCase()}.'
+            : 'Ditolak. Terapis akan melihat jawaban ini.';
+      });
+    }
+    // Jawaban (peristiwa TGT) langsung dicoba kirim; bila luring, tetap di outbox.
+    await widget.state.syncNow();
   }
 
   Future<void> _revoke() async {
@@ -98,7 +115,22 @@ class _TherapistScreenState extends State<TherapistScreen> {
   List<Widget> _linked(BuildContext context) {
     final pending = widget.state.targets.where((target) => target.status == TargetStatus.usulan && target.words.isNotEmpty).firstOrNull;
     return [
-      CompanionCard(child: Text('Terhubung dengan ${widget.state.therapistName} sejak hari ini.', style: companionBodyStyle)),
+      CompanionCard(
+        child: Text.rich(
+          TextSpan(
+            style: companionBodyStyle,
+            children: [
+              const TextSpan(text: 'Terhubung dengan '),
+              TextSpan(
+                text: widget.state.therapistName,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              TextSpan(text: ' sejak ${formatTanggal(widget.state.activeLink?.linkedAt ?? '')}.'),
+            ],
+          ),
+        ),
+      ),
+      if (_connectionMessage != null) ...[const SizedBox(height: 12), Text(_connectionMessage!, style: companionBodyStyle)],
       if (pending != null) ...[
         const SizedBox(height: 16),
         CompanionCard(
@@ -116,11 +148,11 @@ class _TherapistScreenState extends State<TherapistScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: EqualOutlineButton(label: 'Tolak', onPressed: () => widget.state.logTargetAnswer(pending.targetId, false)),
+                    child: EqualOutlineButton(label: 'Tolak', onPressed: () => _answer(pending, false)),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: EqualOutlineButton(label: 'Terima', onPressed: () => widget.state.logTargetAnswer(pending.targetId, true)),
+                    child: EqualOutlineButton(label: 'Terima', onPressed: () => _answer(pending, true)),
                   ),
                 ],
               ),

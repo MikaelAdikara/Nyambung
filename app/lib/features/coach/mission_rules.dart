@@ -19,3 +19,26 @@ String routineDisplayLabel(String routine) => switch (routine) {
   'main' => 'main pagi',
   _ => 'makan sore',
 };
+
+const _bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+/// `2026-09-18T03:20:38Z` → `18 September 2026` (waktu lokal perangkat).
+String formatTanggal(String iso) {
+  final t = DateTime.tryParse(iso)?.toLocal();
+  if (t == null) return iso;
+  return '${t.day} ${_bulan[t.month - 1]} ${t.year}';
+}
+
+/// Waktu singkat untuk kartu catatan: `hari ini 10.20`, `kemarin 18.05`, atau `16 September 18.05`.
+String formatWaktuSingkat(String iso, {DateTime? now}) {
+  final t = DateTime.tryParse(iso)?.toLocal();
+  if (t == null) return iso;
+  final n = now ?? DateTime.now();
+  final jam = '${t.hour.toString().padLeft(2, '0')}.${t.minute.toString().padLeft(2, '0')}';
+  final today = DateTime(n.year, n.month, n.day);
+  final day = DateTime(t.year, t.month, t.day);
+  final diff = today.difference(day).inDays;
+  if (diff == 0) return 'hari ini $jam';
+  if (diff == 1) return 'kemarin $jam';
+  return '${t.day} ${_bulan[t.month - 1]} $jam';
+}

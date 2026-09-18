@@ -9,6 +9,8 @@ Diperbarui: 13:55
   `POST .../sessions/{note_id}/share` (hanya `family_text` sampai ke keluarga), `GET /v1/children/{id}/shared-summaries`
   untuk perangkat. Waktu tinjauan D1: tabel `review_log`, `POST /v1/review-time`, rerata 30 hari di `/v1/children`.
   45 tes pytest lulus
+- (13:55, tanpa tag) `simclient.py demo` menulis 2 catatan sesi ilustratif untuk Arka (yang terbaru dikirim ke keluarga);
+  `seed/demo_events.json` dibuat ulang 18 Sep 13:50: 5 anak, 870 peristiwa, 2 target, 2 catatan sesi
 - j0-repo: kerangka repo, hash aset 175/175 OK
 - j3-sync: `POST /v1/sync/events` idempoten, 422 untuk medan tak dikenal dan `ts_device` tanpa zona, trigger append-only
 - j3-auth: undangan, tebus, cabut, token Bearer (SHA-256), 401/403/404/410 sesuai kontrak

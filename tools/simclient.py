@@ -45,6 +45,12 @@ MISSION_WORDS = ["mau", "lagi", "tidak", "berhenti", "bantu", "selesai", "minum"
 CHILD_POOL = ["mau", "lagi", "tidak", "makan", "minum", "selesai", "bantu", "itu", "ya", "aku", "main", "mandi", "susu", "bola", "ibu"]
 
 # Kata unik per pekan (pekan -2, -1, 0) → menghasilkan trend_3w yang dimaksud.
+# Catatan sesi tatap muka ilustratif untuk D4: (berapa hari lalu, catatan terapis, fokus pekan depan).
+SESSIONS = [
+    (23, "Pengenalan SELESAI; orang tua diajari memodelkan sambil bicara. (ilustratif)", "Modeling SELESAI saat makan"),
+    (9, "MAU spontan tiga kali saat sesi. BANTU masih perlu jeda tunggu lebih panjang. (ilustratif)", "Jeda tunggu 10 detik"),
+]
+
 FAMILIES = [
     {"nickname": "Arka", "age_years": 5, "routine": "makan", "weekly": (4, 5, 9), "mission_rate": 0.85},  # naik
     {"nickname": "Nadia", "age_years": 4, "routine": "mandi", "weekly": (4, 5, 5), "mission_rate": 0.7},
@@ -252,7 +258,7 @@ def cmd_demo(args: argparse.Namespace) -> None:
     seed_out = Path(args.out) if args.out else SEED_OUT
     rng = random.Random(args.seed)
     now = datetime.now(timezone.utc)
-    out = {"illustrative": True, "generated_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "children": [], "events": [], "targets": []}
+    out = {"illustrative": True, "generated_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "children": [], "events": [], "targets": [], "sessions": []}
     for i, fam in enumerate(FAMILIES):
         status, inv = http("POST", f"{server}/v1/link/invite", tok)
         if status != 201:
@@ -280,6 +286,18 @@ def cmd_demo(args: argparse.Namespace) -> None:
             status, tgt = http("POST", f"{server}/v1/children/{child_id}/targets", tok, body)
             if status == 201:
                 out["targets"].append({k: tgt[k] for k in ("target_id", "child_id", "words", "note", "week_index", "routine", "therapist", "created_at")})
+        if i == 0:  # dua catatan sesi tatap muka (Arka), yang terbaru dikirim ke keluarga
+            for k, (ago, note, focus) in enumerate(SESSIONS):
+                day = (now.astimezone(WIB) - timedelta(days=ago)).date()
+                nxt = datetime.combine(day + timedelta(days=14), datetime.min.time()).strftime("%Y-%m-%dT15:30")
+                body = {"session_date": day.isoformat(), "note": note, "focus": focus, "next_session": nxt}
+                status, sess = http("POST", f"{server}/v1/children/{child_id}/sessions", tok, body)
+                if status != 201:
+                    sys.exit(f"Catatan sesi gagal {status}: {sess}")
+                if k == len(SESSIONS) - 1:
+                    share = {"family_text": f"Fokus pekan depan: {focus.lower()}. Ibu sudah memodelkan dengan tempo yang baik. (ilustratif)"}
+                    status, sess = http("POST", f"{server}/v1/children/{child_id}/sessions/{sess['note_id']}/share", tok, share)
+                out["sessions"].append(sess)
         generate(dev, fam, args.days, now, rng, accepted)
         res = sync(dev, server)
         print(f"{fam['nickname']:<6} child_id={child_id} terkirim={res['accepted']} duplikat={res['duplicates']}")
@@ -299,7 +317,10 @@ def cmd_demo(args: argparse.Namespace) -> None:
             out["events"].append({k: r[k] for k in ("child_id", "event_id", "ts_device", "content", "method", "actor", "prompt_level", "context", "session_id")})
     seed_out.parent.mkdir(parents=True, exist_ok=True)
     seed_out.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"Tulis {seed_out}: {len(out['children'])} anak, {len(out['events'])} peristiwa, {len(out['targets'])} target (ilustratif)")
+    print(
+        f"Tulis {seed_out}: {len(out['children'])} anak, {len(out['events'])} peristiwa, {len(out['targets'])} target, "
+        f"{len(out['sessions'])} catatan sesi (ilustratif)"
+    )
 
 
 def cmd_tap(args: argparse.Namespace) -> None:

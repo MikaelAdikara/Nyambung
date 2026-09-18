@@ -1,8 +1,8 @@
 # Status jalur 2 — Pendamping
-Diperbarui: 09:49
+Diperbarui: 09:53
 
 ## Sedang dikerjakan
-2.2 Integrasi j1-kerangka — fake AppState sudah dihapus; layar membaca AppState/DAO nyata, analyzer seluruh app bersih
+2.2 Integrasi j1-papan — B1/B2 membuka BoardScreen nyata dan memuat ulang penghitung saat kembali; analyzer bersih, 10 tes lulus (1 skip simbol)
 
 ## Tonggak selesai (tag)
 - (kosong)
@@ -11,7 +11,7 @@ Diperbarui: 09:49
 j2-layar sekitar 10:05 setelah titik masuk main.dart dan smoke test
 
 ## Terblokir oleh
-- Uji widget belum tersedia karena app/test milik jalur 1 dan belum ada di j1-kerangka
+- Titik masuk main.dart masih PlaceholderOnboarding/PlaceholderHome; menunggu perubahan kecil jalur 1
 
 ## Permintaan ke jalur lain
 - ke jalur 1: ganti PlaceholderOnboarding dengan `const OnboardingFlow()` dari `features/onboarding/onboarding_flow.dart`

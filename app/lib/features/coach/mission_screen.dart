@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../board/board_screen.dart';
 import 'companion_widgets.dart';
 import 'confirm_screen.dart';
 import 'companion_controller.dart';
-import 'fake_board_screen.dart';
 
 class MissionScreen extends StatelessWidget {
   const MissionScreen({super.key, required this.state, this.openBoard});
@@ -77,12 +77,10 @@ class MissionScreen extends StatelessWidget {
                 if (openBoard != null) {
                   await openBoard!();
                 } else {
-                  await Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => FakeBoardScreen(state: state, missionContext: mission.id, allowTurnToggle: true),
-                    ),
-                  );
+                  await Navigator.of(context)
+                      .push(MaterialPageRoute<void>(builder: (_) => BoardScreen(missionContext: mission.id, allowTurnToggle: true)));
                 }
+                await state.load();
               },
             ),
             const SizedBox(height: 20),

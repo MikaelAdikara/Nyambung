@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../core/app_state.dart';
+import '../board/board_screen.dart';
 import 'companion_controller.dart';
 import 'companion_widgets.dart';
-import 'fake_board_screen.dart';
 import 'lesson_screen.dart';
 import 'mission_screen.dart';
 
@@ -67,7 +67,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: Icons.grid_view_rounded,
                   onPressed:
                       widget.openChildBoard ??
-                      () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => FakeBoardScreen(state: controller))),
+                      () async {
+                        await Navigator.of(context).push(BoardScreen.childRoute());
+                        await controller.load();
+                      },
                 ),
                 const SizedBox(height: 16),
                 _MissionCard(state: controller),

@@ -32,10 +32,11 @@ pembuka dan penutup, klinis di tengah. Sebut sumber, sebut batas, jangan melebih
 | 2:42–3:02 | 10 | Yang kami ciptakan untuk terapis | 1, 2 |
 | 3:02–3:27 | 11 | Ketepatan teknologi, arsitektur, dan keamanan | **2** |
 | 3:27–3:40 | 12 | Basis ilmiah, opini FORMAPI UB, asal aset | 1, 2 |
-| 3:40–4:05 | 13 | Kelayakan: teknis, biaya, model bisnis, penerapan | **3** |
-| 4:05–4:27 | 14 | Dampak dan metrik | **3** |
-| 4:27–4:40 | 15 | Penutup | 4 |
-| 4:40–5:00 | | Cadangan 20 detik | |
+| 3:40–3:55 | 13 | Kelayakan: teknis dan rencana penerapan | **3** |
+| 3:55–4:15 | 14 | **Nilai bisnis: keluarga gratis, institusi yang membayar** | **3** |
+| 4:15–4:37 | 15 | Dampak dan metrik | **3** |
+| 4:37–4:50 | 16 | Penutup | 4 |
+| 4:50–5:00 | | Cadangan 10 detik | |
 
 **Benang merah cerita:** Ethan berhasil karena lingkungannya belajar menjawab → banyak anak tidak punya lingkungan itu
 (masalah) → alat yang ada tidak menyambungkan orang-orangnya (celah) → Nyambung menyambungkan anak, keluarga, dan
@@ -43,7 +44,7 @@ terapis (loop) → untuk keluarga: papan dan misi yang berbasis riset → dua fi
 keluarga: suaranya sendiri dan foto rumahnya sendiri → semua itu sampai ke terapis sebagai konteks → teknologinya
 dipilih untuk kondisi itu dan dijaga keamanannya → bukti, kelayakan, dampak → kembali ke Ethan.
 
-Slide 16–19 adalah **lampiran Q&A** (asal aset, 12 kata inti, batasan dan roadmap, ringkasan `PERUBAHAN.md`). Jangan ditampilkan
+Slide 17–20 adalah **lampiran Q&A** (asal aset, 12 kata inti, batasan dan roadmap, ringkasan `PERUBAHAN.md`). Jangan ditampilkan
 saat pitch.
 
 ---
@@ -150,16 +151,22 @@ tidak dipakai tanpa izin; slide memakai bingkai ilustrasi.*
 > *'[kutipan singkat asli dari A]'*. **Validasi klinis bersama terapis wicara adalah bagian dari pilot kami.**
 > Semua aset, dari simbol Mulberry CC BY-SA 4.0 sampai suara, tercatat asal-usulnya; rinciannya di lampiran."
 
-## 3:40–4:05 · Slide 13 — Kelayakan
+## 3:40–3:55 · Slide 13 — Kelayakan
 
 > "Apakah layak? Ini sudah berjalan, dibangun dalam 24 jam, dengan **113 tes otomatis lulus**.
-> Model bisnisnya: **keluarga gratis selamanya**, karena suara anak tidak boleh dikunci langganan. Biaya per keluarga
-> untuk fitur inti hampir nol, karena semuanya berjalan di HP. **Yang membayar adalah terapis dan institusi**, yang
-> mendapat dasbor dan data rumah. Kami mulai dengan pilot enam pekan bersama satu terapis wicara, lalu tumbuh lewat
-> terapis: **setiap kode undangan adalah satu keluarga baru**.
+> Kami mulai dengan pilot enam pekan bersama satu terapis wicara, lalu tumbuh lewat terapis: **setiap kode undangan
+> adalah satu keluarga baru**.
 > Batasannya kami tulis terbuka: belum HTTPS, dan [belum diuji di HP fisik 2 GB — perbarui bila sudah]."
 
-## 4:05–4:27 · Slide 14 — Dampak
+## 3:55–4:15 · Slide 14 — Nilai bisnis
+
+> "Siapa yang membayar? **Bukan keluarga.** Suara anak tidak boleh dikunci langganan, jadi papan, suara, dan misi
+> harian gratis selamanya. Karena semuanya jalan di HP, biaya tambahan per keluarga hampir nol.
+> **Yang membayar adalah terapis dan institusi**, karena merekalah yang mendapat dasbor dan data rumah. Satu terapis
+> dengan dua puluh keluarga menelan biaya sekitar **Rp70–135 ribu per bulan**, masih tertutup oleh hipotesis harga kami.
+> Pemerintah dan CSR menjadi jalur skala setelah pilot membuktikan retensi."
+
+## 4:15–4:37 · Slide 15 — Dampak
 
 > "Dampaknya kami ukur dengan jujur. Masalah intinya alat ditinggalkan, jadi **metrik utama pilot adalah retensi hari
 > ke-14, minimal 60 persen**, didukung hari misi terlaksana, usulan yang dijawab keluarga, dan waktu tinjauan terapis
@@ -167,7 +174,7 @@ tidak dipakai tanpa izin; slide memakai bingkai ilustrasi.*
 > Kalau tinjauan cukup lima menit per anak, satu jam terapis memantau dua belas keluarga. **Itu asumsi, dan pilot yang
 > akan mengujinya.**"
 
-## 4:27–4:40 · Slide 15 — Penutup
+## 4:37–4:50 · Slide 16 — Penutup
 
 > "Ethan punya suara karena orang di sekitarnya belajar menjawab. Nyambung ingin hal yang sama terjadi di setiap rumah
 > di Indonesia.
@@ -214,6 +221,9 @@ tidak dipakai tanpa izin; slide memakai bingkai ilustrasi.*
 ---
 
 ## Yang diubah dari naskah sebelumnya
+
+- **(19 Sep) Slide Nilai bisnis (14)** dari `deck/model-bisnis.md`: siapa membayar, biaya per keluarga, unit ekonomi
+  satu terapis, skalabilitas. Kalimat bisnis di slide Kelayakan dipindah ke sana; cadangan waktu jadi 10 detik.
 
 0. **(22:30) Dua slide fitur unggulan** (suara keluarga, papan dari foto dengan AI), masing-masing dengan alur,
    bukti, pengaman yang sudah dibangun, dan batas jujur. Slide teknologi kini memuat keamanan (undangan kedaluwarsa,
